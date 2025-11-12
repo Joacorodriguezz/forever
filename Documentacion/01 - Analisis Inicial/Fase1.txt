@@ -1,0 +1,130 @@
+Fase 1: Preparación y Análisis Inicial
+
+
+1.1 *Revisión del alcance inicial*
+
+Reunión de inmersión
+
+**Áreas confusas:**
+
+-Un socio puede ser profesor, administrador o jugador
+-La aplicación permite registrar los pagos de cuotas de los socios, y los estados de la cuota se manejan de la siguiente manera:
+	A principio de mes, el estado de la cuota comienza en "pendiente". Este estado se mantiene hasta que se realiza el pago. La cuota cambia a "pagado" cuando un administrativo verifica que la operación se completó correctamente o cuando se vence el plazo de pago.
+	Si el socio paga en efectivo, la cuota pasará directamente de "pendiente" a "pagado".
+	En el caso de que el socio elija el pago virtual, el sistema proporciona un alias donde el socio debe enviar el pago de la cuota. Después de realizar el pago, el socio debe adjuntar el comprobante al sistema. Al hacerlo, la cuota pasa a un estado "en revisión". En este punto, el administrativo debe verificar el comprobante del pago, y si todo es correcto, cambiar el estado de la cuota a "pagado".
+	Si el plazo de pago se vence y no se ha realizado el pago, la cuota automáticamente pasa a "vencida".
+    Si la cuota esta en estado “en revision” y se pasa la fecha de vencimiento, continua en estado “en revision”
+-No permite comprar indumentaria institucional
+-No gestiona cobros de empleados
+-A qué nos referimos con EVENTO
+-Los empleados y profesores: ¿Pagan cuota de socios?
+
+**Preguntas al cliente:**
+
+-¿Qué tipo de eventos se realizan en el club?
+-¿Cuántas y cuáles son las actividades deportivas que se realizan en el club?
+-¿Cuántas faltas de un alumno en una actividad deportiva son consideradas para que sea dado de baja de dicha actividad? O hasta que el alumno no se dé de baja, sigue estando en la actividad?
+-¿Cuál es el plazo para pagar la cuota?(asumimos 3 días en el Diagrama de Reglas de Negocio)
+
+
+
+**Glosario:**
+
+
+
+- Socio: Paga para acceder mensualmente a una actividad/evento
+- Deportista: Realiza actividad deportiva.
+- Empleado: Persona que trabaja en el club deportivo con funciones administrativas.
+- Profesor: Persona encargada de dictar clases o coordinar actividades deportivas dentro del club.
+- Evento: Actividad especial organizada por el club deportivo, fuera del cronograma regular de clases, donde se deben adquirir entradas para concurrir.
+- EVENTO DEPORTIVO: Cuando juega las primeras divisiones de basquet, voley, competencia de patín, competencia de gimnasia artística. No se consideran las inferiores de cada deporte. El deportista no paga entrada
+- EVENTO SHOW: Evento pago para cualquier socio/no socio, sea deportista del club o no. Ejemplos: presentación de patín show, evento musical, fiestas. todos pagan entrada
+- Cancha: Espacio físico del club destinado a la práctica de deportes.
+- Reserva de cancha: Acción mediante la cual un socio solicita el uso exclusivo de una cancha en un día y horario determinados.
+- Notificaciones: Mensaje automático o manual que el sistema envía a los usuarios para informarles sobre acciones relevantes
+
+
+
+Event Storming
+
+
+En primera instancia, todos los integrantes del grupo fuimos poniendo ideas e inquietudes que nos fueron surgiendo a medida que íbamos pensando en cómo funcionaría el sistema. Este diagrama lo realizamos con Miro, y nos fue de mucha ayuda para resolver los siguientes puntos. El diagrama está adjuntado dentro de esta carpeta.
+
+EVENTO
+
+**Inicio:** 
+No registrado: 
+**Botones:** iniciar sesión, registrarse
+    - registrarse→crearcuenta()
+    -   iniciar sesión→validarcuenta() → 
+
+Registrados:
+**Botones:** iniciar sesión
+    - iniciar sesión→validarcuenta() →
+
+
+**SOCIOS:** administrador, deportista y profe
+
+Estamos en la cuenta deportista: 
+
+**Botones:** inicio, perfil, eventos próximos, pagar cuota, cerrar sesión, alquilar cancha, inscribirse a actividad 
+
+    - inicio→pagprincipal()
+    - perfil→ modCampo(), verCampo()
+    - eventos→mostrarListaDeEventosProximos() →seleccionarEvento() → comparEentrada() ***
+    - pagar cuota → adjuntarComprobante()
+    - cerrar sesión→ volverAInicioNR()
+    - alquilar cancha→alquilarcancha()
+    - inscribirse→altaAct(act,soc)
+
+Estamos en cuenta administrador:
+
+**Botones:** agregar evento, validar pago, dar de baja socio (BAJA LÓGICO), mandar notificaciones, ver clases por profesor, agregar no socio a evento, vender entrada + todo lo del deportista 
+
+    - agregar evento → agregarEventoAcalendario()
+    - validar pago → cambiarEstadoCuota()
+    - agregar profe → agregarProfAct() → agregarProfClase()
+    - mandar notificaciones → enviarMsj()
+    - ver clases → verClasesxProfe()
+    - vender entrada //presencial// → venderEntrada()
+
+Estamos en cuenta profe:
+
+**Botones:** mandar notificaciones, ver mis clases
+    - mandar notificaciones → enviarMsj()
+    - ver mis clases → verClasesxProfe()
+
+
+
+MODULOS
+- Reservar cancha
+- Socio (ABMC)
+- Eventos (ABMC): entradas
+- Actividades: ABMC socios
+- Pagar Cuota
+- Notificaciones
+
+1.2 Definiendo Límites y Estructura Macro
+Crear diagrama contextual: definir claramente los límites del sistema e identificar todos los actores externos e interfaces
+Crear un mapa funcional del sistema: un diagrama con módulos, flujos de usuario y entidades claves
+Esto le da al equipo una visión macro clara y compartida
+
+ACTORES EXTERNOS: 
+API para mandar notificaciones por mail.
+API Mercado Pago
+INTERFACES:
+App de mensajería
+Página web
+
+
+1.3 Identificación temprana de riesgos
+Realizar una reunión específica de identificación de riesgos
+Armar una Matriz de Riesgos:
+Clasificar los riesgos por impacto y probabilidad
+Documentar estrategias de mitigación para los riesgos altos
+Asignar responsables para seguimiento
+
+
+
+
+

@@ -1,0 +1,194 @@
+* {
+    margin-top: 10px;
+    box-sizing: border-box;
+}
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: beige;
+    color: #333;
+    line-height: 1.6;
+}
+
+/* Contenedor principal para que el contenido no toque los bordes */
+body > header,
+body > main,
+body > footer {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* === CABECERA === */
+header {
+    background-image: url('fondo-cabecera.jpg'); /* Imagen de fondo para la cabecera */
+    background-size: cover;
+    background-position: center;
+    color: white;
+    padding: 15px 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    border-radius: 0 0 15px 15px;
+}
+
+/* Contenedor cabecera: logo + nombre */
+.cabecera {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.cabecera img {
+    height: 80px;
+    width: auto;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+}
+
+.cabecera h1 {
+    font-size: 2.4rem;
+    font-weight: 700;
+    text-shadow: 1px 1px 4px rgba(0,0,0,0.7);
+}
+
+/* === MENÚ === */
+nav {
+    margin-top: 10px;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 8px;
+}
+
+nav ul {
+    list-style: none;
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+    padding: 10px 0;
+}
+
+nav ul li a {
+    text-decoration: none;
+    color: white;
+    font-weight: 600;
+    padding: 8px 15px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    border-radius: 6px;
+}
+
+nav ul li a:hover,
+nav ul li a:focus {
+    background-color: #ffd700;
+    color: #222;
+}
+
+/* === MAIN === */
+main {
+    margin: 40px 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 30px;
+}
+
+main section {
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    padding: 20px;
+    transition: transform 0.2s ease;
+}
+
+main section:hover {
+    transform: translateY(-5px);
+}
+
+/* === FOOTER === */
+footer {
+    background-color: #222;
+    color: #ddd;
+    text-align: center;
+    padding: 20px 15px;
+    border-radius: 15px 15px 0 0;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+footer p {
+    margin-bottom: 8px;
+}
+
+footer a {
+    color: #ffd700;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+
+footer a:hover,
+footer a:focus {
+    color: #fff;
+    text-decoration: underline;
+}
+
+/* === SECCIÓN FICCIÓN === */
+section.actividades {
+    grid-column: 1 / -1;
+    background-color: #fffaf0;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    padding: 25px 20px;
+}
+
+section.actividades h2 {
+    font-size: 2rem;
+    margin-bottom: 25px;
+    border-left: 6px solid #ffd700;
+    padding-left: 12px;
+    color: #333;
+}
+
+/* Diseño de los libros dentro de la sección */
+.grid-actividades {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 25px;
+    margin-top: 20px;
+}
+
+
+.actividad {
+    background-color: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+    transition: transform 0.2s ease;
+}
+
+.actividad:hover {
+    transform: translateY(-4px);
+}
+
+
+section.actividades .actividad img {
+    max-width: 200px;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    margin-bottom: 10px;
+}
+
+section.actividades .actividad h3 {
+    font-size: 1.4rem;
+    color: #222;
+    margin-bottom: 5px;
+    text-align: center;
+}
+
+section.actividades .actividad p {
+    font-size: 0.95rem;
+    color: #555;
+    text-align: center;
+    margin-bottom: 5px;
+}
+
+section.actividades .actividad p:nth-of-type(2) {
+    font-style: italic;
+    color: #666;
+}

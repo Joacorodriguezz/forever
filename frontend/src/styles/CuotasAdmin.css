@@ -1,0 +1,102 @@
+/* Cuotas Admin - Gestión de cuotas con colores del Club For Ever */
+.cuotas-page {
+  min-height: 100vh;
+  width: 100vw;
+  overflow-x: hidden;
+  background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+}
+
+.cuotas-contenido {
+  padding: var(--spacing-2xl) var(--spacing-lg);
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.cuotas-header {
+  margin-bottom: var(--spacing-xl);
+  text-align: center;
+}
+
+.cuotas-header h1 {
+  color: white;
+  font-weight: 700;
+  margin-bottom: var(--spacing-sm);
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
+  justify-content: flex-end;
+  align-items: center;
+  background: var(--color-white);
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.filtros input,
+.filtros select {
+  max-width: 300px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 2px solid var(--color-gray-300);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  transition: all var(--transition-base);
+}
+
+.filtros input:focus,
+.filtros select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--overlay-light);
+}
+
+.filtros label {
+  color: var(--color-text-primary);
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.tarjetas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+/* Estados de las cuotas */
+.estado-badge {
+  display: inline-block;
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.estado-pendiente {
+  background-color: var(--color-warning-light);
+  color: var(--color-pendiente);
+  border: 1px solid var(--color-pendiente);
+}
+
+.estado-vencida {
+  background-color: var(--color-error-light);
+  color: var(--color-vencida);
+  border: 1px solid var(--color-vencida);
+}
+
+.estado-pagada {
+  background-color: var(--color-success-light);
+  color: var(--color-pagada);
+  border: 1px solid var(--color-pagada);
+}
+
+.estado-revision {
+  background-color: var(--color-info-light);
+  color: var(--color-revision);
+  border: 1px solid var(--color-revision);
+}

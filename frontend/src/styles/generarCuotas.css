@@ -1,0 +1,113 @@
+.gc-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.gc-title {
+  text-align: center;
+  margin: 0 0 20px 0;
+  margin-bottom: 10px;
+}
+
+.gc-field {
+  margin-top: 40px;
+  margin-bottom: 25px;
+}
+
+.gc-label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: bold;
+}
+
+.gc-select,
+.gc-input,
+.gc-date {
+  padding: 4px 6px; /* más bajo aún */
+  font-size: 13px;
+  min-width: 200px;
+}
+
+.gc-select--sm {
+  min-width: 150px;
+}
+
+.gc-info {
+  background-color: #f5f5f5;
+  padding: 12px;
+  border-radius: 5px;
+  margin-bottom: 16px;
+}
+
+.gc-actions {
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.gc-button {
+  padding: 10px 20px;
+  font-size: 16px;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.gc-button.primary { 
+  background-color: var(--color-primary);
+  transition: all var(--transition-base);
+}
+.gc-button.primary:hover:not(:disabled) {
+  background-color: var(--color-primary-light);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+.gc-button.success { 
+  background-color: var(--color-success);
+}
+.gc-button.success:hover:not(:disabled) {
+  opacity: var(--opacity-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+.gc-button:disabled {
+  background-color: var(--color-gray-500);
+  cursor: not-allowed;
+  opacity: var(--opacity-disabled);
+}
+
+.gc-card {
+  background-color: var(--color-white);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  max-height: 300px;
+  overflow-y: auto;
+  border: 2px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+}
+
+.gc-preview-card { 
+  background-color: var(--color-accent-light);
+  border-color: var(--color-primary);
+}
+.gc-gen-card { 
+  background-color: var(--color-success-light);
+  border-color: var(--color-success);
+}
+
+.gc-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.gc-table th,
+.gc-table td {
+  padding: 8px;
+  border: 1px solid #dee2e6;
+}
+
+.gc-table thead tr { background-color: #dee2e6; }
+

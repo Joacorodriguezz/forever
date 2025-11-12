@@ -1,0 +1,330 @@
+**Historias de Usuario por Feature**
+**1- VALIDACION DE CUOTAS AL DIA**
+Features:
+	- **HU 1.1- Bloquear reservas a socios con cuotas vencidas**
+		**Como** Administrador
+		**Quiero** negar que un socio con cuota vencida pueda reservar una cancha
+		**Para** que un usuario con cuotas vencidas
+		**Prioridad** Must Have
+		**Estimación:** 8
+		**Criterios de aceptación:**
+		- Escenario de Éxito: Dado que un socio tenga la cuota al día, cuando seleccione la opción “Reservar Cancha”, entonces el sistema procesará la reserva y confirmará que la reserva se ha guardado correctamente
+		- Escenario de Fallo: Dado que un socio tenga la cuota vencida , cuando seleccione la opción “Reservar Cancha”, entonces el sistema no le permitirá continuar con la reserva y le mostrará un mensaje de advertencia.
+		**Reglas de negocio:**
+		- RNEG_01: Al momento de reservar una cancha, se debe señar el 50% del valor de la reserva.
+		- RNEG_03: Se tiene una tolerancia de 3 días luego de la fecha de vencimiento del pago de cuota social y/0 deportiva
+		- RNEG_04: Los horarios para realizar actividades deportivas, eventos o utilizar una cancha es de 8:00hs a 23:00hs
+		**Riesgos asociados:**
+		- Riesgo de que el sistema no identifique correctamente la deuda vencida de algunos socios: Errores en la verificación de pagos podrían permitir que un socio con deuda vencida reserve una cancha.
+
+
+	- **HU 1.2- Mostrar mensaje informativo sobre deuda al intentar reservar**
+		**Como** socio
+		**Quiero** que el sistema me informe si tengo deudas al momento de intentar hacer una reserva
+		**Para** entender que no puedo reservar hasta regularizar mi situación.
+		**Prioridad:** Should Have
+		**Estimación:** 3
+		**Criterios de aceptación:**
+		- Escenario de Éxito: Dado un socio con cuota al día, cuando el socio intente reservar una cancha, entonces el sistema le permitirá realizar la reserva sin restricciones
+		- Escenario de Fallo: Dado un socio con cuota vencida, cuando un socio intente reservar una cancha, entonces el sistema no le permitirá realizar la reserva y le mostrara un mensaje detallando su situación financiera.
+		**Riesgos asociados:**
+		- Riesgo de mensaje informativo incorrecto: Si el sistema no muestra el mensaje adecuado o no lo hace de manera clara, los socios podrían no entender correctamente su situación financiera, lo que podría generar frustración o confusión al intentar realizar una reserva.
+		**Wireframes o Mockups:** sería una pequeña ventana emergente con: 
+		- Título: "Deuda pendiente"
+		- Texto: "Tiene una deuda pendiente de [el monto]. Para continuar con la reserva debe abonar su deuda”.
+		- Botón: "Aceptar" (cierra el mensaje).
+
+**2- VALIDACION DE DISPONIBILIDAD HORARIA**
+Features:
+	- **HU 2.1- Verificación que no existan reservas superpuestas**
+		**Como** administrador del sistema
+		**Quiero** poder controlar la superposición de reservas de canchas
+		**Para** que dos socios no reserven una cancha en un mismo horario
+		**Prioridad:** Must Have
+		**Estimación:** 8
+		**Criterios de aceptación:**
+		- Escenario de Éxito:Dado que no existan reservas de esa cancha en ese horario, cuando el socio solicite reservar la cancha, entonces el sistema permitirá confirmar la operación.
+		- Escenario de Fallo:  Dado que ya exista una reserva de esa cancha en ese horario, cuando el socio solicite reservar la cancha, entonces el sistema debe rechazar la operación.
+		**Riesgos asociados:**
+		- Riesgo de actualización de reservas incorrecta: Si el sistema no actualiza correctamente la base de datos de reservas, podría permitir la superposición de reservas
+
+	- **HU 2.2- Mostrar horarios ocupados y disponibles**
+		**Como** Socio
+		**Quiero** ver los horarios ocupados y disponibles
+		**Para** poder ver los horarios en los que puedo reservar una cancha
+		**Prioridad:** Must Have
+		**Estimación:** 8
+		**Criterios de aceptación:**
+		- Escenario de Éxito: dado que el socio desee reservar una cancha en un horario disponible, el sistema permitirá ingresar sus datos para dar de alta la reserva.
+		- Escenario de Fallo: dado que el socio desee reservar una cancha en un horario que no esté disponible, el sistema no le permitirá hacer click en el botón “Reservar” para ingresar sus datos y así dar de alta la reserva.
+		**Reglas de negocio:**
+		- RNEG_01: Al momento de reservar una cancha, se señar el 50% del valor de la reserva
+		- RNEG_04: Los horarios para realizar actividades deportivas, eventos o utilizar una cancha es de 8:00hs a 23:00hs 
+		**Riesgos asociados:**
+		- Riesgo de actualización de reservas incorrecta: Si el sistema no actualiza correctamente la base de datos de reservas, podría visualizar horarios disponibles o ocupados, que no lo estén, y así evitar una reserva o superponer reservas.
+ 
+
+**3- CONTROL DE HORARIOS DE HABILITACION DEL CLUB** 
+Features:
+	- **HU 3.1- Bloquear reservas fuera del horario del club**
+		**Como** socio
+		**Quiero** poder realizar reservas de canchas dentro del horario habilitado por el club
+		**Para** asegurar que mi reserva se realice cuando el club está abierto 
+		**Prioridad**: Must Have
+		**Estimación:** 3
+		Criterios de aceptación:
+		- Escenario de Éxito: Dado que un socio intente reservar una cancha en un horario dentro del rango habilitado por el club, cuando el socio seleccione/ingrese el horario, entonces el sistema permitirá continuar con la reserva.
+		- Escenario de Fallo: Dado que un socio intente reservar una cancha en un horario fuera del rango habilitado por el club, cuando el socio seleccione/ingrese el horario, entonces el sistema deberá rechazar la reserva y mostrar un mensaje indicando que el horario no está disponible.
+		**Reglas de negocio:**
+		- RNEG_04: Los horarios para realizar actividades deportivas, eventos o utilizar una cancha es de 8:00hs a 23:00hs 
+		**Riesgos asociados:**
+		- Riesgo de una validación incorrecta del los horarios: Si el sistema no verifica correctamente los horarios habilitados, se podrían generar reservas en horarios no disponibles 
+
+
+
+**4- CONTROLAR CUPOS MAXIMOS**
+Features:
+	- **HU 4.1 Validar disponibilidad de entradas antes de la compra**
+		**Como** administrador del sistema
+		**Quiero** poder controlar en todo momento que la cantidad de entradas disponibles se actualice correctamente	
+		**Para** no generar sobreventas de entradas y excederse de la capacidad del polideportivo
+		**Prioridad:** Must Have
+		**Estimación:** 3
+		**Criterios de aceptación:**
+		- Escenario de Éxito: Dado un evento con entradas disponibles, cuando un socio accede a comprar, entonces el sistema le permitirá realizar la operación.
+		- Escenario de Fallo: Dado un evento sin entradas disponibles, cuando un socio accede a comprar, entonces el sistema debe bloquear la compra y mostrar un mensaje de cupo máximo alcanzado.
+		**Reglas de negocio:**
+		- RNEG_05: La capacidad del polideportivo donde se realizan los eventos es de 800 espectadores
+		**Riesgos asociados:**
+		- Mala actualización de la cantidad: si hay un error en el sistema, el cual no registre la venta de n cantidad de entradas se podrán vender varias veces las mismas entradas y exceder la capacidad del polideportivo.
+
+**5- CALCULO AUTOMATICO DE DEUDA**
+Features:
+	- **H.U 5.1- Actualizar deuda automáticamente al ingresar al sistema**
+		**Como** socio
+		**Quiero** ver el monto actualizado de mi deuda cada vez que inicie sesión 
+		**Para** tener información sobre mi situación financiera con el club
+		**Prioridad:** Must Have
+		**Estimación:** 5
+		**Criterios de aceptación:**
+		- Escenario de Éxito: Dado que un socio tiene una deuda pendiente, cuando inicie sesión, entonces el sistema debe mostrar el monto actualizado de su deuda.
+		- Escenario de Fallo: Dado que un socio no tiene deuda, cuando inicie sesión, entonces el sistema debe mostrar un mensaje indicando "Sin Deudas".
+		**Riesgos asociados:**
+		- Riesgo de actualización incorrecta de la deuda: Si el sistema no actualiza correctamente la deuda al iniciar sesión, podría mostrar información incorrecta al socio, lo que podría generar malentendidos. 
+
+	- **H.U 5.2- Generar automáticamente cuota mensual para cada socio**
+		**Como** Administrador
+		**Quiero** poder generar automáticamente la cuota social
+		**Para** evitar errores manuales
+		**Prioridad:** Must have
+		**Estimación:** 8
+		**Criterios de aceptación:**
+		- Escenario de Éxito:Dado el inicio de mes, cuando un socio se mantiene activo, entonces el sistema genera automáticamente una nueva cuota correspondiente al mes en curso.
+		- Escenario de Fallo: Dado el inicio del mes, cuando un socio se mantiene activo, entonces el sistema no genera automáticamente una nueva cuota mensual, o genera una errónea.
+		**Riesgos asociados:**
+		- Mal cálculo de la cuota: si el sistema genera erróneamente la cuota social, evadiendo montos correspondientes a un deporte o a una deuda anterior, se le cobrará menos de lo debido al socio.
+
+	- **H.U 5.3- Acumular cuotas impagas como deuda del socio**
+		**Como** Administrador
+		**Quiero** aculumar las cuotas impagas de los socios mes a mes
+		**Para** que el monto total adeudado refleje la deuda real del socio
+		**Prioridad:** Must Have
+		**Estimación:** 8
+		**Criterios de aceptación:**
+		- Escenario de Éxito: Dado que un socio no pago la cuota del  mes anterior, cuando accede al sistema, entonces el sistema debe sumar esa cuota a la deuda acumulada.
+		- Escenario de Fallo: Dado que un socio no pago la cuota del mes anterior, cuando acceda al sistema, entonces el sistema no muestra correctamente el total adeudado o muestra un mensaje incorrecto como “Sin Deudas”.
+		**Riesgos asociados:**
+		- Riesgo de acumulación incorrecta: Si el sistema no calcula bien las cuotas impagas, se puede generar una deuda incorrecta.
+
+
+	- **H.U 5.4- Mostrar deuda acumulado al iniciar sesión**
+		**Como** Socio
+		**Quiero** poder visualizar la deuda que tengo al iniciar sesión en el sistema
+		**Para** poder saber lo que debo pagar
+		**Prioridad:** Should Have
+		**Estimación:** 5
+		**Criterios de aceptación:**
+		- Escenario de Éxito: Dado un socio con cuotas impagas, cuando inicie sesión, entonces el sistema debe mostrar la deuda total acumulada, detallando la deuda de cada mes.
+		- Escenario de Fallo: Dado un socio con cuotas impagas, cuando inicie sesión, entonces el sistema no muestra la deuda total acumulada.
+		**Reglas de negocio: **
+		- RNEG_03: Se tiene una tolerancia de 3 días luego de la fecha de vencimiento del pago de cuota social y/0 deportiva
+		**Riesgos asociados:
+		- Continuar acumulando deuda: si el socio no visualiza la deuda, puede olvidarse y así seguir acumulando deuda mes a mes.
+
+
+	- **H.U 5.5- Actualizar deuda al registrar pagos**
+		**Como** sistema de gestión del club
+		**Quiero** actualizar automáticamente la deuda del socio cuando se registran pago
+		**Para** reflejar correctamente el saldo adeudado y evitar errores en la gestión de cobros
+		**Prioridad:** Must Have 
+		**Estimación:** 5
+		**Criterios de aceptación:**
+		- Escenario de Éxito: Dado un socio con deuda acumulada, cuando paga una o más cuotas, entonces el sistema debe actualizar el saldo adeudado restando los montos correspondientes.
+		- Escenario de Fallo: Dado un socio sin deudas pendientes, cuando realiza un pago, entonces el sistema no debe modificar el saldo.
+
+	- **H.U 5.6- Notificar cuotas vencidas al iniciar sesión**
+		**Como** administrador del sistema
+		**Quiero** poder notificar al Socio de sus cuotas vencidas cuando inicie sesión
+		**Para** recordarle que las abone
+		**Prioridad:** Should Have
+		**Estimación:** 8
+		**Criterios de aceptación: **
+		- Escenario de Éxito: Dado un socio con cuotas vencidas, cuando inicie sesión, entonces se muestra una notificación indicando que la deuda está vencida.
+		- Escenario de Fallo: Dado un socio con cuotas vencidas, cuando inicie sesión, no se mostrará una notificación indicando que la deuda está vencida.
+		**Reglas de negocio:**
+		- RNEG_03: Se tiene una tolerancia de 3 días luego de la fecha de vencimiento del pago de cuota social y/0 deportiva
+		**Riesgos asociados:**
+		- Olvidar la deuda: si no se le recuerda al socio cada vez que entre al sistema acerca de sus cuotas vencidas, puede olvidar que las tiene.
+
+
+
+
+**6- MANEJO DE ESTADO DE CUOTAS**
+Features:
+	- **H.U 6.1- Asignar estado “Pendiente” al generar una nueva cuota mensual.**
+		**Como** sistema de gestión de socios 
+		**Quiero** que cada nueva cuota se registre con el estado “Pendiente”
+		**Para** permitir un control del estado de pago de las cuotas desde su creación.
+		**Prioridad:** Must Have 
+		**Estimación:** 3
+		**Criterios de aceptación:**
+		- Escenario de Éxito: Dado que se genere una nueva cuota, cuando el sistema la cree, entonces su estado inicial debe ser “Pendiente”
+		- Escenario de Fallo: Dado que se genere una nueva cuota, cuando el sistema no asigne el estado “Pendiente”, entonces debe notificarse un error en el sistema.
+		**Reglas de negocio:**
+		**Riesgos asociados:**
+		- Inconsistencia en reportes de deudas: Una cuota sin estado claro no puede ser interpretada correctamente en reportes o al mostrar el saldo al socio.
+
+	- **H.U 6.2- Cambiar el estado a “En revisión” al cargar comprobante**
+		**Como** Administrador
+		**Quiero** que el estado apenas se cargue el comprobante sea “En revisión”
+		**Para** que luego el administrativo lo cambie al que corresponde
+		**Prioridad:** Must Have
+		**Estimación:** 5
+		**Criterios de aceptación:**
+		- Escenario de Éxito: Dado un socio con una cuota pendiente, cuando carga un comprobante, entonces la cuota cambia automáticamente a “En revisión”
+		- Escenario de Fallo:  Dado un socio con una cuota pendiente, cuando carga un comprobante, entonces la cuota no cambia automáticamente a “En revisión” y se pone en otro estado incorrecto o no se registra la carga del comprobante.
+		**Reglas de negocio:**
+		**Riesgos asociados:**
+		- Problemas para ubicar el comprobante: si se tiene una lista de comprobantes en revisión esperando a ser aprobados o rechazados; si el estado del comprobante es erróneo o no tiene, nunca aparecerá en el listado para cambiarle su estado 
+
+	- **H.U 6.3- Cambiar el estado a “Pagada” al aprobar el comprobante**
+		**Como** Administrativo
+		**Quiero** poder cambiar el estado del comprobante a “Pagada”
+		**Para** registrar el pago del Socio
+		**Prioridad:** Must Have
+		**Estimación:** 5
+		**Criterios de aceptación:**
+		- Escenario de Éxito: Dado que un administrativo verifica y aprueba el comprobante,entonces el sistema cambia el estado de  la cuota a “Pagada”.
+		- Escenario de Fallo: Dado que un administrativo verifica y aprueba el comprobante,  entonces el sistema no cambia el estado de  la cuota a “Pagada”.
+		**Reglas de negocio:**
+		**Riesgos asociados:**
+		- No se registra como “Pagada” la cuota: Si bien el administrativo cambió el estado de la cuota, esa acción no repercutió en el sistema, generando así una deuda en el Socio.
+
+	- **H.U 6.4- Cambiar el estado a “Vencida” si al superar fecha límite sin pago aprobado** 
+		**Como** sistema de gestión de socios
+		**Quiero** que las cuotas sin pago pasen automáticamente a estado “Vencida” al superar su fecha de vencimiento. 
+		**Para** reflejar correctamente el estado de deuda de cada socio
+		**Prioridad:** Must Have 
+		**Estimación:** 8
+		**Criterios de aceptación:**
+		- Escenario de Éxito: Dado una cuota con fecha de vencimiento pasado y sin pago, entonces el sistema debe actualizar automáticamente su estado a “Vencida”
+		- Escenario de Fallo: Dado una cuota con fecha de vencimiento pasado y sin pago, entonces el sistema no actualiza automáticamente su estado a “Vencida” y no figura como deuda al Socio.
+		**Reglas de negocio:**
+		**Riesgos asociados:**
+		- Riesgo de omisión en el cambio de estado: Si el sistema no actualiza el estado por fallos en el proceso automático, las cuotas seguirán figurando como “Pendiente” y el sistema no aplicará las restricciones correspondientes.
+
+	- **H.U 6.5- Cambiar el estado nuevamente a “Pendiente” si el comprobante es invalido**
+		**Como** administrativo 
+		**Quiero** que la cuota vuelva al estado “Pendiente” si el comprobante de pago es rechazado
+		**Para** asegurar que el sistema refleje correctamente el estado del pago 
+		**Prioridad:** Must Have
+		**Estimación:** 8
+		**Criterios de aceptación:**
+		- Escenario de Éxito: Dado un comprobante en revisión, cuando un administrativo lo rechaza, entonces la cuota vuelve a “Pendiente”.
+		- Escenario de Fallo: Dado un comprobante válido, cuando el sistema no actualiza correctamente el estado de la cuota al ser rechazado, entonces la cuota queda en estado incorrecta impidiendo que el socio cargue un nuevo comprobante o acceda a funcionalidades como reservas.
+		**Reglas de negocio:**
+		**Riesgos asociados:**
+		- Riesgo de inconsistencia en el estado de la cuota: Si el sistema no revierte el estado correctamente, el socio puede quedar habilitado o bloqueado injustamente.
+
+	- **H.U 6.6- Notificar al socio los cambios de estado de su cuota** 
+		**Como** Administrativo
+		**Quiero** poder avisarle al socio cada vez que su cuota cambie de estado
+		**Para** que tenga presente si debe pagar o no
+		**Prioridad:** Should Have
+		**Estimación:** 13
+		**Criterios de aceptación:**
+		- Escenario de Éxito: Dado un cambio de estado de una cuota, cuando ocurra, entonces el sistema debe enviar una notificación al socio.
+		- Escenario de Fallo: Dado un cambio de estado de una cuota, cuando ocurra, entonces el sistema no envía una notificación al socio.
+		**Reglas de negocio:**
+		**Riesgos asociados:**
+		- No recordar si pagó o no la cuota: si no se le notifica al Socio, el mismo puede olvidar si pagó o no la cuota, y si la tiene vencida. Además de tener la función de notificar en el momento, el socio puede ir al mail a fijarse si no recuerda el estado de su cuota.
+
+
+**7-VALIDACIÓN DE INSCRIPCIÓN**
+Features:
+	- **H.U 7.1- Validar que el socio tenga la cuota al dia al momento de inscribirse en una clase**
+		**Como** Administrador
+		**Quiero** poder validar que un socio que se quiera anotar en una clase, tenga la cuota al día
+		**Para** que un socio deudor no pueda inscribirse
+		**Prioridad:** Must Have
+		**Estimación:** 13
+		**Criterios de aceptación:**
+		1. Escenario de Éxito:
+		- Dado un socio con deudas, cuando intente inscribirse, entonces el sistema debe rechazar la inscripción e informar el motivo.
+		- Dado un socio sin deudas, cuando intente inscribirse, entonces el sistema debe permitir la inscripción.
+		2. Escenario de Fallo: Dado un socio con deudas, cuando intente inscribirse, entonces el sistema debe permitir la inscripción.
+		**Riesgos asociados:**
+		- Un socio deudor inscripto: si el sistema le permite inscribirse al socio deudor, el mismo podrá seguir asistiendo a las clases.
+
+
+	- **H.U 7.2- Validar que el socio no esté previamente inscripto a la misma actividad**
+		**Como** socio
+		**Quiero** que el sistema me impida inscribirme más de una vez a la misma clase 
+		**Para** evitar errores, duplicaciones y sobreocupación de cupos.
+		**Prioridad:** Must Have
+		**Estimación:** 8
+		**Criterios de aceptación:**
+		- Escenario de Éxito: Dado un socio no inscripto en la clase, cuando intente inscribirse, entonces el sistema debe permitirle continuar con la operación.
+		- Escenario de Fallo: Dado un socio ya inscripto a una clase, cuando intente volver a inscribirse, entonces el sistema debe bloquear la operación y notificar al usuario.
+		**Riesgos asociados:**
+		- Riesgo de omisión en la verificación: Si el sistema no detecta correctamente una inscripción previa, el socio podría duplicarla, afectando el cupo disponible.
+		- Riesgo de rechazo incorrecto: Si el sistema detecta erróneamente una inscripción inexistente como duplicada, podría impedir inscripciones legítimas.
+
+
+**8- INTEGRACION CON API DE CORREO**
+Features:
+	- **H.U 8.1- Enviar confirmacion automatica por correo al reservar una cancha **
+		**Como** Administrativo
+		**Quiero** que el sistema envíe automáticamente la notificación por correo al reservar una cancha
+		**Para** que el Socio no lo olvide
+		**Prioridad:** Should Have
+		**Estimación:** 21
+		**Criterios de aceptación:**
+		- Escenario de Éxito: Dado que un socio realiza una reserva de una cancha, cuando confirme la reserva, entonces el sistema debe enviar automáticamente la confirmación por correo.
+		- Escenario de Fallo: Dado que un socio realiza una reserva de una cancha, cuando confirme la reserva, entonces el sistema no le envía automáticamente la confirmación por correo.
+		**Riesgos asociados:**
+		- El socio olvida la reserva: si no se le notifica, el socio puede no recordar que hizo una reserva ni cuanto señó en comparación al monto total.
+
+
+	- **H.U 8.2- Enviar recordatorio antes del vencimiento de cuota**
+		**Como** Administrativo
+		**Quiero** que se le envíe un recordatorio antes de que venza la cuota
+		**Para** que el socio la pague
+		**Prioridad:** Should Have
+		**Estimación:** 8
+		**Criterios de aceptación:**
+		- Escenario de Éxito: Dado que un socio realiza una reserva de una cancha, cuando confirme la reserva, entonces el sistema debe enviar automáticamente la confirmación por correo.
+		- Escenario de Fallo: Dado que un socio realiza una reserva de una cancha, cuando confirme la reserva, entonces el sistema no le envía automáticamente la confirmación por correo.
+
+	- **H.U 8.3- Enviar entrada por correo**
+		**Como** socio
+		**Quiero** recibir por correo electrónico el ticket de compra al adquirir una entrada para un evento
+		**Para** tener acceso a la entrada sin depender de impresiones o trámites presenciales 
+		**Prioridad:** Must Have
+		**Estimación:** 13
+		**Criterios de aceptación:**
+		- Escenario de Éxito: Dado que un socio con correo electrónico válido, cuando compre una entrada para un evento, entonces el sistema debe enviarle el ticket por correo. 
+		- Escenario de Fallo: Dado que un socio con correo electrónico inválido, cuando compre una entrada para un evento, entonces el sistema informa que el ticket no pudo ser enviado y sugiere verificar los datos.
+		**Riesgos asociados:**
+		- Fallo en el servidor de correo: Podría impedir el envío de tickets, generando reclamos.
+		- Correo no actualizado: El socio podría no recibir su entrada si su email está desactualizado.

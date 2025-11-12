@@ -1,0 +1,165 @@
+/* Ver Socios - Lista de socios con colores del Club For Ever */
+:root{
+    --rojo: var(--color-error);
+    --verde: var(--color-success);
+}
+
+.socios-container {
+  padding: var(--spacing-2xl) var(--spacing-lg);
+  max-width: 1400px;
+  margin: 0 auto;
+  background: linear-gradient(135deg, 
+    var(--color-off-white) 0%, 
+    var(--color-gray-100) 50%,
+    var(--color-accent-light) 100%);
+  min-height: 100vh;
+  position: relative;
+}
+
+.socios-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 10% 20%, rgba(0, 26, 71, 0.02) 0%, transparent 50%),
+    radial-gradient(circle at 90% 80%, rgba(74, 144, 226, 0.03) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.socios-header {
+  text-align: center;
+  margin-bottom: var(--spacing-2xl);
+}
+
+.socios-header h1 {
+  color: var(--color-primary);
+  font-weight: 700;
+  margin-bottom: var(--spacing-sm);
+}
+
+#lista {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  position: relative;
+  z-index: 1;
+}
+
+#itemSocio {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-lg);
+  width: 100%;
+  max-width: 900px;
+  background: var(--color-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border-left: 5px solid var(--color-primary);
+  transition: all var(--transition-base);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+#itemSocio::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent 0%, rgba(74, 144, 226, 0.03) 100%);
+  opacity: 0;
+  transition: opacity var(--transition-base);
+  pointer-events: none;
+}
+
+#itemSocio:hover {
+  background-color: var(--color-white);
+  box-shadow: var(--shadow-lg);
+  transform: translateX(10px);
+  border-left-width: 6px;
+  border-left-color: var(--color-accent);
+}
+
+#itemSocio:hover::before {
+  opacity: 1;
+}
+
+#itemSocio .socio-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  flex: 1;
+}
+
+#itemSocio .socio-nombre {
+  color: var(--color-primary);
+  font-weight: 600;
+  font-size: 1.125rem;
+  margin: 0;
+}
+
+#itemSocio .socio-detalles {
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+#itemSocio .socio-estado {
+  display: inline-block;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+#itemSocio .socio-estado.activo {
+  background-color: var(--color-success-light);
+  color: var(--color-success);
+}
+
+#itemSocio .socio-estado.inactivo {
+  background-color: var(--color-error-light);
+  color: var(--color-error);
+}
+
+.boton{
+    margin: var(--spacing-xs) var(--spacing-xs) 0 0;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-md);
+    border: 2px solid var(--color-success);
+    background-color: var(--color-white);
+    color: var(--color-success);
+    font-weight: 600;
+    transition: all var(--transition-base);
+    cursor: pointer;
+}
+
+.boton:hover {
+    background-color: var(--color-success);
+    color: var(--color-white);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+
+.boton.eliminar {
+    border-color: var(--color-error);
+    color: var(--color-error);
+}
+
+.boton.eliminar:hover {
+    background-color: var(--color-error);
+    color: var(--color-white);
+}
