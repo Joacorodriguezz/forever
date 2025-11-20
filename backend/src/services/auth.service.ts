@@ -36,20 +36,29 @@ export async function login(data: LoginRequest) {
     });
   }
 
-  if (!usuario) throw new Error("Credenciales inválidas");
+  if (!usuario) {
+    throw new Error("Usuario o contraseña incorrectos");
+  }
+
+  // Validar longitud de contraseña
+  if (password.length < 8) {
+    throw new Error("La contraseña debe tener al menos 8 caracteres");
+  }
 
   // ⚠️ Validar estado de socio o administrativo
   if (usuario.socio && usuario.socio.estado !== "ACTIVO") {
-    throw new Error("Tu cuenta de socio está inactiva.");
+    throw new Error("Usuario inhabilitado, contacte al administrador");
   }
 
   if (usuario.administrativo && usuario.administrativo.activo === false) {
-    throw new Error("Tu cuenta de administrativo está inactiva.");
+    throw new Error("Usuario inhabilitado, contacte al administrador");
   }
 
   // Validar contraseña
   const passwordValida = await bcrypt.compare(password, usuario.password);
-  if (!passwordValida) throw new Error("Credenciales inválidas");
+  if (!passwordValida) {
+    throw new Error("Usuario o contraseña incorrectos");
+  }
 
   // Generar token
   const token = jwt.sign(

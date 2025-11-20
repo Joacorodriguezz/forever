@@ -131,3 +131,81 @@ export async function runVencimiento(req: Request, res: Response, next: NextFunc
     next(error);
   }
 }
+
+// CU10 - Consultar Cuotas Predefinidas
+export async function getCuotasPredefinidas(req: Request, res: Response, next: NextFunction) {
+  try {
+    const cuotas = await cuotaService.getCuotasPredefinidas();
+    res.json({
+      success: true,
+      data: cuotas,
+      total: cuotas.length,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+// CU04 - Asignar Cuota
+export async function asignarCuota(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { socioId, mes, monto, fechaVencimiento, actividadId } = req.body;
+
+    if (!socioId || !mes || !monto || !fechaVencimiento) {
+      return res.status(400).json({
+        success: false,
+        message: 'Faltan datos requeridos',
+      });
+    }
+
+    const cuota = await cuotaService.asignarCuota({
+      socioId,
+      mes,
+      monto,
+      fechaVencimiento: new Date(fechaVencimiento),
+      actividadId,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Cuota asignada correctamente',
+      data: cuota,
+    });
+  } catch (error: any) {
+    if (error.message.includes('Ya existe')) {
+      return res.status(409).json({
+        success: false,
+        message: error.message,
+      });
+    }
+    next(error);
+  }
+}
+
+// CU05 - Actualizar Cuotas
+export async function actualizarCuota(req: Request, res: Response, next: NextFunction) {
+  try {
+    const cuotaId = Number(req.params.id);
+    const { monto, fechaVencimiento, actividadId } = req.body;
+
+    const cuota = await cuotaService.actualizarCuota(cuotaId, {
+      monto,
+      fechaVencimiento: fechaVencimiento ? new Date(fechaVencimiento) : undefined,
+      actividadId,
+    });
+
+    res.json({
+      success: true,
+      message: 'Cuota actualizada correctamente',
+      data: cuota,
+    });
+  } catch (error: any) {
+    if (error.message.includes('no encontrada') || error.message.includes('mayor a 0')) {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+    next(error);
+  }
+}

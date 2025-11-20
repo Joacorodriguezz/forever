@@ -4,6 +4,7 @@ import { validate, validateSafe } from "../middlewares/validation.middleware";
 import { authenticate, authorize } from "../middlewares/auth.middleware";
 import * as cuotaController from "../controllers/cuotaController";
 import * as cuotaValidation from "../validations/cuotas.validation";
+import { AsignarCuotaSchema, ActualizarCuotaSchema } from "../validations/cuota.validation";
 import { upload } from '../middlewares/comprobantes.middleware';
 const router = Router();
 
@@ -74,6 +75,32 @@ router.delete(
   authenticate,
   authorize("ADMIN"),
   cuotaController.deleteCuota
+);
+
+// CU10 - Consultar Cuotas Predefinidas
+router.get(
+  "/predefinidas",
+  authenticate,
+  authorize("ADMINISTRATIVO", "ADMIN"),
+  cuotaController.getCuotasPredefinidas
+);
+
+// CU04 - Asignar Cuota
+router.post(
+  "/asignar",
+  authenticate,
+  authorize("ADMINISTRATIVO", "ADMIN"),
+  validate(AsignarCuotaSchema),
+  cuotaController.asignarCuota
+);
+
+// CU05 - Actualizar Cuotas
+router.put(
+  "/:id",
+  authenticate,
+  authorize("ADMINISTRATIVO", "ADMIN"),
+  validate(ActualizarCuotaSchema),
+  cuotaController.actualizarCuota
 );
 
 export const cuotaRoutes = router;

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { getAllSocios, getSocioByDni, getSocioCompletoByDni, updateSocio, updateSocioEstado } from '../controllers/socioController';
+import { authenticate, authorize } from '../middlewares/auth.middleware';
 import multer from 'multer';
 import path from 'path';
 
@@ -20,12 +21,12 @@ const upload = multer({ storage });
 
 const router = Router();
 
-
-router.get('/dni/:dni', getSocioByDni);
-router.get('/dni/:dni/full', getSocioCompletoByDni);
-router.get('/', getAllSocios);
-router.put('/', upload.single('foto'), updateSocio);
-router.put('/:id/estado', updateSocioEstado);
+// CU14 - Gestionar Deportistas (solo ADMINISTRATIVO y ADMIN)
+router.get('/dni/:dni', authenticate, authorize('ADMINISTRATIVO', 'ADMIN'), getSocioByDni);
+router.get('/dni/:dni/full', authenticate, authorize('ADMINISTRATIVO', 'ADMIN'), getSocioCompletoByDni);
+router.get('/', authenticate, authorize('ADMINISTRATIVO', 'ADMIN'), getAllSocios);
+router.put('/', authenticate, authorize('ADMINISTRATIVO', 'ADMIN'), upload.single('foto'), updateSocio);
+router.put('/:id/estado', authenticate, authorize('ADMINISTRATIVO', 'ADMIN'), updateSocioEstado);
 
 export default router;
 

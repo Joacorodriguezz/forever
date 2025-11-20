@@ -11,21 +11,16 @@ import { logRequest } from './middlewares/logger.middleware';
 
 // Rutas de dominio
 import socioRoutes from './routes/socioRoutes';
-import { socioHomeRoutes } from './routes/HomeSocioRoutes';
 import { cuotaRoutes } from './routes/cuotaRoutes';
 import { comprobanteRoutes } from './routes/comprobante.routes';
-import { eventoRoutes } from './routes/evento.routes';
-import { entradaRoutes } from './routes/entradas.routes';
-import { ActividadRoutes } from './routes/actividad.routes';
-import { profesorRoutes } from './routes/profesor.routes';
-import { ClaseRoutes } from './routes/clase.routes';
-import { actividadSocioRoutes } from './routes/actividadSocio.routes';
-import reservaRoutes from './routes/reserva.routes';
-import canchaRoutes from './routes/cancha.routes';
 
 // Rutas de autenticación/usuarios
 import { authRoutes } from './routes/auth.routes';
 import { userRoutes } from './routes/user.routes';
+import { reporteRoutes } from './routes/reporte.routes';
+import { historialRoutes } from './routes/historial.routes';
+import { pagoRoutes } from './routes/pago.routes';
+import { grupoFamiliarRoutes } from './routes/grupoFamiliar.routes';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -58,20 +53,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(logRequest);
 app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
-app.use('/api/socios', socioHomeRoutes);
 app.use('/api/socios', socioRoutes);
 app.use('/api/cuotas', cuotaRoutes);
 app.use('/api/cuotas', comprobanteRoutes);
-app.use('/api/entradas', entradaRoutes);
-app.use('/api/eventos', eventoRoutes);
-app.use('/api/actividades', ActividadRoutes);
-app.use('/api/profesores', profesorRoutes);
-app.use('/api/clases', ClaseRoutes);
-app.use('/api/actividadSocio', actividadSocioRoutes);
-app.use('/api/reserva', reservaRoutes);
-app.use('/api/canchas', canchaRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/reportes', reporteRoutes);
+app.use('/api/historial', historialRoutes);
+app.use('/api/pagos', pagoRoutes);
+app.use('/api/grupos-familiares', grupoFamiliarRoutes);
 app.use(handleError);
 
 app.listen(PORT, () => {

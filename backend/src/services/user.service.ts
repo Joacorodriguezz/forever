@@ -264,3 +264,120 @@ export async function registerSocio(data: {
       : null,
   };
 }
+
+// CU16 - Consultar Perfil (obtener perfil propio)
+export async function getOwnProfile(userId: number): Promise<UserData> {
+  return getUserById(userId);
+}
+
+// CU17 - Modificar Perfil (actualizar perfil propio)
+export async function updateOwnProfile(
+  userId: number,
+  data: {
+    email?: string;
+    password?: string;
+    telefono?: string | null;
+  }
+): Promise<UserData> {
+  const updateData: any = {};
+
+  // Validar email único si se está actualizando
+  if (data.email) {
+    const emailExists = await prisma.usuario.findFirst({
+      where: {
+        email: data.email,
+        NOT: { id: userId },
+      },
+    });
+    if (emailExists) {
+      const error = new Error('El email ya está en uso') as any;
+      error.statusCode = 409;
+      throw error;
+    }
+    updateData.email = data.email;
+  }
+
+  // Actualizar contraseña si se proporciona
+  if (data.password) {
+    updateData.password = await bcrypt.hash(data.password, SALT_ROUNDS);
+  }
+
+  // Actualizar teléfono (si existe campo en schema, de lo contrario se puede agregar)
+  // Por ahora, si el usuario es socio, actualizamos datos del socio
+  const usuario = await prisma.usuario.findUnique({
+    where: { id: userId },
+    include: { socio: true, administrativo: true },
+  });
+
+  if (!usuario) {
+    const error = new Error('Usuario no encontrado') as any;
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const updatedUser = await prisma.usuario.update({
+    where: { id: userId },
+    data: updateData,
+    include: { socio: true, administrativo: true },
+  });
+
+  const { password: _, ...userWithoutPassword } = updatedUser;
+  return {
+    ...userWithoutPassword,
+    role: updatedUser.rol as "ADMIN" | "SOCIO" | "ADMINISTRATIVO",
+    socio: updatedUser.socio
+      ? { ...updatedUser.socio, estado: updatedUser.socio.estado as "ACTIVO" | "INACTIVO" }
+      : null,
+  };
+}
+
+// CU03 - Asignar Rol
+export async function assignRole(
+  userId: number,
+  newRole: 'ADMIN' | 'ADMINISTRATIVO' | 'SOCIO',
+  currentAdminId: number
+): Promise<UserData> {
+  // Validar que el usuario existe
+  const usuario = await prisma.usuario.findUnique({
+    where: { id: userId },
+    include: { socio: true, administrativo: true },
+  });
+
+  if (!usuario) {
+    const error = new Error('Usuario no encontrado') as any;
+    error.statusCode = 404;
+    throw error;
+  }
+
+  // Validar que no se elimine el último Admin activo
+  if (usuario.rol === 'ADMIN' && newRole !== 'ADMIN') {
+    const adminCount = await prisma.usuario.count({
+      where: {
+        rol: 'ADMIN',
+        id: { not: userId },
+      },
+    });
+
+    if (adminCount === 0) {
+      const error = new Error('No se puede cambiar el rol del último administrador activo') as any;
+      error.statusCode = 400;
+      throw error;
+    }
+  }
+
+  // Actualizar rol
+  const updatedUser = await prisma.usuario.update({
+    where: { id: userId },
+    data: { rol: newRole },
+    include: { socio: true, administrativo: true },
+  });
+
+  const { password, ...userWithoutPassword } = updatedUser;
+  return {
+    ...userWithoutPassword,
+    role: updatedUser.rol as "ADMIN" | "SOCIO" | "ADMINISTRATIVO",
+    socio: updatedUser.socio
+      ? { ...updatedUser.socio, estado: updatedUser.socio.estado as "ACTIVO" | "INACTIVO" }
+      : null,
+  };
+}

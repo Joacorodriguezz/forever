@@ -62,12 +62,26 @@ export const UpdateUserSchema = z.object({
 });
 
 export const RegisterSchema = z.object({
-  email: z.email('Email inválido').trim(),
-  password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
+  email: z.string().email('Ingrese un email válido').trim(),
+  password: z
+    .string()
+    .min(8, 'La contraseña debe tener al menos 8 caracteres')
+    .regex(/[A-Z]/, 'Debe tener mínimo 8 caracteres y al menos una mayúscula'),
   role: roleEnum,
   socio: socioSchema.optional(),
   administrativo: administrativoSchema.optional(),
 }).superRefine((data, ctx) => {
+  // Validar nombre no vacío
+  if (data.role === 'SOCIO' && data.socio) {
+    if (!data.socio.nombre || data.socio.nombre.trim().length === 0) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['socio', 'nombre'],
+        message: 'Complete todos los campos obligatorios',
+      });
+    }
+  }
+  
   if (data.role === 'SOCIO' && !data.socio) {
     ctx.addIssue({
       code: 'custom',
@@ -82,5 +96,7 @@ export const RegisterSchema = z.object({
       message: 'Los datos de administrativo son obligatorios',
     });
   }
+  
+  // Validar unicidad de DNI y email (se validará en el servicio)
 });
 

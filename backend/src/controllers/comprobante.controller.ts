@@ -5,6 +5,7 @@ import {
   UpdateEstadoCuotaRequest,
   UpdateEstadoCuotaResponse
 } from '../types/cuota';
+import prisma from '../config/prisma';
 
 export async function getDetalle(
   req: Request,
@@ -32,5 +33,64 @@ export async function patchEstado(
     res.json(data);
   } catch (e) {
     next(e);
+  }
+}
+
+// CU15 - Descargar Comprobante
+export async function descargarComprobante(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const cuotaId = parseInt(req.params.id, 10);
+    const socioId = (req as any).user?.socioId;
+    const userRole = (req as any).user?.role;
+
+    // Validar que la cuota existe
+    const cuota = await prisma.cuota.findUnique({
+      where: { id: cuotaId },
+      include: {
+        Socio: true,
+        comprobantes: {
+          where: { activo: true },
+          select: { url: true },
+        },
+      },
+    });
+
+    if (!cuota) {
+      return res.status(404).json({
+        success: false,
+        message: 'Cuota no encontrada',
+      });
+    }
+
+    // Validar permisos: solo el socio dueño o admin/administrativo
+    if (userRole === 'SOCIO' && cuota.socio_id !== socioId) {
+      return res.status(403).json({
+        success: false,
+        message: 'No tiene permisos para acceder a este comprobante',
+      });
+    }
+
+    // Validar que existe comprobante
+    if (!cuota.comprobantes || cuota.comprobantes.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Comprobante no encontrado',
+      });
+    }
+
+    const comprobanteUrl = cuota.comprobantes[0].url;
+
+    // Redirigir a la URL del comprobante o devolver la URL
+    res.json({
+      success: true,
+      url: comprobanteUrl,
+      message: 'Comprobante disponible',
+    });
+  } catch (error) {
+    next(error);
   }
 }

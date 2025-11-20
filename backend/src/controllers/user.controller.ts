@@ -63,6 +63,11 @@ export async function updateUser(req: Request, res: Response) {
     let fotoCarnetUrl: string | undefined = undefined;
 
     if (req.file) {
+      // Verificar que Supabase esté configurado
+      if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
+        throw new Error('Supabase no está configurado. Configure las variables de entorno SUPABASE_URL y SUPABASE_SERVICE_KEY.');
+      }
+
       const ext = req.file.originalname.split(".").pop();
       const fileName = `foto-${userId}-${Date.now()}.${ext}`;
 
@@ -118,5 +123,83 @@ export async function deleteUser(req: Request, res: Response) {
     return res
       .status(error.statusCode || 404)
       .json({ message: error.message || 'Error al eliminar usuario' });
+  }
+}
+
+// CU16 - Consultar Perfil
+export async function getOwnProfile(req: Request, res: Response) {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'No autenticado' });
+    }
+
+    const profile = await userService.getOwnProfile(userId);
+    return res.status(200).json({
+      success: true,
+      data: profile,
+    });
+  } catch (error: any) {
+    console.error('Error al obtener perfil:', error);
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || 'Error al obtener perfil',
+    });
+  }
+}
+
+// CU17 - Modificar Perfil
+export async function updateOwnProfile(req: Request, res: Response) {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'No autenticado' });
+    }
+
+    const updated = await userService.updateOwnProfile(userId, req.body);
+    return res.status(200).json({
+      success: true,
+      message: 'Perfil actualizado correctamente',
+      data: updated,
+    });
+  } catch (error: any) {
+    console.error('Error al actualizar perfil:', error);
+    return res.status(error.statusCode || 400).json({
+      success: false,
+      message: error.message || 'Error al actualizar perfil',
+    });
+  }
+}
+
+// CU03 - Asignar Rol
+export async function assignRole(req: Request, res: Response) {
+  try {
+    const userId = parseInt(req.params.id, 10);
+    const { role } = req.body;
+    const currentAdminId = req.user?.id;
+
+    if (!currentAdminId) {
+      return res.status(401).json({ success: false, message: 'No autenticado' });
+    }
+
+    if (!['ADMIN', 'ADMINISTRATIVO', 'SOCIO'].includes(role)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Rol inválido',
+      });
+    }
+
+    const updated = await userService.assignRole(userId, role, currentAdminId);
+    return res.status(200).json({
+      success: true,
+      message: 'Rol actualizado correctamente',
+      data: updated,
+    });
+  } catch (error: any) {
+    console.error('Error al asignar rol:', error);
+    return res.status(error.statusCode || 400).json({
+      success: false,
+      message: error.message || 'Error al asignar rol',
+    });
   }
 }

@@ -19,4 +19,11 @@ router.patch(
   comprobanteAdminController.patchEstado
 );
 
+// CU15 - Descargar Comprobante (SOCIO puede descargar sus propios comprobantes)
+router.get(
+  "/:id/descargar",
+  authenticate,
+  comprobanteAdminController.descargarComprobante
+);
+
 export const comprobanteRoutes = router;

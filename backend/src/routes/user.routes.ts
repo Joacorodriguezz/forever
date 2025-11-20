@@ -2,7 +2,8 @@ import { Router } from 'express';
 import * as userController from '../controllers/user.controller';
 import { validate } from '../middlewares/validation.middleware';
 import { authenticate, authorize } from '../middlewares/auth.middleware';
-import {  UpdateUserSchema } from '../validations/user.validation';
+import { UpdateUserSchema } from '../validations/user.validation';
+import { UpdateProfileSchema, AssignRoleSchema } from '../validations/profile.validation';
 import { upload } from '../middlewares/comprobantes.middleware';
 
 const router = Router();
@@ -28,6 +29,20 @@ router.get(
   userController.getSocios
 );
 
+// CU16 - Consultar Perfil
+router.get(
+  '/profile/me',
+  authenticate,
+  userController.getOwnProfile
+);
+
+// CU17 - Modificar Perfil
+router.put(
+  '/profile/me',
+  authenticate,
+  validate(UpdateProfileSchema),
+  userController.updateOwnProfile
+);
 
 router.get(
    '/:id',
@@ -40,6 +55,15 @@ router.put('/:id',
    upload.single("foto"),
    validate(UpdateUserSchema),
    userController.updateUser
+);
+
+// CU03 - Asignar Rol
+router.patch(
+  '/:id/role',
+  authenticate,
+  authorize('ADMIN'),
+  validate(AssignRoleSchema),
+  userController.assignRole
 );
 
 router.delete('/:id',

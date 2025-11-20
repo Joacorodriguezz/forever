@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import * as authController from '../controllers/auth.controller';
 import { validate } from '../middlewares/validation.middleware';
+import { authenticate, authorize } from '../middlewares/auth.middleware';
 import { LoginSchema } from '../validations/auth.validation';
 import { RegisterSchema } from '../validations/user.validation';
 
@@ -11,6 +12,11 @@ router.post('/login',
    authController.login
 );
 
-router.post('/register', validate(RegisterSchema), authController.register);
+router.post('/register', 
+  authenticate,
+  authorize('ADMIN'),
+  validate(RegisterSchema), 
+  authController.register
+);
 
 export const authRoutes = router

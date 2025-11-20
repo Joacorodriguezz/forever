@@ -13,7 +13,9 @@ import {
   UpdateEstadoCuotaRequest,
   UpdateEstadoCuotaResponse,
   PreviewItem,
-  DetalleCuota
+  DetalleCuota,
+  Mes,
+  EstadoCuota,
 } from '../types/cuota';
 
 import prisma from '../config/prisma';
@@ -76,6 +78,11 @@ export async function enviarComprobante(
     throw new Error('Formato inválido (solo JPG, PNG o PDF)');
   if (file.size > 5 * 1024 * 1024)
     throw new Error('Archivo demasiado grande (máx 5MB)');
+
+  // Verificar que Supabase esté configurado
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
+    throw new Error('Supabase no está configurado. Configure las variables de entorno SUPABASE_URL y SUPABASE_SERVICE_KEY.');
+  }
 
   // Subir al bucket de Supabase (soporta multer disk o memory)
   const bucket ='comprobante-cuota';
@@ -375,5 +382,194 @@ export async function marcarCuotasVencidas(): Promise<{ updated: number }>{
   });
 
   return { updated: res.count };
+}
+
+// CU10 - Consultar Cuotas Predefinidas
+export interface CuotaPredefinida {
+  id: number;
+  mes: Mes;
+  monto: number;
+  fechaVencimiento: string;
+  estado: EstadoCuota;
+  numero: number;
+  emision: string;
+  socioNombre: string;
+}
+
+export async function getCuotasPredefinidas(): Promise<CuotaPredefinida[]> {
+  const cuotas = await prisma.cuota.findMany({
+    where: {
+      estado: { in: [estado_cuota.PENDIENTE, estado_cuota.VENCIDA] },
+    },
+    include: {
+      Socio: {
+        select: {
+          nombre: true,
+          apellido: true,
+        },
+      },
+    },
+    orderBy: [
+      { mes: 'asc' },
+      { created_at: 'desc' },
+    ],
+  });
+
+  return cuotas.map((c, index) => ({
+    id: c.id,
+    mes: c.mes!,
+    monto: Number(c.monto),
+    fechaVencimiento: c.fecha_vencimiento.toISOString().split('T')[0],
+    estado: c.estado,
+    numero: index + 1,
+    emision: toDDMMYYYY(c.created_at),
+    socioNombre: `${c.Socio.nombre} ${c.Socio.apellido}`,
+  }));
+}
+
+// CU04 - Asignar Cuota
+export interface AsignarCuotaRequest {
+  socioId: number;
+  mes: Mes;
+  monto: number;
+  fechaVencimiento: Date;
+  actividadId?: number;
+}
+
+export async function asignarCuota(data: AsignarCuotaRequest): Promise<CuotaAdminDTO> {
+  // Validar que el socio existe
+  const socio = await prisma.socio.findUnique({
+    where: { id: data.socioId },
+  });
+
+  if (!socio) {
+    throw new Error('Socio no encontrado');
+  }
+
+  // Validar que no existe una cuota para ese mes
+  const existente = await prisma.cuota.findFirst({
+    where: {
+      socio_id: data.socioId,
+      mes: data.mes,
+    },
+  });
+
+  if (existente) {
+    throw new Error('Ya existe una cuota asignada para ese período');
+  }
+
+  // Crear la cuota
+  const nuevaCuota = await prisma.cuota.create({
+    data: {
+      socio_id: data.socioId,
+      mes: data.mes,
+      monto: data.monto,
+      fecha_vencimiento: data.fechaVencimiento,
+      metodo_pago: $Enums.FormaDePago.EFECTIVO,
+      estado: $Enums.estado_cuota.PENDIENTE,
+      ...(data.actividadId && {
+        cuotaXactividad: {
+          create: {
+            actividadId: data.actividadId,
+            monto: data.monto,
+          },
+        },
+      }),
+    },
+    include: {
+      Socio: {
+        select: {
+          id: true,
+          nombre: true,
+          apellido: true,
+          dni: true,
+        },
+      },
+      comprobantes: {
+        where: { activo: true },
+        select: { url: true, subido_en: true },
+      },
+    },
+  });
+
+  return {
+    id: nuevaCuota.id,
+    socioId: nuevaCuota.Socio.id,
+    socioNombre: `${nuevaCuota.Socio.nombre} ${nuevaCuota.Socio.apellido}`,
+    dni: nuevaCuota.Socio.dni,
+    mes: nuevaCuota.mes!,
+    monto: Number(nuevaCuota.monto),
+    estado: nuevaCuota.estado,
+    comprobanteUrl: nuevaCuota.comprobantes?.[0]?.url,
+  };
+}
+
+// CU05 - Actualizar Cuotas
+export interface ActualizarCuotaRequest {
+  monto?: number;
+  fechaVencimiento?: Date;
+  actividadId?: number;
+}
+
+export async function actualizarCuota(
+  cuotaId: number,
+  data: ActualizarCuotaRequest
+): Promise<CuotaAdminDTO> {
+  const cuota = await prisma.cuota.findUnique({
+    where: { id: cuotaId },
+    include: {
+      Socio: {
+        select: {
+          id: true,
+          nombre: true,
+          apellido: true,
+          dni: true,
+        },
+      },
+    },
+  });
+
+  if (!cuota) {
+    throw new Error('Cuota no encontrada');
+  }
+
+  // Validaciones
+  if (data.monto !== undefined && data.monto <= 0) {
+    throw new Error('El monto debe ser mayor a 0');
+  }
+
+  const updateData: any = {};
+  if (data.monto !== undefined) updateData.monto = data.monto;
+  if (data.fechaVencimiento) updateData.fecha_vencimiento = data.fechaVencimiento;
+
+  const cuotaActualizada = await prisma.cuota.update({
+    where: { id: cuotaId },
+    data: updateData,
+    include: {
+      Socio: {
+        select: {
+          id: true,
+          nombre: true,
+          apellido: true,
+          dni: true,
+        },
+      },
+      comprobantes: {
+        where: { activo: true },
+        select: { url: true, subido_en: true },
+      },
+    },
+  });
+
+  return {
+    id: cuotaActualizada.id,
+    socioId: cuotaActualizada.Socio.id,
+    socioNombre: `${cuotaActualizada.Socio.nombre} ${cuotaActualizada.Socio.apellido}`,
+    dni: cuotaActualizada.Socio.dni,
+    mes: cuotaActualizada.mes!,
+    monto: Number(cuotaActualizada.monto),
+    estado: cuotaActualizada.estado,
+    comprobanteUrl: cuotaActualizada.comprobantes?.[0]?.url,
+  };
 }
 
