@@ -1,98 +1,64 @@
-import { Request, Response } from 'express';
-import * as grupoFamiliarService from '../services/grupoFamiliar.service';
+import { Response, NextFunction } from 'express';
+import { grupoFamiliarService } from '../services/grupoFamiliar.service';
+import { sendSuccess, sendCreated } from '../utils/response';
+import { AuthenticatedRequest } from '../types';
+import {
+  CreateGrupoFamiliarInput,
+  UpdateGrupoFamiliarInput,
+} from '../validators/grupoFamiliar.validator';
 
-// CU13 - Gestionar Grupo Familiar
-export async function crearGrupoFamiliar(req: Request, res: Response) {
-  try {
-    const grupo = await grupoFamiliarService.crearGrupoFamiliar(req.body);
-    res.status(201).json({
-      success: true,
-      message: 'Grupo familiar creado correctamente',
-      data: grupo,
-    });
-  } catch (error: any) {
-    console.error('Error al crear grupo familiar:', error);
-    res.status(error.statusCode || 400).json({
-      success: false,
-      message: error.message || 'Error al crear grupo familiar',
-    });
-  }
-}
-
-export async function getGruposFamiliares(req: Request, res: Response) {
-  try {
-    const grupos = await grupoFamiliarService.getGruposFamiliares();
-    res.json({
-      success: true,
-      data: grupos,
-      total: grupos.length,
-    });
-  } catch (error: any) {
-    console.error('Error al obtener grupos familiares:', error);
-    res.status(500).json({
-      success: false,
-      message: error.message || 'Error al obtener grupos familiares',
-    });
-  }
-}
-
-export async function getGrupoFamiliarById(req: Request, res: Response) {
-  try {
-    const id = parseInt(req.params.id, 10);
-    const grupo = await grupoFamiliarService.getGrupoFamiliarById(id);
-
-    if (!grupo) {
-      return res.status(404).json({
-        success: false,
-        message: 'Grupo familiar no encontrado',
-      });
+export class GrupoFamiliarController {
+  async create(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const data = req.body as CreateGrupoFamiliarInput;
+      const result = await grupoFamiliarService.create(data);
+      sendCreated(res, result, 'Grupo familiar creado exitosamente');
+    } catch (error) {
+      next(error);
     }
+  }
 
-    res.json({
-      success: true,
-      data: grupo,
-    });
-  } catch (error: any) {
-    console.error('Error al obtener grupo familiar:', error);
-    res.status(500).json({
-      success: false,
-      message: error.message || 'Error al obtener grupo familiar',
-    });
+  async getAll(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const page = parseInt(req.query.page as string, 10) || 1;
+      const limit = parseInt(req.query.limit as string, 10) || 10;
+      const result = await grupoFamiliarService.getAll(page, limit);
+      sendSuccess(res, result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getById(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const id = parseInt(req.params.id as string, 10);
+      const result = await grupoFamiliarService.getById(id);
+      sendSuccess(res, result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async update(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const id = parseInt(req.params.id as string, 10);
+      const data = req.body as UpdateGrupoFamiliarInput;
+      const result = await grupoFamiliarService.update(id, data);
+      sendSuccess(res, result, 'Grupo familiar actualizado correctamente');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async delete(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const id = parseInt(req.params.id as string, 10);
+      const result = await grupoFamiliarService.delete(id);
+      sendSuccess(res, result);
+    } catch (error) {
+      next(error);
+    }
   }
 }
 
-export async function actualizarGrupoFamiliar(req: Request, res: Response) {
-  try {
-    const id = parseInt(req.params.id, 10);
-    const grupo = await grupoFamiliarService.actualizarGrupoFamiliar(id, req.body);
-    res.json({
-      success: true,
-      message: 'Grupo familiar actualizado correctamente',
-      data: grupo,
-    });
-  } catch (error: any) {
-    console.error('Error al actualizar grupo familiar:', error);
-    res.status(error.statusCode || 400).json({
-      success: false,
-      message: error.message || 'Error al actualizar grupo familiar',
-    });
-  }
-}
-
-export async function eliminarGrupoFamiliar(req: Request, res: Response) {
-  try {
-    const id = parseInt(req.params.id, 10);
-    await grupoFamiliarService.eliminarGrupoFamiliar(id);
-    res.json({
-      success: true,
-      message: 'Grupo familiar eliminado correctamente',
-    });
-  } catch (error: any) {
-    console.error('Error al eliminar grupo familiar:', error);
-    res.status(error.statusCode || 400).json({
-      success: false,
-      message: error.message || 'Error al eliminar grupo familiar',
-    });
-  }
-}
-
+export const grupoFamiliarController = new GrupoFamiliarController();

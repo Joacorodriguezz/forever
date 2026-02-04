@@ -1,18 +1,96 @@
 import { Request, Response, NextFunction } from 'express';
-export function handleError(err: any, req: Request, res: Response, next: NextFunction) {
-  const timestamp = new Date().toISOString();
-  const message = err?.message || String(err);
-  const stack = err?.stack || '';
-  const statusCode = Number(err?.statusCode) || 500;
-  console.error(`[${timestamp}] Error:`, message);
-  if (stack) console.error(stack);
-  try {
-    res.setHeader('X-Error-Message', message);
-    if (stack) res.setHeader('X-Error-Stack', stack.substring(0, 2048));
-  } catch {}
-  res.status(statusCode).json({
-    error: 'Internal server error',
-    message,
-    timestamp,
+import { Prisma } from '@prisma/client';
+import { AppError, ValidationError, ErrorMessages } from '../utils/errors';
+import { env } from '../config/env';
+
+export const errorHandler = (
+  err: Error,
+  _req: Request,
+  res: Response,
+  _next: NextFunction
+): void => {
+  console.error('Error:', err);
+
+  // Errores de aplicación personalizados
+  if (err instanceof AppError) {
+    if (err instanceof ValidationError) {
+      res.status(err.statusCode).json({
+        success: false,
+        error: err.message,
+        errors: err.errors,
+      });
+      return;
+    }
+    res.status(err.statusCode).json({
+      success: false,
+      error: err.message,
+    });
+    return;
+  }
+
+  // Errores de Prisma
+  if (err instanceof Prisma.PrismaClientKnownRequestError) {
+    switch (err.code) {
+      case 'P2002': {
+        const target = (err.meta?.target as string[]) || [];
+        let message = 'El registro ya existe';
+        if (target.includes('email')) {
+          message = ErrorMessages.EMAIL_EXISTS;
+        } else if (target.includes('dni')) {
+          message = ErrorMessages.DNI_EXISTS;
+        } else if (target.includes('nombre')) {
+          message = 'Ya existe un registro con ese nombre';
+        }
+        res.status(409).json({
+          success: false,
+          error: message,
+        });
+        return;
+      }
+      case 'P2025':
+        res.status(404).json({
+          success: false,
+          error: 'Registro no encontrado',
+        });
+        return;
+      case 'P2003':
+        res.status(400).json({
+          success: false,
+          error: 'Referencia invalida a otro registro',
+        });
+        return;
+      default:
+        res.status(400).json({
+          success: false,
+          error: 'Error en la base de datos',
+        });
+        return;
+    }
+  }
+
+  if (err instanceof Prisma.PrismaClientValidationError) {
+    res.status(400).json({
+      success: false,
+      error: 'Error de validacion en los datos',
+    });
+    return;
+  }
+
+  // Error genérico
+  res.status(500).json({
+    success: false,
+    error: env.NODE_ENV === 'development' ? err.message : ErrorMessages.SERVER_ERROR,
+    ...(env.NODE_ENV === 'development' && { stack: err.stack }),
   });
-}
+};
+
+export const notFoundHandler = (
+  req: Request,
+  res: Response,
+  _next: NextFunction
+): void => {
+  res.status(404).json({
+    success: false,
+    error: `Ruta no encontrada: ${req.method} ${req.path}`,
+  });
+};

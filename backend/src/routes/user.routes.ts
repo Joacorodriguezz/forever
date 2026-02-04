@@ -1,74 +1,33 @@
 import { Router } from 'express';
-import * as userController from '../controllers/user.controller';
-import { validate } from '../middlewares/validation.middleware';
-import { authenticate, authorize } from '../middlewares/auth.middleware';
-import { UpdateUserSchema } from '../validations/user.validation';
-import { UpdateProfileSchema, AssignRoleSchema } from '../validations/profile.validation';
-import { upload } from '../middlewares/comprobantes.middleware';
+import { userController } from '../controllers/user.controller';
+import { authenticateToken, requireAdmin } from '../middlewares/auth.middleware';
+import { validateBody, validateParams } from '../middlewares/validation.middleware';
+import { assignRoleSchema, updateProfileSchema, idParamSchema } from '../validators/user.validator';
 
 const router = Router();
 
-//creo que no se usa
-router.get(
-   '/',
-   authenticate,        
-   userController.getAllUsers
-);
+// GET /api/users - Listar usuarios (solo Admin)
+router.get('/', authenticateToken, requireAdmin, userController.getAllUsers.bind(userController));
 
-router.get(
-  '/administrativos',
-  authenticate,
-  authorize('ADMIN'),  
-  userController.getAdministrativos
-);
+// GET /api/users/profile - CU16 Consultar perfil propio
+router.get('/profile', authenticateToken, userController.getProfile.bind(userController));
 
-router.get(
-  "/deportistas",
-  authenticate,
-  authorize('ADMIN', 'ADMINISTRATIVO'),
-  userController.getDeportistas
-);
-
-// CU16 - Consultar Perfil
-router.get(
-  '/profile/me',
-  authenticate,
-  userController.getOwnProfile
-);
-
-// CU17 - Modificar Perfil
+// PUT /api/users/profile - CU17 Modificar perfil propio
 router.put(
-  '/profile/me',
-  authenticate,
-  validate(UpdateProfileSchema),
-  userController.updateOwnProfile
+  '/profile',
+  authenticateToken,
+  validateBody(updateProfileSchema),
+  userController.updateProfile.bind(userController)
 );
 
-router.get(
-   '/:id',
-   authenticate,
-   userController.getUserById
-);
-
-router.put('/:id',
-   authenticate,
-   upload.single("foto"),
-   validate(UpdateUserSchema),
-   userController.updateUser
-);
-
-// CU03 - Asignar Rol
-router.patch(
+// PUT /api/users/:id/role - CU03 Asignar rol (solo Admin)
+router.put(
   '/:id/role',
-  authenticate,
-  authorize('ADMIN'),
-  validate(AssignRoleSchema),
-  userController.assignRole
+  authenticateToken,
+  requireAdmin,
+  validateParams(idParamSchema),
+  validateBody(assignRoleSchema),
+  userController.assignRole.bind(userController)
 );
 
-router.delete('/:id',
-   authenticate,
-   authorize('ADMIN'),
-   userController.deleteUser
-);
-export const userRoutes = router;
+export default router;

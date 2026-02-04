@@ -1,73 +1,44 @@
-require('dotenv').config();
 import express from 'express';
 import cors from 'cors';
-import path from 'path';
-
-import prisma from './config/prisma';
-
-// Middlewares
-import { handleError } from './middlewares/error.middleware';
-import { logRequest } from './middlewares/logger.middleware';
-
-// Rutas de dominio
-import deportistaRoutes from './routes/deportistaRoutes';
-import { cuotaRoutes } from './routes/cuotaRoutes';
-import { comprobanteRoutes } from './routes/comprobante.routes';
-
-// Rutas de autenticación/usuarios
-import { authRoutes } from './routes/auth.routes';
-import { userRoutes } from './routes/user.routes';
-import { reporteRoutes } from './routes/reporte.routes';
-import { historialRoutes } from './routes/historial.routes';
-import { pagoRoutes } from './routes/pago.routes';
-import { grupoFamiliarRoutes } from './routes/grupoFamiliar.routes';
-import { webhookRoutes } from './routes/webhook.routes';
+import helmet from 'helmet';
+import { env } from './config/env';
+import routes from './routes';
+import { errorHandler, notFoundHandler } from './middlewares/error.middleware';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
-console.log("🟩 FRONTEND_URL usado por el backend:", process.env.FRONTEND_URL);
-
-const allowedOrigins = [
-  process.env.FRONTEND_URL,
-  'http://localhost:5173',
-  'http://localhost:5174',
-  'https://utn-ds-25-grupo3.vercel.app',
-].filter(Boolean) as string[];
-
+// Configuración de CORS
 const corsOptions = {
-  origin: function (origin: any, callback: any) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-    return callback(new Error('Not allowed by CORS'));
-  },
+  origin: env.FRONTEND_URL.split(',').map((url) => url.trim()),
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 };
 
-
+// Middlewares de seguridad
+app.use(helmet());
 app.use(cors(corsOptions));
-app.options(/.*/, cors(corsOptions));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(logRequest);
-app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
-app.use('/api/deportistas', deportistaRoutes);
-app.use('/api/cuotas', cuotaRoutes);
-app.use('/api/cuotas', comprobanteRoutes);
-app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/reportes', reporteRoutes);
-app.use('/api/historial', historialRoutes);
-app.use('/api/pagos', pagoRoutes);
-app.use('/api/grupos-familiares', grupoFamiliarRoutes);
-app.use('/api/webhooks', webhookRoutes);
-app.use(handleError);
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+// Parseo de JSON y URL encoded
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Health check
+app.get('/health', (_req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Server is running',
+    timestamp: new Date().toISOString(),
+  });
 });
+
+// Rutas principales
+app.use('/api', routes);
+
+// Manejador de rutas no encontradas
+app.use(notFoundHandler);
+
+// Manejador de errores global
+app.use(errorHandler);
 
 export default app;

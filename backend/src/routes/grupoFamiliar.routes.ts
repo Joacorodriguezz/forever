@@ -1,48 +1,58 @@
 import { Router } from 'express';
-import { authenticate, authorize } from '../middlewares/auth.middleware';
-import { validate } from '../middlewares/validation.middleware';
-import { CrearGrupoFamiliarSchema, ActualizarGrupoFamiliarSchema } from '../validations/grupoFamiliar.validation';
-import * as grupoFamiliarController from '../controllers/grupoFamiliar.controller';
+import { grupoFamiliarController } from '../controllers/grupoFamiliar.controller';
+import { authenticateToken, requireAdministrativo } from '../middlewares/auth.middleware';
+import { validateBody, validateParams } from '../middlewares/validation.middleware';
+import {
+  createGrupoFamiliarSchema,
+  updateGrupoFamiliarSchema,
+} from '../validators/grupoFamiliar.validator';
+import { idParamSchema } from '../validators/user.validator';
 
 const router = Router();
 
-// CU13 - Gestionar Grupo Familiar (solo ADMINISTRATIVO)
+// POST /api/grupos-familiares - CU13 Crear grupo familiar (solo Administrativo)
 router.post(
   '/',
-  authenticate,
-  authorize('ADMINISTRATIVO', 'ADMIN'),
-  validate(CrearGrupoFamiliarSchema),
-  grupoFamiliarController.crearGrupoFamiliar
+  authenticateToken,
+  requireAdministrativo,
+  validateBody(createGrupoFamiliarSchema),
+  grupoFamiliarController.create.bind(grupoFamiliarController)
 );
 
+// GET /api/grupos-familiares - Listar grupos familiares
 router.get(
   '/',
-  authenticate,
-  authorize('ADMINISTRATIVO', 'ADMIN'),
-  grupoFamiliarController.getGruposFamiliares
+  authenticateToken,
+  requireAdministrativo,
+  grupoFamiliarController.getAll.bind(grupoFamiliarController)
 );
 
+// GET /api/grupos-familiares/:id - Obtener grupo familiar
 router.get(
   '/:id',
-  authenticate,
-  authorize('ADMINISTRATIVO', 'ADMIN'),
-  grupoFamiliarController.getGrupoFamiliarById
+  authenticateToken,
+  requireAdministrativo,
+  validateParams(idParamSchema),
+  grupoFamiliarController.getById.bind(grupoFamiliarController)
 );
 
+// PUT /api/grupos-familiares/:id - Actualizar grupo familiar
 router.put(
   '/:id',
-  authenticate,
-  authorize('ADMINISTRATIVO', 'ADMIN'),
-  validate(ActualizarGrupoFamiliarSchema),
-  grupoFamiliarController.actualizarGrupoFamiliar
+  authenticateToken,
+  requireAdministrativo,
+  validateParams(idParamSchema),
+  validateBody(updateGrupoFamiliarSchema),
+  grupoFamiliarController.update.bind(grupoFamiliarController)
 );
 
+// DELETE /api/grupos-familiares/:id - Eliminar grupo familiar
 router.delete(
   '/:id',
-  authenticate,
-  authorize('ADMINISTRATIVO', 'ADMIN'),
-  grupoFamiliarController.eliminarGrupoFamiliar
+  authenticateToken,
+  requireAdministrativo,
+  validateParams(idParamSchema),
+  grupoFamiliarController.delete.bind(grupoFamiliarController)
 );
 
-export const grupoFamiliarRoutes = router;
-
+export default router;

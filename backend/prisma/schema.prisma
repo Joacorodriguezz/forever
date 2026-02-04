@@ -1,4 +1,3 @@
-// Define tu datasource y generator aquí (ej. PostgreSQL)
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,126 +7,285 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// =============================================================================
+// ENUMS
+// =============================================================================
+
 enum EstadoDeportista {
-  AL_DIA
-  EN_DEUDA
-  MOROSA
-  INACTIVA
+  EN_DEUDA    @map("En deuda")
+  AL_DIA      @map("Al dia")
+  MOROSA      @map("Morosa")
+  INACTIVA    @map("Inactiva")
 }
 
+enum EstadoCuota {
+  PAGADA      @map("Pagada")
+  PENDIENTE   @map("Pendiente")
+  VENCIDA     @map("Vencida")
+}
+
+enum EstadoPago {
+  APROBADO    @map("Aprobado")
+  RECHAZADO   @map("Rechazado")
+  PENDIENTE   @map("Pendiente")
+}
+
+enum Rol {
+  ADMIN           @map("Admin")
+  ADMINISTRATIVO  @map("Administrativo")
+  DEPORTISTA      @map("Deportista")
+}
+
+enum Vinculo {
+  PADRE    @map("Padre")
+  MADRE    @map("Madre")
+  HIJO     @map("Hijo")
+  HERMANO  @map("Hermano")
+  OTRO     @map("Otro")
+}
+
+enum Periodicidad {
+  MENSUAL   @map("Mensual")
+  ANUAL     @map("Anual")
+}
+
+// =============================================================================
+// MODELOS BASE
+// =============================================================================
+
 model Localidad {
-  id_localidad Int         @id @default(autoincrement())
-  codigoPostal Int
-  nombre       String      @db.VarChar(50)
+  id           Int         @id @default(autoincrement()) @map("id_localidad")
+  codigoPostal String      @map("codigo_postal")
+  nombre       String
   domicilios   Domicilio[]
+
+  @@map("localidades")
 }
 
 model Domicilio {
-  id_domicilio Int          @id @default(autoincrement())
-  id_localidad Int
-  localidad    Localidad    @relation(fields: [id_localidad], references: [id_localidad])
+  id           Int          @id @default(autoincrement()) @map("id_domicilio")
+  calle        String
+  numero       String
+  piso         String?
+  departamento String?
+  localidadId  Int          @map("id_localidad")
+  localidad    Localidad    @relation(fields: [localidadId], references: [id])
   deportistas  Deportista[]
-}
 
-model CuentaUsuario {
-  id_cuenta      Int             @id @default(autoincrement())
-  mail           String          @unique @db.VarChar(50)
-  contrasena     String          @db.VarChar(255) // Increased for bcrypt hash
-  deportista     Deportista?
-  administrativo Administrativo?
-}
-
-model Administrativo {
-  id_administrativo Int           @id @default(autoincrement())
-  nombre            String        @db.VarChar(50)
-  apellido          String        @db.VarChar(50)
-  dni               Int           @unique
-  // Relación inferida 1:1 con CuentaUsuario (basado en la línea del diagrama)
-  id_cuenta         Int           @unique
-  cuenta            CuentaUsuario @relation(fields: [id_cuenta], references: [id_cuenta])
-}
-
-model Deportista {
-  id_deportista Int              @id @default(autoincrement())
-  estado        EstadoDeportista
-  categoria     String           @db.VarChar(50)
-  fechaNac      DateTime
-  obraSocial    String           @db.VarChar(50)
-  nombre        String           @db.VarChar(50)
-  apellido      String           @db.VarChar(50)
-  dni           Int              @unique
-
-  // Campos opcionales
-  sexo       String? @db.VarChar(20)
-  fotoCarnet String? @db.VarChar(255) // URL de la imagen
-
-  // Relaciones (FKs)
-  id_disciplina Int
-  disciplina    Disciplina @relation(fields: [id_disciplina], references: [id_disciplina])
-
-  id_cuenta Int           @unique // 1:1 con Cuenta
-  cuenta    CuentaUsuario @relation(fields: [id_cuenta], references: [id_cuenta])
-
-  id_domicilio Int?
-  domicilio    Domicilio? @relation(fields: [id_domicilio], references: [id_domicilio])
-
-  // Colecciones
-  telefonos    Telefono[]
-  cuotas       Cuota[]
-  pagos        Pago[]
-  enfermedades Enfermedad[] // Relación implícita N:M
+  @@map("domicilios")
 }
 
 model Enfermedad {
-  id_enfermedad Int          @id @default(autoincrement())
-  nombre        String       @db.VarChar(50)
-  deportistas   Deportista[] // Prisma crea la tabla intermedia automáticamente
+  id          Int                       @id @default(autoincrement()) @map("id_enfermedad")
+  nombre      String                    @unique
+  descripcion String?
+  deportistas DeportistaEnfermedad[]
+
+  @@map("enfermedades")
 }
 
 model Telefono {
-  id_telefono   String     @id @default(uuid()) // El diagrama dice varchar, asumo UUID
-  numero        Int
-  // Relación inferida: El diagrama conecta Telefono a Deportista, 
-  // por lo que Telefono necesita la FK.
-  id_deportista Int
-  deportista    Deportista @relation(fields: [id_deportista], references: [id_deportista])
+  id          Int                   @id @default(autoincrement()) @map("id_telefono")
+  numero      String
+  tipo        String?               @default("celular")
+  deportistas DeportistaTelefono[]
+
+  @@map("telefonos")
 }
 
 model Disciplina {
-  id_disciplina Int          @id @default(autoincrement())
-  nombre        String       @db.VarChar(50)
-  precioMensual Float // O Decimal si prefieres exactitud financiera
+  id            Int          @id @default(autoincrement()) @map("id_disciplina")
+  nombre        String       @unique
+  descripcion   String?
+  precioMensual Decimal      @map("precio_mensual") @db.Decimal(10, 2)
+  activa        Boolean      @default(true)
   deportistas   Deportista[]
   cuotas        Cuota[]
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  @@map("disciplinas")
 }
 
+// =============================================================================
+// USUARIOS Y AUTENTICACIÓN
+// =============================================================================
+
+model CuentaUsuario {
+  id              Int             @id @default(autoincrement()) @map("id_cuenta")
+  email           String          @unique
+  password        String
+  rol             Rol             @default(DEPORTISTA)
+  activo          Boolean         @default(true)
+  intentosFallidos Int            @default(0) @map("intentos_fallidos")
+  bloqueadoHasta  DateTime?       @map("bloqueado_hasta")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+  deportista      Deportista?
+  administrativo  Administrativo?
+
+  @@map("cuentas_usuario")
+}
+
+model Administrativo {
+  id        Int           @id @default(autoincrement()) @map("id_administrativo")
+  nombre    String
+  apellido  String
+  dni       String        @unique
+  cuentaId  Int           @unique @map("id_cuenta")
+  cuenta    CuentaUsuario @relation(fields: [cuentaId], references: [id], onDelete: Cascade)
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+
+  @@map("administrativos")
+}
+
+// =============================================================================
+// DEPORTISTAS
+// =============================================================================
+
+model Deportista {
+  id            Int                       @id @default(autoincrement()) @map("id_deportista")
+  nombre        String
+  apellido      String
+  dni           String                    @unique
+  fechaNac      DateTime                  @map("fecha_nac")
+  categoria     String?
+  obraSocial    String?                   @map("obra_social")
+  estado        EstadoDeportista          @default(AL_DIA)
+  disciplinaId  Int                       @map("id_disciplina")
+  disciplina    Disciplina                @relation(fields: [disciplinaId], references: [id])
+  cuentaId      Int                       @unique @map("id_cuenta")
+  cuenta        CuentaUsuario             @relation(fields: [cuentaId], references: [id], onDelete: Cascade)
+  domicilioId   Int                       @map("id_domicilio")
+  domicilio     Domicilio                 @relation(fields: [domicilioId], references: [id])
+  enfermedades  DeportistaEnfermedad[]
+  telefonos     DeportistaTelefono[]
+  pagos         Pago[]
+  cuotas        Cuota[]
+  grupoFamiliar GrupoFamiliarIntegrante[]
+  createdAt     DateTime                  @default(now()) @map("created_at")
+  updatedAt     DateTime                  @updatedAt @map("updated_at")
+
+  @@map("deportistas")
+}
+
+// Tablas de relación many-to-many
+model DeportistaEnfermedad {
+  deportistaId  Int        @map("id_deportista")
+  enfermedadId  Int        @map("id_enfermedad")
+  deportista    Deportista @relation(fields: [deportistaId], references: [id], onDelete: Cascade)
+  enfermedad    Enfermedad @relation(fields: [enfermedadId], references: [id], onDelete: Cascade)
+
+  @@id([deportistaId, enfermedadId])
+  @@map("deportistas_enfermedades")
+}
+
+model DeportistaTelefono {
+  deportistaId Int        @map("id_deportista")
+  telefonoId   Int        @map("id_telefono")
+  deportista   Deportista @relation(fields: [deportistaId], references: [id], onDelete: Cascade)
+  telefono     Telefono   @relation(fields: [telefonoId], references: [id], onDelete: Cascade)
+
+  @@id([deportistaId, telefonoId])
+  @@map("deportistas_telefonos")
+}
+
+// =============================================================================
+// GRUPOS FAMILIARES
+// =============================================================================
+
+model GrupoFamiliar {
+  id           Int                       @id @default(autoincrement()) @map("id_grupo_familiar")
+  nombre       String
+  integrantes  GrupoFamiliarIntegrante[]
+  createdAt    DateTime                  @default(now()) @map("created_at")
+  updatedAt    DateTime                  @updatedAt @map("updated_at")
+
+  @@map("grupos_familiares")
+}
+
+model GrupoFamiliarIntegrante {
+  grupoId      Int           @map("id_grupo_familiar")
+  deportistaId Int           @map("id_deportista")
+  vinculo      Vinculo
+  esPrincipal  Boolean       @default(false) @map("es_principal")
+  grupo        GrupoFamiliar @relation(fields: [grupoId], references: [id], onDelete: Cascade)
+  deportista   Deportista    @relation(fields: [deportistaId], references: [id], onDelete: Cascade)
+
+  @@id([grupoId, deportistaId])
+  @@map("grupo_familiar_integrantes")
+}
+
+// =============================================================================
+// CUOTAS Y PAGOS
+// =============================================================================
+
 model Cuota {
-  id_cuota         Int      @id @default(autoincrement())
-  monto            Decimal  @db.Money // Mapeo de tipo 'money'
-  fechaVencimiento DateTime
-  estadoCuota      String   @db.VarChar(50)
-  nroCuota         Int
-  fechaEmision     DateTime
-  mes              String?  @db.VarChar(20) // e.g. "ENERO", "FEBRERO"
+  id               Int          @id @default(autoincrement()) @map("id_cuota")
+  nroCuota         Int          @map("nro_cuota")
+  monto            Decimal      @db.Decimal(10, 2)
+  fechaEmision     DateTime     @map("fecha_emision")
+  fechaVencimiento DateTime     @map("fecha_vencimiento")
+  estadoCuota      EstadoCuota  @default(PENDIENTE) @map("estado_cuota")
+  periodicidad     Periodicidad @default(MENSUAL)
+  disciplinaId     Int          @map("id_disciplina")
+  disciplina       Disciplina   @relation(fields: [disciplinaId], references: [id])
+  deportistaId     Int          @map("id_deportista")
+  deportista       Deportista   @relation(fields: [deportistaId], references: [id], onDelete: Cascade)
+  pagos            Pago[]
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
 
-  id_disciplina Int
-  disciplina    Disciplina @relation(fields: [id_disciplina], references: [id_disciplina])
-
-  deportista_id Int
-  deportista    Deportista @relation(fields: [deportista_id], references: [id_deportista])
-
-  pagos Pago[]
+  @@unique([deportistaId, nroCuota, disciplinaId])
+  @@map("cuotas")
 }
 
 model Pago {
-  id_pago         Int      @id @default(autoincrement())
-  fechaPago       DateTime
-  estadoPago      String   @db.VarChar(50)
-  linkComprobante String?  @db.VarChar(50) // Puede ser opcional
+  id                 Int         @id @default(autoincrement()) @map("id_pago")
+  fechaPago          DateTime    @map("fecha_pago")
+  monto              Decimal     @db.Decimal(10, 2)
+  estadoPago         EstadoPago  @default(PENDIENTE) @map("estado_pago")
+  medioPago          String?     @map("medio_pago")
+  linkComprobante    String?     @map("link_comprobante")
+  mercadoPagoId      String?     @unique @map("mercado_pago_id")
+  mercadoPagoStatus  String?     @map("mercado_pago_status")
+  cuotaId            Int         @map("id_cuota")
+  cuota              Cuota       @relation(fields: [cuotaId], references: [id])
+  deportistaId       Int         @map("id_deportista")
+  deportista         Deportista  @relation(fields: [deportistaId], references: [id], onDelete: Cascade)
+  createdAt          DateTime    @default(now()) @map("created_at")
+  updatedAt          DateTime    @updatedAt @map("updated_at")
 
-  id_cuota Int
-  cuota    Cuota @relation(fields: [id_cuota], references: [id_cuota])
+  @@map("pagos")
+}
 
-  id_deportista Int
-  deportista    Deportista @relation(fields: [id_deportista], references: [id_deportista])
+// =============================================================================
+// AUDITORÍA
+// =============================================================================
+
+model AuditoriaAcceso {
+  id        Int      @id @default(autoincrement())
+  cuentaId  Int      @map("id_cuenta")
+  accion    String
+  ip        String?
+  userAgent String?  @map("user_agent")
+  exitoso   Boolean  @default(true)
+  mensaje   String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("auditoria_accesos")
+}
+
+model AuditoriaCambios {
+  id          Int      @id @default(autoincrement())
+  cuentaId    Int      @map("id_cuenta")
+  entidad     String
+  entidadId   Int      @map("entidad_id")
+  accion      String
+  datosAntes  String?  @map("datos_antes") @db.Text
+  datosDespues String? @map("datos_despues") @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("auditoria_cambios")
 }

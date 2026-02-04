@@ -1,108 +1,167 @@
 import prisma from '../config/prisma';
+import { CreateGrupoFamiliarDTO, UpdateGrupoFamiliarDTO } from '../types/requests';
+import { NotFoundError, ConflictError, ErrorMessages } from '../utils/errors';
+import { Vinculo } from '@prisma/client';
 
-// CU13 - Gestionar Grupo Familiar
-export interface GrupoFamiliar {
-  id: number;
-  nombre: string;
-  deportistaPrincipalId: number;
-  miembros: Array<{
-    id: number;
-    nombre: string;
-    apellido: string;
-    dni: number;
-    vinculo: string;
-  }>;
-  creadoEn: Date;
-}
+export class GrupoFamiliarService {
+  async create(data: CreateGrupoFamiliarDTO) {
+    // Verificar que todos los deportistas existen
+    const deportistaIds = data.integrantes.map((i) => i.deportistaId);
+    const deportistas = await prisma.deportista.findMany({
+      where: { id: { in: deportistaIds } },
+    });
 
-export interface CrearGrupoFamiliarRequest {
-  nombre: string;
-  deportistaPrincipalId: number;
-  miembros: Array<{
-    socioId: number;
-    vinculo: string; // 'HIJO', 'HIJA', 'PADRE', 'MADRE', 'HERMANO', 'HERMANA', 'OTRO'
-  }>;
-}
+    if (deportistas.length !== deportistaIds.length) {
+      throw new NotFoundError('Uno o mas deportistas no existen');
+    }
 
-export interface ActualizarGrupoFamiliarRequest {
-  nombre?: string;
-  deportistaPrincipalId?: number;
-  miembros?: Array<{
-    socioId: number;
-    vinculo: string;
-  }>;
-}
+    // Verificar que no exista un grupo con la misma composición
+    const existingGroups = await prisma.grupoFamiliar.findMany({
+      include: {
+        integrantes: true,
+      },
+    });
 
-// Nota: Como no existe el modelo en Prisma, usaremos una tabla temporal o un campo en Socio
-// Por ahora, implementaremos la lógica usando una relación many-to-many entre Socios
-// Para una implementación completa, se necesitaría agregar el modelo GrupoFamiliar al schema
+    for (const group of existingGroups) {
+      const existingIds = group.integrantes.map((i) => i.deportistaId).sort();
+      const newIds = deportistaIds.sort();
+      if (
+        existingIds.length === newIds.length &&
+        existingIds.every((id, index) => id === newIds[index])
+      ) {
+        throw new ConflictError(ErrorMessages.GRUPO_FAMILIAR_DUPLICATE);
+      }
+    }
 
-// Implementación temporal usando un campo JSON o una tabla de relación
-// Esta es una implementación básica que puede mejorarse con un modelo dedicado
+    const grupo = await prisma.grupoFamiliar.create({
+      data: {
+        nombre: data.nombre,
+        integrantes: {
+          create: data.integrantes.map((i) => ({
+            deportistaId: i.deportistaId,
+            vinculo: i.vinculo as Vinculo,
+            esPrincipal: i.esPrincipal || false,
+          })),
+        },
+      },
+      include: {
+        integrantes: {
+          include: {
+            deportista: true,
+          },
+        },
+      },
+    });
 
-export async function crearGrupoFamiliar(
-  data: CrearGrupoFamiliarRequest
-): Promise<GrupoFamiliar> {
-  // Validar que el deportista principal existe
-  const principal = await prisma.socio.findUnique({
-    where: { id: data.deportistaPrincipalId },
-  });
-
-  if (!principal) {
-    throw new Error('Deportista principal no encontrado');
+    return grupo;
   }
 
-  // Validar que todos los miembros existen
-  const miembrosIds = data.miembros.map((m) => m.socioId);
-  const miembros = await prisma.socio.findMany({
-    where: { id: { in: miembrosIds } },
-  });
+  async getById(id: number) {
+    const grupo = await prisma.grupoFamiliar.findUnique({
+      where: { id },
+      include: {
+        integrantes: {
+          include: {
+            deportista: {
+              include: {
+                disciplina: true,
+              },
+            },
+          },
+        },
+      },
+    });
 
-  if (miembros.length !== data.miembros.length) {
-    throw new Error('Uno o más miembros no fueron encontrados');
+    if (!grupo) {
+      throw new NotFoundError(ErrorMessages.GRUPO_FAMILIAR_NOT_FOUND);
+    }
+
+    return grupo;
   }
 
-  // Validar que el deportista principal no esté ya en otro grupo
-  // (esto requeriría un campo grupoFamiliarId en Socio o una tabla de relación)
+  async getAll(page: number = 1, limit: number = 10) {
+    const skip = (page - 1) * limit;
 
-  // Por ahora, retornamos una estructura básica
-  // En una implementación completa, se crearía el registro en la tabla GrupoFamiliar
-  return {
-    id: 1, // Temporal - se generaría con autoincrement
-    nombre: data.nombre,
-    deportistaPrincipalId: data.deportistaPrincipalId,
-    miembros: miembros.map((s, index) => ({
-      id: s.id,
-      nombre: s.nombre,
-      apellido: s.apellido,
-      dni: s.dni,
-      vinculo: data.miembros[index].vinculo,
-    })),
-    creadoEn: new Date(),
-  };
+    const [grupos, total] = await Promise.all([
+      prisma.grupoFamiliar.findMany({
+        skip,
+        take: limit,
+        include: {
+          integrantes: {
+            include: {
+              deportista: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.grupoFamiliar.count(),
+    ]);
+
+    return {
+      data: grupos,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async update(id: number, data: UpdateGrupoFamiliarDTO) {
+    const grupo = await prisma.grupoFamiliar.findUnique({
+      where: { id },
+    });
+
+    if (!grupo) {
+      throw new NotFoundError(ErrorMessages.GRUPO_FAMILIAR_NOT_FOUND);
+    }
+
+    await prisma.$transaction(async (tx) => {
+      if (data.nombre) {
+        await tx.grupoFamiliar.update({
+          where: { id },
+          data: { nombre: data.nombre },
+        });
+      }
+
+      if (data.integrantes) {
+        // Eliminar integrantes actuales
+        await tx.grupoFamiliarIntegrante.deleteMany({
+          where: { grupoId: id },
+        });
+
+        // Crear nuevos integrantes
+        for (const integrante of data.integrantes) {
+          await tx.grupoFamiliarIntegrante.create({
+            data: {
+              grupoId: id,
+              deportistaId: integrante.deportistaId,
+              vinculo: integrante.vinculo as Vinculo,
+              esPrincipal: integrante.esPrincipal || false,
+            },
+          });
+        }
+      }
+    });
+
+    return this.getById(id);
+  }
+
+  async delete(id: number) {
+    const grupo = await prisma.grupoFamiliar.findUnique({
+      where: { id },
+    });
+
+    if (!grupo) {
+      throw new NotFoundError(ErrorMessages.GRUPO_FAMILIAR_NOT_FOUND);
+    }
+
+    await prisma.grupoFamiliar.delete({
+      where: { id },
+    });
+
+    return { message: 'Grupo familiar eliminado correctamente' };
+  }
 }
 
-export async function getGruposFamiliares(): Promise<GrupoFamiliar[]> {
-  // Implementación temporal
-  // En una implementación completa, se consultaría la tabla GrupoFamiliar
-  return [];
-}
-
-export async function getGrupoFamiliarById(id: number): Promise<GrupoFamiliar | null> {
-  // Implementación temporal
-  return null;
-}
-
-export async function actualizarGrupoFamiliar(
-  id: number,
-  data: ActualizarGrupoFamiliarRequest
-): Promise<GrupoFamiliar> {
-  // Implementación temporal
-  throw new Error('Funcionalidad en desarrollo');
-}
-
-export async function eliminarGrupoFamiliar(id: number): Promise<void> {
-  // Implementación temporal
-  throw new Error('Funcionalidad en desarrollo');
-}
-
+export const grupoFamiliarService = new GrupoFamiliarService();
