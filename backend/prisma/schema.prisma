@@ -75,23 +75,9 @@ model Domicilio {
   @@map("domicilios")
 }
 
-model Enfermedad {
-  id          Int                       @id @default(autoincrement()) @map("id_enfermedad")
-  nombre      String                    @unique
-  descripcion String?
-  deportistas DeportistaEnfermedad[]
 
-  @@map("enfermedades")
-}
 
-model Telefono {
-  id          Int                   @id @default(autoincrement()) @map("id_telefono")
-  numero      String
-  tipo        String?               @default("celular")
-  deportistas DeportistaTelefono[]
 
-  @@map("telefonos")
-}
 
 model Disciplina {
   id            Int          @id @default(autoincrement()) @map("id_disciplina")
@@ -159,8 +145,8 @@ model Deportista {
   cuenta        CuentaUsuario             @relation(fields: [cuentaId], references: [id], onDelete: Cascade)
   domicilioId   Int                       @map("id_domicilio")
   domicilio     Domicilio                 @relation(fields: [domicilioId], references: [id])
-  enfermedades  DeportistaEnfermedad[]
-  telefonos     DeportistaTelefono[]
+  enfermedades  String?
+  telefonos     String?
   pagos         Pago[]
   cuotas        Cuota[]
   grupoFamiliar GrupoFamiliarIntegrante[]
@@ -168,27 +154,6 @@ model Deportista {
   updatedAt     DateTime                  @updatedAt @map("updated_at")
 
   @@map("deportistas")
-}
-
-// Tablas de relación many-to-many
-model DeportistaEnfermedad {
-  deportistaId  Int        @map("id_deportista")
-  enfermedadId  Int        @map("id_enfermedad")
-  deportista    Deportista @relation(fields: [deportistaId], references: [id], onDelete: Cascade)
-  enfermedad    Enfermedad @relation(fields: [enfermedadId], references: [id], onDelete: Cascade)
-
-  @@id([deportistaId, enfermedadId])
-  @@map("deportistas_enfermedades")
-}
-
-model DeportistaTelefono {
-  deportistaId Int        @map("id_deportista")
-  telefonoId   Int        @map("id_telefono")
-  deportista   Deportista @relation(fields: [deportistaId], references: [id], onDelete: Cascade)
-  telefono     Telefono   @relation(fields: [telefonoId], references: [id], onDelete: Cascade)
-
-  @@id([deportistaId, telefonoId])
-  @@map("deportistas_telefonos")
 }
 
 // =============================================================================

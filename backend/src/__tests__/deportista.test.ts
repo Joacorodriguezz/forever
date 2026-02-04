@@ -22,17 +22,7 @@ jest.mock('../config/prisma', () => {
       create: jest.fn(),
       update: jest.fn(),
     },
-    telefono: {
-      create: jest.fn(),
-    },
-    deportistaTelefono: {
-      create: jest.fn(),
-      deleteMany: jest.fn(),
-    },
-    deportistaEnfermedad: {
-      create: jest.fn(),
-      deleteMany: jest.fn(),
-    },
+
     pago: {
       findMany: jest.fn(),
     },
@@ -147,6 +137,108 @@ describe('Deportista Module', () => {
 
       expect(response.status).toBe(400);
     });
+
+    it('deberia retornar 201 y crear deportista exitosamente', async () => {
+      // Mock findUnique for correct routing
+      (mockPrisma.cuentaUsuario.findUnique as jest.Mock).mockImplementation((args) => {
+        if (args.where.email === deportistaData.email) return Promise.resolve(null); // Check email unique
+        if (args.where.id === 1) return Promise.resolve(adminUser); // Admin
+        return Promise.resolve(null);
+      });
+      (mockPrisma.deportista.findUnique as jest.Mock).mockResolvedValue(null); // DNI no existe
+
+      // Mock transaction
+      (mockPrisma.$transaction as jest.Mock).mockImplementation(async (cb) => cb(mockPrisma));
+
+      const createdDeportista = {
+        id: 1,
+        ...deportistaData,
+        fechaNac: new Date(deportistaData.fechaNac),
+        cuentaId: 3,
+        domicilioId: 1,
+        estado: EstadoDeportista.AL_DIA,
+        telefonos: '12345678,87654321',
+        enfermedades: 'Gripe,Alergia',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        disciplina: { nombre: 'Futbol' },
+        cuenta: { email: deportistaData.email, rol: Rol.DEPORTISTA, activo: true, createdAt: new Date() },
+        domicilio: { ...deportistaData.domicilio, localidad: { nombre: 'Ciudad' } },
+      };
+
+      (mockPrisma.domicilio.create as jest.Mock).mockResolvedValue({ id: 1, ...deportistaData.domicilio });
+      (mockPrisma.cuentaUsuario.create as jest.Mock).mockResolvedValue({ id: 3, email: deportistaData.email, rol: Rol.DEPORTISTA });
+      (mockPrisma.deportista.create as jest.Mock).mockResolvedValue(createdDeportista);
+      (mockPrisma.deportista.findUnique as jest.Mock)
+        .mockResolvedValueOnce(null) // Check DNI
+        .mockResolvedValueOnce(createdDeportista); // Return created
+
+      const response = await request(app)
+        .post('/api/deportistas')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          ...deportistaData,
+          telefonos: '12345678,87654321', // Example string input for telefonos
+          enfermedades: 'Gripe,Alergia',  // Example string input for enfermedades
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.nombre).toBe(deportistaData.nombre);
+      expect(response.body.data.telefonos).toBe('12345678,87654321');
+      expect(response.body.data.enfermedades).toBe('Gripe,Alergia');
+    });
+  });
+
+  describe('PUT /api/deportistas/:id', () => {
+    const updateData = {
+      nombre: 'Juan Actualizado',
+      telefonos: '99999999',
+      enfermedades: 'Ninguna',
+    };
+
+    it('deberia retornar 200 y actualizar deportista correctamente', async () => {
+      (mockPrisma.cuentaUsuario.findUnique as jest.Mock).mockResolvedValue(adminUser);
+
+      const existingDeportista = {
+        id: 1,
+        domicilioId: 1,
+        nombre: 'Juan',
+        telefonos: '111111',
+        enfermedades: 'Asma',
+      };
+
+      (mockPrisma.deportista.findUnique as jest.Mock)
+        .mockResolvedValueOnce(existingDeportista) // Check existence
+        .mockResolvedValueOnce({ ...existingDeportista, ...updateData, disciplina: {}, cuenta: {}, domicilio: {} }); // Return updated
+
+      (mockPrisma.$transaction as jest.Mock).mockImplementation(async (cb) => cb(mockPrisma));
+      (mockPrisma.deportista.update as jest.Mock).mockResolvedValue({ ...existingDeportista, ...updateData });
+
+      const response = await request(app)
+        .put('/api/deportistas/1')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send(updateData);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.nombre).toBe(updateData.nombre);
+      expect(response.body.data.telefonos).toBe(updateData.telefonos);
+      expect(response.body.data.enfermedades).toBe(updateData.enfermedades);
+    });
+
+    it('deberia retornar 404 si el deportista no existe', async () => {
+      (mockPrisma.cuentaUsuario.findUnique as jest.Mock).mockResolvedValue(adminUser);
+      (mockPrisma.deportista.findUnique as jest.Mock).mockResolvedValue(null);
+
+      const response = await request(app)
+        .put('/api/deportistas/999')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send(updateData);
+
+      expect(response.status).toBe(404);
+    });
+
   });
 
   describe('GET /api/deportistas', () => {
@@ -186,8 +278,8 @@ describe('Deportista Module', () => {
         disciplina: { nombre: 'Futbol' },
         cuenta: { email: 'juan@test.com' },
         domicilio: { calle: 'Calle 123', localidad: { nombre: 'Ciudad' } },
-        telefonos: [],
-        enfermedades: [],
+        telefonos: null,
+        enfermedades: null,
       });
 
       const response = await request(app)
@@ -272,3 +364,4 @@ describe('Deportista Module', () => {
     });
   });
 });
+

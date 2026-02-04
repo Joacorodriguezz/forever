@@ -56,8 +56,8 @@ export interface CreateDeportistaDTO {
   email: string;
   password: string;
   domicilio: CreateDomicilioDTO;
-  telefonos?: string[];
-  enfermedadIds?: number[];
+  telefonos?: string;
+  enfermedades?: string;
 }
 
 export interface UpdateDeportistaDTO {
@@ -68,8 +68,8 @@ export interface UpdateDeportistaDTO {
   obraSocial?: string;
   disciplinaId?: number;
   domicilio?: Partial<CreateDomicilioDTO>;
-  telefonos?: string[];
-  enfermedadIds?: number[];
+  telefonos?: string;
+  enfermedades?: string;
 }
 
 // =============================================================================
@@ -156,11 +156,4 @@ export interface CreateLocalidadDTO {
   nombre: string;
 }
 
-// =============================================================================
-// ENFERMEDAD DTOs
-// =============================================================================
 
-export interface CreateEnfermedadDTO {
-  nombre: string;
-  descripcion?: string;
-}

@@ -64,35 +64,10 @@ export class DeportistaService {
           disciplinaId: data.disciplinaId,
           cuentaId: cuenta.id,
           domicilioId: domicilio.id,
+          telefonos: data.telefonos,
+          enfermedades: data.enfermedades,
         },
       });
-
-      // Crear teléfonos
-      if (data.telefonos && data.telefonos.length > 0) {
-        for (const numero of data.telefonos) {
-          const telefono = await tx.telefono.create({
-            data: { numero },
-          });
-          await tx.deportistaTelefono.create({
-            data: {
-              deportistaId: nuevoDeportista.id,
-              telefonoId: telefono.id,
-            },
-          });
-        }
-      }
-
-      // Asociar enfermedades
-      if (data.enfermedadIds && data.enfermedadIds.length > 0) {
-        for (const enfermedadId of data.enfermedadIds) {
-          await tx.deportistaEnfermedad.create({
-            data: {
-              deportistaId: nuevoDeportista.id,
-              enfermedadId,
-            },
-          });
-        }
-      }
 
       return nuevoDeportista;
     });
@@ -116,12 +91,6 @@ export class DeportistaService {
         },
         domicilio: {
           include: { localidad: true },
-        },
-        telefonos: {
-          include: { telefono: true },
-        },
-        enfermedades: {
-          include: { enfermedad: true },
         },
       },
     });
@@ -201,6 +170,8 @@ export class DeportistaService {
           categoria: data.categoria,
           obraSocial: data.obraSocial,
           disciplinaId: data.disciplinaId,
+          telefonos: data.telefonos,
+          enfermedades: data.enfermedades,
         },
       });
 
@@ -210,41 +181,6 @@ export class DeportistaService {
           where: { id: deportista.domicilioId },
           data: data.domicilio,
         });
-      }
-
-      // Actualizar teléfonos si se proporcionan
-      if (data.telefonos) {
-        await tx.deportistaTelefono.deleteMany({
-          where: { deportistaId: id },
-        });
-
-        for (const numero of data.telefonos) {
-          const telefono = await tx.telefono.create({
-            data: { numero },
-          });
-          await tx.deportistaTelefono.create({
-            data: {
-              deportistaId: id,
-              telefonoId: telefono.id,
-            },
-          });
-        }
-      }
-
-      // Actualizar enfermedades si se proporcionan
-      if (data.enfermedadIds) {
-        await tx.deportistaEnfermedad.deleteMany({
-          where: { deportistaId: id },
-        });
-
-        for (const enfermedadId of data.enfermedadIds) {
-          await tx.deportistaEnfermedad.create({
-            data: {
-              deportistaId: id,
-              enfermedadId,
-            },
-          });
-        }
       }
     });
 

@@ -20,9 +20,6 @@ export class UserService {
             domicilio: {
               include: { localidad: true },
             },
-            telefonos: {
-              include: { telefono: true },
-            },
           },
         },
         administrativo: true,
@@ -78,21 +75,9 @@ export class UserService {
 
     // Si hay teléfono y es deportista, actualizar
     if (data.telefono && updatedCuenta.deportista) {
-      // Eliminar teléfonos anteriores
-      await prisma.deportistaTelefono.deleteMany({
-        where: { deportistaId: updatedCuenta.deportista.id },
-      });
-
-      // Crear nuevo teléfono
-      const telefono = await prisma.telefono.create({
-        data: { numero: data.telefono },
-      });
-
-      await prisma.deportistaTelefono.create({
-        data: {
-          deportistaId: updatedCuenta.deportista.id,
-          telefonoId: telefono.id,
-        },
+      await prisma.deportista.update({
+        where: { id: updatedCuenta.deportista.id },
+        data: { telefonos: data.telefono },
       });
     }
 

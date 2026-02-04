@@ -33,8 +33,8 @@ export const createDeportistaSchema = z.object({
     .min(8, 'La contrasena debe tener al menos 8 caracteres')
     .regex(/[A-Z]/, 'La contrasena debe tener al menos una mayuscula'),
   domicilio: domicilioSchema,
-  telefonos: z.array(z.string()).optional(),
-  enfermedadIds: z.array(z.number().int().positive()).optional(),
+  telefonos: z.string().optional(),
+  enfermedades: z.string().optional(),
 });
 
 export const updateDeportistaSchema = z.object({
@@ -45,8 +45,8 @@ export const updateDeportistaSchema = z.object({
   obraSocial: z.string().optional(),
   disciplinaId: z.number().int().positive().optional(),
   domicilio: domicilioSchema.partial().optional(),
-  telefonos: z.array(z.string()).optional(),
-  enfermedadIds: z.array(z.number().int().positive()).optional(),
+  telefonos: z.string().optional(),
+  enfermedades: z.string().optional(),
 });
 
 export const deportistasQuerySchema = z.object({
