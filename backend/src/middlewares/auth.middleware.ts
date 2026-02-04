@@ -1,15 +1,15 @@
-import { Request,  Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { Role } from '../types/user';
 
 declare global {
     namespace Express {
         interface Request {
-            user?:{
+            user?: {
                 id: number;
-                email: string;
-                role: 'SOCIO' | 'ADMIN'| 'ADMINISTRATIVO';
-                socioId?: number | null;
+                mail: string;
+                role: 'DEPORTISTA' | 'ADMIN' | 'ADMINISTRATIVO';
+                deportistaId?: number | null;
             }
         }
     }
@@ -26,16 +26,16 @@ export function authenticate(req: Request, res: Response, next: NextFunction) {
         const decoded = jwt.verify(token, secret) as any;
         req.user = {
             id: decoded.id,
-            email: decoded.email,
+            mail: decoded.mail,
             role: decoded.role,
-            socioId: decoded.socioId ?? null,
+            deportistaId: decoded.deportistaId ?? null,
         };
         next();
-    }catch (error: any) {
+    } catch (error: any) {
         console.error('Error en autenticación:', error);
         if (error.name === 'TokenExpiredError') {
             return res.status(401).json({ success: false, message: 'Token expirado' });
-        } 
+        }
         res.status(401).json({ success: false, message: 'Token inválido' });
     }
 }

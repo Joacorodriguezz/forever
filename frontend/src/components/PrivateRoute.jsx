@@ -1,29 +1,29 @@
+import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { isAuthenticated, getToken, parseJWT } from '../helpers/auth';
 
 export function PrivateRoute({ children, allowedRoles = [] }) {
-  const { isAuthenticated, loading, user, hasRole } = useAuth();
-
-  if (loading) return <div style={{ padding: 16 }}>Verificando autorización…</div>;
-
-  if (!isAuthenticated || !user) {
+  // Verificar si está autenticado
+  if (!isAuthenticated()) {
     return <Navigate to="/" replace />;
   }
 
-  if (!allowedRoles.length) {
-    return children;
+  // Verificar roles si se especifican
+  if (allowedRoles.length > 0) {
+    const token = getToken();
+    const userData = parseJWT(token);
+    const userRole = userData?.role || userData?.rol;
+
+    if (!userRole || !allowedRoles.map(r => r.toUpperCase()).includes(userRole.toUpperCase())) {
+      // Redirigir según el rol del usuario
+      if (userRole === 'DEPORTISTA') {
+        return <Navigate to="/inicioDeportista" replace />;
+      } else if (['ADMIN', 'ADMINISTRATIVO'].includes(userRole)) {
+        return <Navigate to="/inicio" replace />;
+      }
+      return <Navigate to="/" replace />;
+    }
   }
 
-  const permitido = hasRole(allowedRoles);
-  if (permitido) return children;
-
-  switch ((user.rol || user.role)) {
-    case 'SOCIO':
-      return <Navigate to="/inicioSocio" replace />;
-    case 'ADMINISTRATIVO':
-    case 'ADMIN':
-      return <Navigate to="/inicio" replace />;
-    default:
-      return <Navigate to="/inicio" replace />;
-  }
+  return children;
 }

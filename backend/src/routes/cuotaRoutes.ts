@@ -9,20 +9,20 @@ import { upload } from '../middlewares/comprobantes.middleware';
 const router = Router();
 
 
-// SOCIO
+// DEPORTISTA
 
 router.get(
-  "/socio",
+  "/deportista",
   authenticate,
-  authorize("SOCIO"),
+  authorize("DEPORTISTA"),
   validateSafe(cuotaValidation.getCuotasSocioSchema),
-  cuotaController.getCuotasSocio
+  cuotaController.getCuotasDeportista
 );
 
 router.post(
-  "/socio/:cuotaId/comprobante",
+  "/deportista/:cuotaId/comprobante",
   authenticate,
-  authorize("SOCIO"),
+  authorize("DEPORTISTA"),
   upload.single("comprobante"),
   validate(cuotaValidation.sendComprobanteSchema),
   cuotaController.enviarComprobante

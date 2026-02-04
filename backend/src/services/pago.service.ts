@@ -1,10 +1,9 @@
 import prisma from '../config/prisma';
-import { estado_cuota, FormaDePago } from '@prisma/client';
 
 // CU08 - Pagar Cuota
 export interface PagarCuotaRequest {
   cuotaId: number;
-  medioDePago: FormaDePago;
+  medioDePago: string; // Changed from enum to string to match schema
 }
 
 export interface PagarCuotaResponse {
@@ -17,47 +16,56 @@ export interface PagarCuotaResponse {
 
 export async function pagarCuota(
   cuotaId: number,
-  medioDePago: FormaDePago,
-  socioId: number
+  medioDePago: string,
+  deportistaId: number
 ): Promise<PagarCuotaResponse> {
-  // Validar que la cuota existe y pertenece al socio
+  // Validar que la cuota existe y pertenece al deportista
   const cuota = await prisma.cuota.findUnique({
-    where: { id: cuotaId },
-    include: { Socio: true },
+    where: { id_cuota: cuotaId },
+    include: {
+      deportista: true,
+      disciplina: true
+    },
   });
 
   if (!cuota) {
     throw new Error('Cuota no encontrada');
   }
 
-  if (cuota.socio_id !== socioId) {
+  if (cuota.deportista_id !== deportistaId) {
     throw new Error('La cuota no pertenece al usuario autenticado');
   }
 
-  if (cuota.estado !== estado_cuota.PENDIENTE && cuota.estado !== estado_cuota.VENCIDA) {
+  // Validar estado de la cuota
+  if (cuota.estadoCuota !== 'PENDIENTE' && cuota.estadoCuota !== 'VENCIDA') {
     throw new Error('Solo se pueden pagar cuotas pendientes o vencidas');
   }
 
   // Validar disponibilidad del medio de pago
-  if (![FormaDePago.EFECTIVO, FormaDePago.CBU].includes(medioDePago)) {
+  const mediosValidos = ['EFECTIVO', 'CBU', 'TRANSFERENCIA', 'TARJETA'];
+  if (!mediosValidos.includes(medioDePago.toUpperCase())) {
     throw new Error('Medio de pago no disponible');
   }
 
-  // Simular procesamiento de pago (aquí se integraría con proveedor externo)
-  // Por ahora, solo actualizamos el estado
   const fechaPago = new Date();
 
-  await prisma.cuota.update({
-    where: { id: cuotaId },
+  // Crear registro de pago
+  const pago = await prisma.pago.create({
     data: {
-      estado: estado_cuota.PAGADA,
-      fecha_pago: fechaPago,
-      metodo_pago: medioDePago,
+      fechaPago: fechaPago,
+      estadoPago: 'APROBADO',
+      id_cuota: cuotaId,
+      id_deportista: deportistaId,
     },
   });
 
-  // Aquí se podría llamar a CU09 - Enviar Notificación
-  // await enviarNotificacionPago(cuotaId, cuota.Socio.email);
+  // Actualizar estado de la cuota
+  await prisma.cuota.update({
+    where: { id_cuota: cuotaId },
+    data: {
+      estadoCuota: 'PAGADA',
+    },
+  });
 
   return {
     success: true,
@@ -67,4 +75,3 @@ export async function pagarCuota(
     monto: Number(cuota.monto),
   };
 }
-

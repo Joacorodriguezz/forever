@@ -10,7 +10,7 @@ const router = Router();
 router.post(
   '/',
   authenticate,
-  authorize('SOCIO'),
+  authorize('DEPORTISTA'),
   validate(PagarCuotaSchema),
   pagoController.pagarCuota
 );

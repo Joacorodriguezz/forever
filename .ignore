@@ -1,0 +1,5 @@
+# Archivos sensibles - Claude Code no los leera
+.env
+.env.*
+*.key
+secrets/*

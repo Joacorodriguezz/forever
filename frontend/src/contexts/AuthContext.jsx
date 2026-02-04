@@ -10,7 +10,7 @@ export function AuthProvider({ children }) {
   const normalizeRole = (rol) => {
     if (!rol) return null;
     const r = rol.toString().toUpperCase();
-    if (['ADMIN', 'ADMINISTRATIVO', 'SOCIO'].includes(r)) return r;
+    if (['ADMIN', 'ADMINISTRATIVO', 'DEPORTISTA'].includes(r)) return r;
     return null;
   };
 
@@ -29,7 +29,7 @@ export function AuthProvider({ children }) {
 
     const usuario = getUser();
     if (usuario) {
-      const rol = normalizeRole(usuario.role || usuario.rol || (usuario.isAdmin ? 'ADMIN' : 'SOCIO'));
+      const rol = normalizeRole(usuario.role || usuario.rol || (usuario.isAdmin ? 'ADMIN' : 'DEPORTISTA'));
       setUser({ ...usuario, rol });
     } else {
       setUser(null);

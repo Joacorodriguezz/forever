@@ -3,6 +3,7 @@ import { Form, Button, Row, Col, Image, Alert } from 'react-bootstrap';
 import Header from '../components/Header';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import '../styles/Auth.css';
 
 const paisesLatam = [
   { value: "ARGENTINA", label: "Argentina" },
@@ -98,8 +99,13 @@ function ModificarDatos() {
 
     const token = localStorage.getItem("token");
     const usuario = JSON.parse(localStorage.getItem("usuario"));
-    const formData = new FormData();
 
+    if (!usuario?.id) {
+      alert("Error: No se encontró el ID del usuario");
+      return;
+    }
+
+    const formData = new FormData();
     formData.append("email", form.email);
 
     if (role === "SOCIO") {
@@ -121,6 +127,7 @@ function ModificarDatos() {
     }
 
     try {
+      // FIX: Usar SIEMPRE /api/users/:id que acepta FormData completo
       const response = await axios.put(
         `${import.meta.env.VITE_API_URL}/api/users/${usuario.id}`,
         formData,
@@ -143,11 +150,13 @@ function ModificarDatos() {
       }
 
       setFotoPreview(null);
-      alert("Datos guardados correctamente");
-      navigate("/inicio");
+      window.dispatchEvent(new Event('profileUpdated'));
+      alert("✅ Datos guardados correctamente");
+      navigate(role === "SOCIO" ? "/inicioSocio" : "/inicio");
     } catch (err) {
       console.error("❌ Error al actualizar usuario:", err);
-      alert("Error al guardar los cambios.");
+      const errorMsg = err.response?.data?.message || "Error al guardar los cambios";
+      alert(`❌ ${errorMsg}`);
     }
   };
 

@@ -7,8 +7,8 @@ export type EstadoCuota = $Enums.estado_cuota; // 'PENDIENTE' | 'VENCIDA' | 'PAG
 
 // ---------------- DTOs POR ROL ----------------
 
-// ---- SOCIO ----
-export interface CuotaSocioDTO {
+// ---- DEPORTISTA ----
+export interface CuotaDeportistaDTO {
   id: number;
   mes: Mes;
   monto: number;
@@ -22,7 +22,7 @@ export interface CuotaSocioDTO {
 // ---- ADMINISTRATIVO ----
 export interface CuotaAdministrativoDTO {
   id: number;
-  socioNombre: string;
+  deportistaNombre: string;
   dni?: number;
   mes: Mes;
   monto: number;
@@ -36,16 +36,16 @@ export interface CuotaAdministrativoDTO {
 
 // ---- ADMINISTRADOR ----
 export interface CuotaAdminDTO extends CuotaAdministrativoDTO {
-  socioId: number;
+  deportistaId: number;
   creadoEn?: string;
   ultimaModificacion?: string;
 }
 
 // ---------------- REQUESTS / RESPONSES ----------------
 
-// ------- SOCIO -------
-export interface GetCuotasSocioResponse {
-  cuotas: CuotaSocioDTO[];
+// ------- DEPORTISTA -------
+export interface GetCuotasDeportistaResponse {
+  cuotas: CuotaDeportistaDTO[];
 }
 
 export interface EnviarComprobanteRequest {
@@ -101,21 +101,21 @@ export type DetalleCuota = {
 };
 
 export interface PreviewItem {
-  socioId: number;
+  deportistaId: number;
   total: number;
   detalle: DetalleCuota[];
 }
 
 export interface GenerarCuotasResponse {
-  processedSocios: number;
+  processedDeportistas: number;
   created: number;
   updated: number;
   skips: number;
   previewItems?: PreviewItem[];
 }
 
-export interface UpsertPorSocioResult {
-  socioId: number;
+export interface UpsertPorDeportistaResult {
+  deportistaId: number;
   created: boolean;
   updated: boolean;
   skipped?: boolean;
@@ -124,7 +124,7 @@ export interface UpsertPorSocioResult {
 // ------- COMPROBANTE (ADMIN / ADMINISTRATIVO) -------
 export interface GetComprobanteDetalleResponse {
   id: number;              // ID de la cuota
-  socioNombre: string;     // Nombre completo del socio
+  deportistaNombre: string;     // Nombre completo del deportista
   mes: Mes;                // Mes de la cuota
   monto: number;           // Importe
   estado: EstadoCuota;     // Estado actual

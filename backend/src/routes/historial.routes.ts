@@ -8,7 +8,7 @@ const router = Router();
 router.get(
   '/',
   authenticate,
-  authorize('SOCIO'),
+  authorize('DEPORTISTA'),
   historialController.getHistorial
 );
 

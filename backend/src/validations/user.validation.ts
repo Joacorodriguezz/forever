@@ -1,8 +1,10 @@
 import { z } from 'zod';
 
-const roleEnum = z.enum(['ADMIN', 'ADMINISTRATIVO', 'SOCIO']);
+const roleEnum = z.enum(['ADMIN', 'ADMINISTRATIVO', 'DEPORTISTA']);
 
-const socioSchema = z.object({
+const estadoDeportistaEnum = z.enum(['AL_DIA', 'EN_DEUDA', 'MOROSA', 'INACTIVA']);
+
+const deportistaSchema = z.object({
   nombre: z.string().min(2, { message: "El nombre debe tener al menos 2 caracteres" }),
   apellido: z.string().min(2, { message: "El apellido debe tener al menos 2 caracteres" }),
   dni: z.coerce.number().int().positive().refine(val => val.toString().length === 8, {
@@ -12,14 +14,17 @@ const socioSchema = z.object({
     (val) => !isNaN(val.getTime()),
     { message: "La fecha de nacimiento no es válida" }
   ),
-  pais: z.enum(["ARGENTINA", "BOLIVIA", "BRASIL", "CHILE", "COLOMBIA", "COSTA_RICA", "CUBA", "ECUADOR", "EL_SALVADOR", "GUATEMALA", "HONDURAS", "MEXICO", "NICARAGUA", "PANAMA", "PARAGUAY", "PERU", "REPUBLICA_DOMINICANA", "URUGUAY", "VENEZUELA"]),
-  sexo: z.enum(["MASCULINO", "FEMENINO", "OTRO"]),
+  categoria: z.string().min(1, { message: "La categoría es obligatoria" }),
+  obraSocial: z.string().min(1, { message: "La obra social es obligatoria" }),
+  id_disciplina: z.number().int().positive({ message: "Debe seleccionar una disciplina" }),
+  id_domicilio: z.number().int().positive().optional(),
+  sexo: z.string().optional().nullable(),
   fotoCarnet: z.string().optional().nullable(),
-  estado: z.enum(["ACTIVO", "INACTIVO"]).optional(), // 👈 nuevo
+  estado: estadoDeportistaEnum.optional(),
 });
 
-const socioUpdateSchema = socioSchema.partial().extend({
-  estado: z.enum(["ACTIVO", "INACTIVO"]).optional(),
+const deportistaUpdateSchema = deportistaSchema.partial().extend({
+  estado: estadoDeportistaEnum.optional(),
 });
 
 const administrativoSchema = z.object({
@@ -28,65 +33,48 @@ const administrativoSchema = z.object({
   dni: z.coerce.number().int().positive().refine(val => val.toString().length === 8, {
     message: 'El DNI debe tener exactamente 8 dígitos',
   }),
-  activo: z.boolean().optional(),
 });
 
 const administrativoUpdateSchema = administrativoSchema.partial();
 
 export const UpdateUserSchema = z.object({
-  email: z.email("Email inválido").trim().optional(),
-  password: z
+  mail: z.string().email("Email inválido").trim().optional(),
+  contrasena: z
     .string()
     .min(8, "Mínimo 8 caracteres")
     .regex(/[A-Z]/, "Debe contener al menos una mayúscula")
     .regex(/[0-9]/, "Debe contener al menos un número")
     .optional(),
-  role: roleEnum.optional(),
-  socio: socioUpdateSchema.optional(),
+  deportista: deportistaUpdateSchema.optional(),
   administrativo: administrativoUpdateSchema.optional(),
-}).superRefine((data, ctx) => {
-  if (data.role === "SOCIO" && !data.socio) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["socio"],
-      message: "Los datos de socio son obligatorios cuando el rol es SOCIO",
-    });
-  }
-  if (data.role === "ADMINISTRATIVO" && !data.administrativo) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["administrativo"],
-      message: "Los datos de administrativo son obligatorios cuando el rol es ADMINISTRATIVO",
-    });
-  }
 });
 
 export const RegisterSchema = z.object({
-  email: z.string().email('Ingrese un email válido').trim(),
-  password: z
+  mail: z.string().email('Ingrese un email válido').trim(),
+  contrasena: z
     .string()
     .min(8, 'La contraseña debe tener al menos 8 caracteres')
     .regex(/[A-Z]/, 'Debe tener mínimo 8 caracteres y al menos una mayúscula'),
   role: roleEnum,
-  socio: socioSchema.optional(),
+  deportista: deportistaSchema.optional(),
   administrativo: administrativoSchema.optional(),
 }).superRefine((data, ctx) => {
   // Validar nombre no vacío
-  if (data.role === 'SOCIO' && data.socio) {
-    if (!data.socio.nombre || data.socio.nombre.trim().length === 0) {
+  if (data.role === 'DEPORTISTA' && data.deportista) {
+    if (!data.deportista.nombre || data.deportista.nombre.trim().length === 0) {
       ctx.addIssue({
         code: 'custom',
-        path: ['socio', 'nombre'],
+        path: ['deportista', 'nombre'],
         message: 'Complete todos los campos obligatorios',
       });
     }
   }
-  
-  if (data.role === 'SOCIO' && !data.socio) {
+
+  if (data.role === 'DEPORTISTA' && !data.deportista) {
     ctx.addIssue({
       code: 'custom',
-      path: ['socio'],
-      message: 'Los datos de socio son obligatorios',
+      path: ['deportista'],
+      message: 'Los datos de deportista son obligatorios',
     });
   }
   if (data.role === 'ADMINISTRATIVO' && !data.administrativo) {
@@ -96,7 +84,6 @@ export const RegisterSchema = z.object({
       message: 'Los datos de administrativo son obligatorios',
     });
   }
-  
+
   // Validar unicidad de DNI y email (se validará en el servicio)
 });
-

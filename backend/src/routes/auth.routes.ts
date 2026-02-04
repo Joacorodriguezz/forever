@@ -13,8 +13,6 @@ router.post('/login',
 );
 
 router.post('/register', 
-  authenticate,
-  authorize('ADMIN'),
   validate(RegisterSchema), 
   authController.register
 );

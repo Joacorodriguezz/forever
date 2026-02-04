@@ -23,10 +23,10 @@ router.get(
 );
 
 router.get(
-  "/socios",
+  "/deportistas",
   authenticate,
-  authorize('ADMIN', 'ADMINISTRATIVO'), 
-  userController.getSocios
+  authorize('ADMIN', 'ADMINISTRATIVO'),
+  userController.getDeportistas
 );
 
 // CU16 - Consultar Perfil

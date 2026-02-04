@@ -10,7 +10,7 @@ import { handleError } from './middlewares/error.middleware';
 import { logRequest } from './middlewares/logger.middleware';
 
 // Rutas de dominio
-import socioRoutes from './routes/socioRoutes';
+import deportistaRoutes from './routes/deportistaRoutes';
 import { cuotaRoutes } from './routes/cuotaRoutes';
 import { comprobanteRoutes } from './routes/comprobante.routes';
 
@@ -21,6 +21,7 @@ import { reporteRoutes } from './routes/reporte.routes';
 import { historialRoutes } from './routes/historial.routes';
 import { pagoRoutes } from './routes/pago.routes';
 import { grupoFamiliarRoutes } from './routes/grupoFamiliar.routes';
+import { webhookRoutes } from './routes/webhook.routes';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -53,7 +54,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(logRequest);
 app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
-app.use('/api/socios', socioRoutes);
+app.use('/api/deportistas', deportistaRoutes);
 app.use('/api/cuotas', cuotaRoutes);
 app.use('/api/cuotas', comprobanteRoutes);
 app.use('/api/auth', authRoutes);
@@ -62,6 +63,7 @@ app.use('/api/reportes', reporteRoutes);
 app.use('/api/historial', historialRoutes);
 app.use('/api/pagos', pagoRoutes);
 app.use('/api/grupos-familiares', grupoFamiliarRoutes);
+app.use('/api/webhooks', webhookRoutes);
 app.use(handleError);
 
 app.listen(PORT, () => {

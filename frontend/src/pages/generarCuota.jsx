@@ -14,7 +14,7 @@ const MESES = [
 const TODAY = new Date().toISOString().slice(0, 10);
 
 const schema = yup.object({
-  actividadId: yup.string().trim().required("Seleccioná una actividad"),
+  actividadId: yup.string().trim().required("Seleccioná una disciplina"),
   montoBase: yup
     .number()
     .typeError("Debe ser un número")
@@ -80,53 +80,42 @@ function CuotasAdmin() {
     if (nuevaFecha) setValue("fechaVenc", nuevaFecha);
   }, [watchMes, setValue, añoActual]);
 
-  // Cargar actividades
+  // Cargar cuotas predefinidas (disciplinas)
   useEffect(() => {
     (async () => {
       try {
         setLoading(true);
-        const { data } = await api.get("/api/actividades");
-        const lista = Array.isArray(data?.actividades)
-          ? data.actividades
+        const { data } = await api.get("/api/cuotas/predefinidas");
+        const lista = Array.isArray(data?.predefinidas)
+          ? data.predefinidas
           : Array.isArray(data)
           ? data
           : [];
-        setActividades(lista.filter((a) => a?.activo !== false));
+        // Mapear predefinidas a formato de actividades para compatibilidad
+        setActividades(lista.map((p) => ({
+          id: p.disciplinaId || p.id,
+          nombre: p.disciplinaNombre || p.nombre,
+          monto: p.precioMensual || p.monto,
+          activo: true,
+        })));
       } catch (err) {
         console.error(err);
-        alert("No se pudieron cargar las actividades.");
+        alert("No se pudieron cargar las disciplinas/cuotas predefinidas.");
       } finally {
         setLoading(false);
       }
     })();
   }, []);
 
-  // Cargar socios de la actividad seleccionada
+  // No cargar socios por actividad - esto se maneja en el backend
   useEffect(() => {
     if (!watchActividadId) {
       setSocios([]);
       setPreview([]);
       return;
     }
-    (async () => {
-      try {
-        setLoading(true);
-        const { data } = await api.get(
-          "/api/actividadSocio/actividad/" + String(watchActividadId)
-        );
-        const arr = Array.isArray(data?.actividadSocios)
-          ? data.actividadSocios
-          : Array.isArray(data)
-          ? data
-          : [];
-        setSocios(arr);
-      } catch (e) {
-        console.error(e);
-        alert("No se pudieron cargar los socios de la actividad.");
-      } finally {
-        setLoading(false);
-      }
-    })();
+    // Los socios se obtienen automáticamente en el backend al generar cuotas
+    setSocios([]);
   }, [watchActividadId]);
 
   // Previsualizar
@@ -138,10 +127,9 @@ function CuotasAdmin() {
     try {
       setLoading(true);
       const { data } = await api.post("/api/cuotas/admin/generar", {
-        actividadId: Number(values.actividadId),
+        actividadId: Number(values.actividadId), // El backend aún usa actividadId
         mes: values.mes,
         montoBase: Number(values.montoBase || 0),
-        fechaVencimiento: values.fechaVenc,
         preview: true,
       });
 
@@ -160,7 +148,7 @@ function CuotasAdmin() {
     try {
       setLoading(true);
       const { data } = await api.post("/api/cuotas/admin/generar", {
-        actividadId: Number(watchActividadId || 0),
+        actividadId: Number(watchActividadId || 0), // El backend aún usa actividadId
         mes: watchMes,
         montoBase: Number(watch("montoBase") || 0),
         preview: false,
@@ -182,11 +170,8 @@ function CuotasAdmin() {
   };
 
   const getSocioApellidoNombre = (id) => {
-    const item = socios.find(
-      (s) => String(s?.socio?.id ?? s?.Socio?.id) === String(id)
-    );
-    const data = item?.socio || item?.Socio;
-    return data ? `${data.apellido} ${data.nombre}` : `Socio #${id}`;
+    // El backend retorna socioNombre en el preview
+    return `Socio #${id}`;
   };
 
   return (
@@ -200,7 +185,7 @@ function CuotasAdmin() {
 
           <form onSubmit={handleSubmit(onPreviewSubmit)} noValidate className="row g-4">
             <div className="col-md-6">
-              <label className="form-label fw-semibold">Actividad</label>
+              <label className="form-label fw-semibold">Disciplina</label>
               <select
                 className={`form-select ${errors.actividadId ? "is-invalid" : ""}`}
                 {...register("actividadId")}
@@ -208,7 +193,7 @@ function CuotasAdmin() {
                   setValue("actividadId", e.target.value, { shouldValidate: true })
                 }
               >
-                <option value="">Seleccionar actividad</option>
+                <option value="">Seleccionar disciplina</option>
                 {actividades.map((a) => (
                   <option key={a.id} value={a.id}>
                     {a.nombre}
@@ -288,7 +273,7 @@ function CuotasAdmin() {
                   <tbody>
                     {preview.map((c, i) => (
                       <tr key={i}>
-                        <td>{getSocioApellidoNombre(c.socioId)}</td>
+                        <td>{c.socioNombre || getSocioApellidoNombre(c.socioId)}</td>
                         <td>{watchMes}</td>
                         <td>${c.total}</td>
                         <td>Pendiente</td>

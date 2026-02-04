@@ -1,5 +1,4 @@
 import prisma from '../config/prisma';
-import { estado_cuota } from '@prisma/client';
 import { GetComprobanteDetalleResponse, UpdateEstadoCuotaRequest, UpdateEstadoCuotaResponse } from '../types/cuota';
 
 const toDDMMYYYY = (d: Date) =>
@@ -8,28 +7,30 @@ const toDDMMYYYY = (d: Date) =>
 
 export async function getCuotaDetalle(id: number): Promise<GetComprobanteDetalleResponse> {
   const cuota = await prisma.cuota.findUnique({
-    where: { id },
+    where: { id_cuota: id },
     include: {
-      Socio: { select: { nombre: true, apellido: true } },
-      comprobantes: { where: { activo: true }, select: { url: true, subido_en: true } },
+      deportista: {
+        select: {
+          nombre: true,
+          apellido: true
+        }
+      },
+      disciplina: {
+        select: {
+          nombre: true
+        }
+      }
     },
   });
 
   if (!cuota) throw new Error('Cuota no encontrada');
 
-  const comprobanteUrl = cuota.comprobantes?.[0]?.url;
-
   return {
-    id: cuota.id,
-    socioNombre: `${cuota.Socio.nombre} ${cuota.Socio.apellido}`,
-    mes: cuota.mes!,
+    id: cuota.id_cuota,
+    socioNombre: `${cuota.deportista.nombre} ${cuota.deportista.apellido}`,
+    mes: cuota.mes || '',
     monto: Number(cuota.monto),
-    estado: cuota.estado,
-    comprobanteUrl,
-    fechaCarga: comprobanteUrl
-      ? toDDMMYYYY(cuota.comprobantes![0].subido_en)
-      : undefined,
-    ...(comprobanteUrl ? {} : { message: 'Comprobante no cargado' }),
+    estado: cuota.estadoCuota,
   };
 }
 
@@ -38,23 +39,23 @@ export async function updateEstadoCuota(
   body: UpdateEstadoCuotaRequest,
   adminName: string
 ): Promise<UpdateEstadoCuotaResponse> {
-  const cuota = await prisma.cuota.findUnique({ where: { id } });
+  const cuota = await prisma.cuota.findUnique({ where: { id_cuota: id } });
   if (!cuota) throw new Error('Cuota no encontrada');
 
   const nuevoEstado =
     body.estado === 'Aprobada'
-      ? estado_cuota.PAGADA
-      : estado_cuota.PENDIENTE;
+      ? 'PAGADA'
+      : 'PENDIENTE';
 
-  const yaEstaba = cuota.estado === nuevoEstado;
+  const yaEstaba = cuota.estadoCuota === nuevoEstado;
 
   await prisma.cuota.update({
-    where: { id },
-    data: { estado: nuevoEstado },
+    where: { id_cuota: id },
+    data: { estadoCuota: nuevoEstado },
   });
 
   return {
-    id: cuota.id,
+    id: cuota.id_cuota,
     estado: body.estado,
     fechaCambio: toDDMMYYYY(new Date()),
     cambiadoPor: adminName,

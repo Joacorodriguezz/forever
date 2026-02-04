@@ -23,7 +23,7 @@ function Header() {
     const usuarioStr = localStorage.getItem("usuario");
     if (usuarioStr) {
       const usuario = JSON.parse(usuarioStr);
-      const fotoPath = usuario?.socio?.fotoCarnet;
+      const fotoPath = usuario?.deportista?.fotoCarnet;
       setFotoPerfil(fotoPath || logoUniversal);
     } else {
       setFotoPerfil(logoUniversal);
@@ -37,7 +37,7 @@ function Header() {
   }, []);
 
   const handleInicio = () => {
-    if (rol === "SOCIO") navigate("/inicioSocio");
+    if (rol === "DEPORTISTA") navigate("/inicioDeportista");
     else navigate("/inicio");
   };
 
@@ -49,7 +49,7 @@ function Header() {
     navigate("/");
   };
 
-  const enInicio = ["/inicio", "/inicioSocio"].includes(location.pathname);
+  const enInicio = ["/inicio", "/inicioDeportista"].includes(location.pathname);
   const enLogin = location.pathname === "/";
 
   return (
@@ -66,7 +66,7 @@ function Header() {
 
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="ms-auto gap-3 align-items-center">
-            {rol === "SOCIO" && !enLogin && (
+            {rol === "DEPORTISTA" && !enLogin && (
               <>
                 {!enInicio && (
                   <Nav.Link as="span" onClick={handleInicio} style={{ cursor: "pointer" }}>

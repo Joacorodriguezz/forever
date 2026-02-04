@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tree:*)",
+      "Bash(wc:*)",
+      "Bash(npx prisma migrate dev:*)",
+      "Bash(DIRECT_URL=\"postgresql://postgres:c1upwSGK7t6kFm8w@db.ewygzgwdoqedobborkxy.supabase.co:5432/postgres\" npx prisma migrate reset:*)",
+      "Bash(DIRECT_URL=\"postgresql://postgres:c1upwSGK7t6kFm8w@db.ewygzgwdoqedobborkxy.supabase.co:5432/postgres\" PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=\"si\" npx prisma migrate reset:*)",
+      "Bash(DIRECT_URL=\"postgresql://postgres:c1upwSGK7t6kFm8w@db.ewygzgwdoqedobborkxy.supabase.co:5432/postgres\" npx prisma migrate dev:*)",
+      "Bash(DIRECT_URL=\"postgresql://postgres:c1upwSGK7t6kFm8w@db.ewygzgwdoqedobborkxy.supabase.co:5432/postgres\" npx prisma db push:*)",
+      "Bash(npx prisma generate)",
+      "Bash(npm test:*)",
+      "Bash(npx jest src/tests/seed.test.ts --verbose --runInBand)"
+    ]
+  },
+  "mcpServers": {
+    "mercadopago-mcp-server": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://mcp.mercadopago.com/mcp",
+        "--header",
+        "Authorization:${AUTH_HEADER}"
+      ],
+      "env": {
+        "AUTH_HEADER": "Bearer APP_USR-6022253160698826-020307-34d9a278129960764c3f6f4a65e5a7a4-319826687"
+      }
+    }
+  }
+}

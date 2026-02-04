@@ -1,26 +1,23 @@
 export interface Administrativo {
-  id: number;
-  usuarioId: number;
+  id_administrativo: number;
+  id_cuenta: number;
   nombre: string;
   apellido: string;
   dni: number;
-  activo: boolean;
 }
 
 export interface CreateAdministrativoRequest {
-    nombre: string;
-    apellido: string;
-    dni: number;
-    usuarioId: number;
-    activo: boolean;
+  nombre: string;
+  apellido: string;
+  dni: number;
+  id_cuenta: number;
 }
 
-export interface updateAdministrativoRequest { 
-    nombre?: string;
-    apellido?: string;
-    dni?: number;
-    usuarioId: number;
-    activo?: boolean
+export interface UpdateAdministrativoRequest {
+  nombre?: string;
+  apellido?: string;
+  dni?: number;
+  id_cuenta: number;
 }
 
 export interface AdministrativoResponse {

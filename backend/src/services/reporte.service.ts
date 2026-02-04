@@ -1,5 +1,4 @@
 import prisma from '../config/prisma';
-import { estado_cuota } from '@prisma/client';
 
 // CU11 - Generar Reporte de Deportistas
 export interface ReporteDeportista {
@@ -9,7 +8,7 @@ export interface ReporteDeportista {
   dni: number;
   email: string;
   estado: string;
-  actividades: string[];
+  disciplina: string;
   ultimoPago?: string;
   montoAdeudado: number;
   cuotasPendientes: number;
@@ -17,47 +16,55 @@ export interface ReporteDeportista {
 }
 
 export async function generarReporteDeportistas(): Promise<ReporteDeportista[]> {
-  const socios = await prisma.socio.findMany({
-    where: { estado: 'ACTIVO' },
+  const deportistas = await prisma.deportista.findMany({
+    where: {
+      estado: {
+        in: ['AL_DIA', 'EN_DEUDA', 'MOROSA']
+      }
+    },
     include: {
-      usuario: true,
-      actividades: {
-        include: {
-          actividad: {
-            select: { nombre: true },
-          },
-        },
+      cuenta: {
+        select: {
+          mail: true
+        }
       },
-      Cuota: {
+      disciplina: {
+        select: {
+          nombre: true
+        }
+      },
+      cuotas: {
         where: {
-          estado: {
-            in: [estado_cuota.PENDIENTE, estado_cuota.VENCIDA],
+          estadoCuota: {
+            in: ['PENDIENTE', 'VENCIDA'],
           },
         },
-        orderBy: { fecha_vencimiento: 'desc' },
+        orderBy: { fechaVencimiento: 'desc' },
       },
+      pagos: {
+        orderBy: { fechaPago: 'desc' },
+        take: 1,
+      }
     },
   });
 
-  return socios.map((socio) => {
-    const actividades = socio.actividades.map((a) => a.actividad.nombre);
-    const cuotasPendientes = socio.Cuota.filter((c) => c.estado === estado_cuota.PENDIENTE).length;
-    const cuotasVencidas = socio.Cuota.filter((c) => c.estado === estado_cuota.VENCIDA).length;
-    const montoAdeudado = socio.Cuota.reduce((sum, c) => sum + Number(c.monto), 0);
-    
-    const ultimaCuotaPagada = socio.Cuota.find((c) => c.estado === estado_cuota.PAGADA && c.fecha_pago);
-    const ultimoPago = ultimaCuotaPagada?.fecha_pago 
-      ? ultimaCuotaPagada.fecha_pago.toISOString().split('T')[0]
+  return deportistas.map((deportista) => {
+    const cuotasPendientes = deportista.cuotas.filter((c) => c.estadoCuota === 'PENDIENTE').length;
+    const cuotasVencidas = deportista.cuotas.filter((c) => c.estadoCuota === 'VENCIDA').length;
+    const montoAdeudado = deportista.cuotas.reduce((sum, c) => sum + Number(c.monto), 0);
+
+    const ultimoPago = deportista.pagos[0]?.fechaPago
+      ? deportista.pagos[0].fechaPago.toISOString().split('T')[0]
       : undefined;
 
     return {
-      id: socio.id,
-      nombre: socio.nombre,
-      apellido: socio.apellido,
-      dni: socio.dni,
-      email: socio.email,
-      estado: socio.estado,
-      actividades,
+      id: deportista.id_deportista,
+      nombre: deportista.nombre,
+      apellido: deportista.apellido,
+      dni: deportista.dni,
+      email: deportista.cuenta.mail,
+      estado: deportista.estado,
+      disciplina: deportista.disciplina.nombre,
       ultimoPago,
       montoAdeudado,
       cuotasPendientes,
@@ -84,47 +91,53 @@ export interface DeportistaPagoPendiente {
 }
 
 export async function getDeportistasConPagosPendientes(): Promise<DeportistaPagoPendiente[]> {
-  const socios = await prisma.socio.findMany({
+  const deportistas = await prisma.deportista.findMany({
     where: {
-      estado: 'ACTIVO',
-      Cuota: {
+      estado: {
+        in: ['AL_DIA', 'EN_DEUDA', 'MOROSA']
+      },
+      cuotas: {
         some: {
-          estado: {
-            in: [estado_cuota.PENDIENTE, estado_cuota.VENCIDA],
+          estadoCuota: {
+            in: ['PENDIENTE', 'VENCIDA'],
           },
         },
       },
     },
     include: {
-      Cuota: {
+      cuenta: {
+        select: {
+          mail: true
+        }
+      },
+      cuotas: {
         where: {
-          estado: {
-            in: [estado_cuota.PENDIENTE, estado_cuota.VENCIDA],
+          estadoCuota: {
+            in: ['PENDIENTE', 'VENCIDA'],
           },
         },
-        orderBy: { fecha_vencimiento: 'asc' },
+        orderBy: { fechaVencimiento: 'asc' },
       },
     },
   });
 
-  return socios.map((socio) => {
-    const montoTotal = socio.Cuota.reduce((sum, c) => sum + Number(c.monto), 0);
-    
+  return deportistas.map((deportista) => {
+    const montoTotal = deportista.cuotas.reduce((sum, c) => sum + Number(c.monto), 0);
+
     return {
-      id: socio.id,
-      nombre: socio.nombre,
-      apellido: socio.apellido,
-      dni: socio.dni,
-      email: socio.email,
+      id: deportista.id_deportista,
+      nombre: deportista.nombre,
+      apellido: deportista.apellido,
+      dni: deportista.dni,
+      email: deportista.cuenta.mail,
       montoTotal,
-      cuotas: socio.Cuota.map((c) => ({
-        id: c.id,
+      cuotas: deportista.cuotas.map((c) => ({
+        id: c.id_cuota,
         mes: c.mes || '',
         monto: Number(c.monto),
-        fechaVencimiento: c.fecha_vencimiento.toISOString().split('T')[0],
-        estado: c.estado,
+        fechaVencimiento: c.fechaVencimiento.toISOString().split('T')[0],
+        estado: c.estadoCuota,
       })),
     };
   });
 }
-

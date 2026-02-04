@@ -1,30 +1,31 @@
-import { Sexo, Usuario } from '@prisma/client';
-
-export interface Socio {  
+export interface Socio {
   id: number;
   nombre: string;
   apellido: string;
   dni: number;
-  email: string;
-  fechaNacimiento: Date; 
-  pais: string;
-  sexo: Sexo;
+  fechaNacimiento: Date;
+  estado: 'AL_DIA' | 'EN_DEUDA' | 'MOROSA' | 'INACTIVA';
+  categoria: string;
+  obraSocial: string;
+  id_cuenta: number;
+  id_disciplina: number;
+  id_domicilio?: number | null;
+  sexo?: string | null;
   fotoCarnet?: string | null;
-  usuarioId: number; 
-  estado: 'ACTIVO' | 'INACTIVO';
 }
 
-export interface ActualizarSocioRequest { 
+export interface ActualizarSocioRequest {
   nombre?: string;
   apellido?: string;
   dni?: number;
-  email?: string;
-  fechaNacimiento?: string; 
-  pais?: string;
-  sexo?: Sexo;
-  fotoCarnet?: string; 
-  usuarioId: number;
-  estado?: 'ACTIVO' | 'INACTIVO';
+  fechaNacimiento?: string;
+  estado?: 'AL_DIA' | 'EN_DEUDA' | 'MOROSA' | 'INACTIVA';
+  categoria?: string;
+  obraSocial?: string;
+  id_disciplina?: number;
+  id_domicilio?: number;
+  sexo?: string;
+  fotoCarnet?: string;
 }
 
-export interface GetSocioResponse extends Socio {} 
+export interface GetSocioResponse extends Socio { }

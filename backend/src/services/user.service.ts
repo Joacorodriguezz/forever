@@ -1,61 +1,52 @@
 import prisma from '../config/prisma';
-import { Sexo, paisesLatam } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import { CreateUserRequest, UpdateUserRequest, UserData } from '../types/user';
+import { EstadoDeportista } from '@prisma/client';
 
 const SALT_ROUNDS = 10;
 
 // Obtener todos los usuarios
 export async function getAllUsers(limit: number = 10): Promise<UserData[]> {
-  const users = await prisma.usuario.findMany({
+  const users = await prisma.cuentaUsuario.findMany({
     take: limit,
-    orderBy: { id: "asc" },
-    include: { socio: true, administrativo: true },
+    orderBy: { id_cuenta: "asc" },
+    include: { deportista: true, administrativo: true },
   });
 
-  return users.map(({ password, ...u }) => ({
+  return users.map(({ contrasena, ...u }) => ({
     ...u,
-    role: u.rol as "ADMIN" | "SOCIO" | "ADMINISTRATIVO",
-    socio: u.socio
-      ? { ...u.socio, estado: u.socio.estado as "ACTIVO" | "INACTIVO" }
-      : null,
   }));
 }
 
 // Obtener todos los administrativos
 export async function getAdministrativos(): Promise<UserData[]> {
-  const administrativos = await prisma.usuario.findMany({
-    where: { rol: "ADMINISTRATIVO" },
+  const cuentas = await prisma.cuentaUsuario.findMany({
+    where: { administrativo: { isNot: null } },
     include: { administrativo: true },
   });
 
-  return administrativos.map(({ password, ...resto }) => ({
+  return cuentas.map(({ contrasena, ...resto }) => ({
     ...resto,
-    role: resto.rol as "ADMIN" | "SOCIO" | "ADMINISTRATIVO",
   }));
 }
 
-// Obtener todos los socios
-export async function getAllSocios(): Promise<UserData[]> {
-  const socios = await prisma.usuario.findMany({
-    where: { rol: "SOCIO" },
-    include: { socio: true },
+// Obtener todos los deportistas
+export async function getAllDeportistas(): Promise<UserData[]> {
+  const cuentas = await prisma.cuentaUsuario.findMany({
+    where: { deportista: { isNot: null } },
+    include: { deportista: true },
   });
 
-  return socios.map(({ password, ...u }) => ({
+  return cuentas.map(({ contrasena, ...u }) => ({
     ...u,
-    role: u.rol as "ADMIN" | "SOCIO" | "ADMINISTRATIVO",
-    socio: u.socio
-      ? { ...u.socio, estado: u.socio.estado as "ACTIVO" | "INACTIVO" }
-      : null,
   }));
 }
 
 // Obtener un usuario por ID
 export async function getUserById(id: number): Promise<UserData> {
-  const user = await prisma.usuario.findUnique({
-    where: { id },
-    include: { socio: true, administrativo: true },
+  const user = await prisma.cuentaUsuario.findUnique({
+    where: { id_cuenta: id },
+    include: { deportista: true, administrativo: true },
   });
 
   if (!user) {
@@ -64,77 +55,63 @@ export async function getUserById(id: number): Promise<UserData> {
     throw error;
   }
 
-  const { password, ...userWithoutPassword } = user;
+  const { contrasena, ...userWithoutPassword } = user;
   return {
     ...userWithoutPassword,
-    role: user.rol as "ADMIN" | "SOCIO" | "ADMINISTRATIVO",
-    socio: user.socio
-      ? { ...user.socio, estado: user.socio.estado as "ACTIVO" | "INACTIVO" }
-      : null,
   };
 }
 
-
-
-// Crear usuario
+// Crear usuario administrativo
 export async function createAdministrativo(data: CreateUserRequest): Promise<UserData> {
-  const exists = await prisma.usuario.findUnique({ where: { email: data.email } });
+  const exists = await prisma.cuentaUsuario.findUnique({ where: { mail: data.mail } });
   if (exists) {
     const error = new Error('Email ya registrado') as any;
     error.statusCode = 409;
     throw error;
   }
 
-  const hashedPassword = await bcrypt.hash(data.password, SALT_ROUNDS);
+  const hashedPassword = await bcrypt.hash(data.contrasena, SALT_ROUNDS);
 
-  const newUser = await prisma.usuario.create({
+  const newUser = await prisma.cuentaUsuario.create({
     data: {
-      email: data.email,
-      password: hashedPassword,
-      rol: 'ADMINISTRATIVO',
+      mail: data.mail,
+      contrasena: hashedPassword,
       administrativo: data.administrativo
         ? {
-            create: {
-              nombre: data.administrativo.nombre,
-              apellido: data.administrativo.apellido,
-              dni: Number(data.administrativo.dni),
-              activo: true, 
-            },
-          }
+          create: {
+            nombre: data.administrativo.nombre,
+            apellido: data.administrativo.apellido,
+            dni: Number(data.administrativo.dni),
+          },
+        }
         : undefined,
     },
     include: { administrativo: true },
   });
 
-  const { password, ...userWithoutPassword } = newUser;
+  const { contrasena, ...userWithoutPassword } = newUser;
   return {
     ...userWithoutPassword,
-    role: newUser.rol as 'ADMIN' | 'SOCIO' | 'ADMINISTRATIVO',
   };
 }
-
 
 export async function updateUser(
   id: number,
   data: any,
 ): Promise<UserData> {
-  const updateData: any = { ...data };
+  const updateData: any = {};
 
-  if (data.role) {
-    updateData.rol = data.role;
-    delete updateData.role;
+  if (data.mail) {
+    updateData.mail = data.mail;
   }
 
-  if (data.password) {
-    updateData.password = await bcrypt.hash(data.password, SALT_ROUNDS);
+  if (data.contrasena) {
+    updateData.contrasena = await bcrypt.hash(data.contrasena, SALT_ROUNDS);
   }
 
-  if (data.socio) {
-    updateData.socio = {
-      update: {
-        ...data.socio,
-        ...(data.fotoCarnet && { fotoCarnet: data.fotoCarnet }),
-      },
+  if (data.deportista) {
+    updateData.deportista = {
+      update: data.deportista,
     };
   }
 
@@ -144,19 +121,15 @@ export async function updateUser(
     };
   }
 
-  const updatedUser = await prisma.usuario.update({
-    where: { id },
+  const updatedUser = await prisma.cuentaUsuario.update({
+    where: { id_cuenta: id },
     data: updateData,
-    include: { socio: true, administrativo: true },
+    include: { deportista: true, administrativo: true },
   });
 
-  const { password, ...userWithoutPassword } = updatedUser;
+  const { contrasena, ...userWithoutPassword } = updatedUser;
   return {
     ...userWithoutPassword,
-    role: updatedUser.rol as "ADMIN" | "SOCIO" | "ADMINISTRATIVO",
-    socio: updatedUser.socio
-      ? { ...updatedUser.socio, estado: updatedUser.socio.estado as "ACTIVO" | "INACTIVO" }
-      : null,
   };
 }
 
@@ -164,9 +137,9 @@ export async function updateUser(
 export async function deleteUser(id: number): Promise<void> {
   await prisma.$transaction(async (tx) => {
     // Buscar usuario
-    const user = await tx.usuario.findUnique({
-      where: { id },
-      include: { socio: true, administrativo: true },
+    const user = await tx.cuentaUsuario.findUnique({
+      where: { id_cuenta: id },
+      include: { deportista: true, administrativo: true },
     });
 
     if (!user) {
@@ -175,93 +148,80 @@ export async function deleteUser(id: number): Promise<void> {
       throw error;
     }
 
-    //Si es SOCIO, eliminar dependencias
-    if (user.socio) {
-      const socioId = user.socio.id;
+    // Si es DEPORTISTA, eliminar dependencias
+    if (user.deportista) {
+      const deportistaId = user.deportista.id_deportista;
 
-      // Eliminar entradas del socio
-      await tx.entrada.deleteMany({ where: { socioId } });
+      // Eliminar pagos
+      await tx.pago.deleteMany({ where: { id_deportista: deportistaId } });
 
-      // Eliminar cuotas y sus comprobantes
-      const cuotas = await tx.cuota.findMany({ where: { socio_id: socioId } });
-      const cuotaIds = cuotas.map((c) => c.id);
+      // Eliminar teléfonos
+      await tx.telefono.deleteMany({ where: { id_deportista: deportistaId } });
 
-      if (cuotaIds.length > 0) {
-        await tx.comprobante.deleteMany({ where: { cuotaId: { in: cuotaIds } } });
-        await tx.cuotaXactividad.deleteMany({ where: { cuotaId: { in: cuotaIds } } });
-        await tx.cuota.deleteMany({ where: { id: { in: cuotaIds } } });
-      }
-
-      // Eliminar reservas
-      await tx.reserva.deleteMany({ where: { socioId } });
-
-      // Eliminar relaciones de actividad
-      await tx.actividadSocio.deleteMany({ where: { socioId } });
-
-      // Finalmente eliminar el socio
-      await tx.socio.delete({ where: { id: socioId } });
+      // Finalmente eliminar el deportista (las relaciones many-to-many se manejan automáticamente)
+      await tx.deportista.delete({ where: { id_deportista: deportistaId } });
     }
 
     // Si es ADMINISTRATIVO, eliminarlo
     if (user.administrativo) {
-      await tx.administrativo.delete({ where: { id: user.administrativo.id } });
+      await tx.administrativo.delete({ where: { id_administrativo: user.administrativo.id_administrativo } });
     }
 
     // Finalmente eliminar el usuario
-    await tx.usuario.delete({ where: { id } });
+    await tx.cuentaUsuario.delete({ where: { id_cuenta: id } });
   });
 }
 
-
-// Registrar socio
-export async function registerSocio(data: {
+// Registrar deportista
+export async function registerDeportista(data: {
   nombre: string;
   apellido: string;
   dni: number;
-  email: string;
-  password: string;
+  mail: string;
+  contrasena: string;
   fechaNacimiento: string;
-  sexo: Sexo;
-  pais: paisesLatam;
-  fotoCarnet?: string | null;
+  categoria: string;
+  obraSocial: string;
+  id_disciplina: number;
+  id_domicilio?: number;
+  sexo?: string;
+  fotoCarnet?: string;
 }): Promise<UserData> {
-  const exists = await prisma.usuario.findUnique({ where: { email: data.email } });
+  const exists = await prisma.cuentaUsuario.findUnique({ where: { mail: data.mail } });
   if (exists) {
     const error = new Error("Email ya registrado") as any;
     error.statusCode = 409;
     throw error;
   }
 
-  const hashedPassword = await bcrypt.hash(data.password, SALT_ROUNDS);
+  const hashedPassword = await bcrypt.hash(data.contrasena, SALT_ROUNDS);
 
-  const newUser = await prisma.usuario.create({
+  const newUser = await prisma.cuentaUsuario.create({
     data: {
-      email: data.email,
-      password: hashedPassword,
-      rol: "SOCIO",
-      socio: {
+      mail: data.mail,
+      contrasena: hashedPassword,
+      deportista: {
         create: {
           nombre: data.nombre,
           apellido: data.apellido,
           dni: data.dni,
-          fechaNacimiento: new Date(data.fechaNacimiento),
-          pais: data.pais,
+          fechaNac: new Date(data.fechaNacimiento),
+          categoria: data.categoria,
+          obraSocial: data.obraSocial,
+          estado: EstadoDeportista.AL_DIA,
+          id_disciplina: data.id_disciplina,
+          id_domicilio: data.id_domicilio,
           sexo: data.sexo,
-          fotoCarnet: data.fotoCarnet ?? null,
-          email: data.email,
+          fotoCarnet: data.fotoCarnet,
         },
       },
     },
-    include: { socio: true },
+    include: { deportista: true },
   });
 
-  const { password, ...userWithoutPassword } = newUser;
+  const { contrasena, ...userWithoutPassword } = newUser;
   return {
     ...userWithoutPassword,
-    role: "SOCIO",
-    socio: newUser.socio
-      ? { ...newUser.socio, estado: newUser.socio.estado as "ACTIVO" | "INACTIVO" }
-      : null,
   };
 }
 
@@ -274,19 +234,18 @@ export async function getOwnProfile(userId: number): Promise<UserData> {
 export async function updateOwnProfile(
   userId: number,
   data: {
-    email?: string;
-    password?: string;
-    telefono?: string | null;
+    mail?: string;
+    contrasena?: string;
   }
 ): Promise<UserData> {
   const updateData: any = {};
 
   // Validar email único si se está actualizando
-  if (data.email) {
-    const emailExists = await prisma.usuario.findFirst({
+  if (data.mail) {
+    const emailExists = await prisma.cuentaUsuario.findFirst({
       where: {
-        email: data.email,
-        NOT: { id: userId },
+        mail: data.mail,
+        NOT: { id_cuenta: userId },
       },
     });
     if (emailExists) {
@@ -294,90 +253,22 @@ export async function updateOwnProfile(
       error.statusCode = 409;
       throw error;
     }
-    updateData.email = data.email;
+    updateData.mail = data.mail;
   }
 
   // Actualizar contraseña si se proporciona
-  if (data.password) {
-    updateData.password = await bcrypt.hash(data.password, SALT_ROUNDS);
+  if (data.contrasena) {
+    updateData.contrasena = await bcrypt.hash(data.contrasena, SALT_ROUNDS);
   }
 
-  // Actualizar teléfono (si existe campo en schema, de lo contrario se puede agregar)
-  // Por ahora, si el usuario es socio, actualizamos datos del socio
-  const usuario = await prisma.usuario.findUnique({
-    where: { id: userId },
-    include: { socio: true, administrativo: true },
-  });
-
-  if (!usuario) {
-    const error = new Error('Usuario no encontrado') as any;
-    error.statusCode = 404;
-    throw error;
-  }
-
-  const updatedUser = await prisma.usuario.update({
-    where: { id: userId },
+  const updatedUser = await prisma.cuentaUsuario.update({
+    where: { id_cuenta: userId },
     data: updateData,
-    include: { socio: true, administrativo: true },
+    include: { deportista: true, administrativo: true },
   });
 
-  const { password: _, ...userWithoutPassword } = updatedUser;
+  const { contrasena: _, ...userWithoutPassword } = updatedUser;
   return {
     ...userWithoutPassword,
-    role: updatedUser.rol as "ADMIN" | "SOCIO" | "ADMINISTRATIVO",
-    socio: updatedUser.socio
-      ? { ...updatedUser.socio, estado: updatedUser.socio.estado as "ACTIVO" | "INACTIVO" }
-      : null,
-  };
-}
-
-// CU03 - Asignar Rol
-export async function assignRole(
-  userId: number,
-  newRole: 'ADMIN' | 'ADMINISTRATIVO' | 'SOCIO',
-  currentAdminId: number
-): Promise<UserData> {
-  // Validar que el usuario existe
-  const usuario = await prisma.usuario.findUnique({
-    where: { id: userId },
-    include: { socio: true, administrativo: true },
-  });
-
-  if (!usuario) {
-    const error = new Error('Usuario no encontrado') as any;
-    error.statusCode = 404;
-    throw error;
-  }
-
-  // Validar que no se elimine el último Admin activo
-  if (usuario.rol === 'ADMIN' && newRole !== 'ADMIN') {
-    const adminCount = await prisma.usuario.count({
-      where: {
-        rol: 'ADMIN',
-        id: { not: userId },
-      },
-    });
-
-    if (adminCount === 0) {
-      const error = new Error('No se puede cambiar el rol del último administrador activo') as any;
-      error.statusCode = 400;
-      throw error;
-    }
-  }
-
-  // Actualizar rol
-  const updatedUser = await prisma.usuario.update({
-    where: { id: userId },
-    data: { rol: newRole },
-    include: { socio: true, administrativo: true },
-  });
-
-  const { password, ...userWithoutPassword } = updatedUser;
-  return {
-    ...userWithoutPassword,
-    role: updatedUser.rol as "ADMIN" | "SOCIO" | "ADMINISTRATIVO",
-    socio: updatedUser.socio
-      ? { ...updatedUser.socio, estado: updatedUser.socio.estado as "ACTIVO" | "INACTIVO" }
-      : null,
   };
 }

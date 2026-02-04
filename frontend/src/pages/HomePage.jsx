@@ -22,6 +22,8 @@ function HomePageAdmin() {
     { texto: 'Socios', ruta: '/socios' },
     { texto: 'Profesores', ruta: '/profesores', requiereAdmin: true },
     { texto: 'Canchas', ruta: '/gestionCanchas' },
+    { texto: 'Reporte de Deportistas', ruta: '/reportes/deportistas' },
+    { texto: 'Reporte de Deudores', ruta: '/reportes/pagos-pendientes' },
   ];
 
   // Filtrar según rol
@@ -37,20 +39,26 @@ function HomePageAdmin() {
   const categorias = [
     {
       nombre: 'Gestión Deportiva',
-      opciones: opcionesVisibles.filter(op => 
+      opciones: opcionesVisibles.filter(op =>
         ['Reserva Canchas', 'Reservas de Socios', 'Canchas'].includes(op.texto)
       )
     },
     {
       nombre: 'Eventos y Actividades',
-      opciones: opcionesVisibles.filter(op => 
+      opciones: opcionesVisibles.filter(op =>
         ['Eventos', 'Actividades'].includes(op.texto)
       )
     },
     {
       nombre: 'Administración',
-      opciones: opcionesVisibles.filter(op => 
+      opciones: opcionesVisibles.filter(op =>
         ['Cuotas', 'Socios', 'Administrativos', 'Profesores'].includes(op.texto)
+      )
+    },
+    {
+      nombre: 'Reportes',
+      opciones: opcionesVisibles.filter(op =>
+        ['Reporte de Deportistas', 'Reporte de Deudores'].includes(op.texto)
       )
     }
   ];

@@ -1,14 +1,14 @@
-import { UserData } from './user';
-
 export interface LoginRequest {
-  emailOdni: string;
+  emailOdni: string;  // Can be email or DNI
   password: string;
 }
 
 export interface LoginResponse {
-  success: boolean;
-  data: {
-    token: string;
-    user: UserData; 
+  token: string;
+  user: {
+    id_cuenta: number;
+    mail: string;
+    deportista?: any;
+    administrativo?: any;
   };
 }

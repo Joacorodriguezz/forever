@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import * as authService from '../services/auth.service';
 import * as userService from '../services/user.service';
-import { RegisterSchema } from '../validations/user.validation'; // asegúrate de importar bien
+import { RegisterSchema } from '../validations/user.validation';
 
 export async function login(req: Request, res: Response) {
   try {
@@ -9,7 +9,7 @@ export async function login(req: Request, res: Response) {
 
     res.json({
       success: true,
-      data: result, 
+      data: result,
     });
   } catch (err: any) {
     console.error("Error en login:", err);
@@ -26,23 +26,25 @@ export async function register(req: Request, res: Response) {
 
     let user;
 
-    if (parsed.role === 'SOCIO') {
-      user = await userService.registerSocio({
-        nombre: parsed.socio!.nombre,
-        apellido: parsed.socio!.apellido,
-        dni: parsed.socio!.dni,
-        email: parsed.email,
-        password: parsed.password,
-        fechaNacimiento: parsed.socio!.fechaNacimiento.toISOString(), // importante
-        sexo: parsed.socio!.sexo,
-        pais: parsed.socio!.pais,
-        fotoCarnet: parsed.socio!.fotoCarnet ?? null,
+    if (parsed.role === 'DEPORTISTA') {
+      user = await userService.registerDeportista({
+        nombre: parsed.deportista!.nombre,
+        apellido: parsed.deportista!.apellido,
+        dni: parsed.deportista!.dni,
+        mail: parsed.mail, // Changed from email
+        contrasena: parsed.contrasena, // Changed from password
+        fechaNacimiento: parsed.deportista!.fechaNacimiento.toISOString(),
+        categoria: parsed.deportista!.categoria,
+        obraSocial: parsed.deportista!.obraSocial,
+        id_disciplina: parsed.deportista!.id_disciplina,
+        id_domicilio: parsed.deportista!.id_domicilio,
+        sexo: parsed.deportista!.sexo,
+        fotoCarnet: parsed.deportista!.fotoCarnet ?? null,
       });
     } else if (parsed.role === 'ADMINISTRATIVO') {
       user = await userService.createAdministrativo({
-        email: parsed.email,
-        password: parsed.password,
-        role: parsed.role,
+        mail: parsed.mail, // Changed from email
+        contrasena: parsed.contrasena, // Changed from password
         administrativo: parsed.administrativo!,
       });
     } else {

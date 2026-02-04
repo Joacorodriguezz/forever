@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { supabase } from '../utils/supabaseClient';
 import {
-  CuotaSocioDTO,
+  CuotaDeportistaDTO,
   CuotaAdministrativoDTO,
   CuotaAdminDTO,
   GetCuotasAdministrativoQuery,
@@ -39,10 +39,10 @@ function determinarEstadoCuota(vencimiento: Date): $Enums.estado_cuota {
   return vencimiento >= hoy ? estado_cuota.PENDIENTE : estado_cuota.VENCIDA;
 }
 
-// SOCIO
-export async function getCuotasSocio(socioId: number): Promise<CuotaSocioDTO[]> {
+// DEPORTISTA
+export async function getCuotasDeportista(deportistaId: number): Promise<CuotaDeportistaDTO[]> {
   const cuotas = await prisma.cuota.findMany({
-    where: { socio_id: socioId },
+    where: { deportista_id: deportistaId },
     include: {
       // Traigo todos los comprobantes y filtro en memoria para evitar problemas de compatibilidad
       comprobantes: { select: { url: true, subido_en: true, activo: true } },
@@ -65,7 +65,7 @@ export async function getCuotasSocio(socioId: number): Promise<CuotaSocioDTO[]> 
   });
 }
 
-// Subida de comprobante (SOCIO)
+// Subida de comprobante (DEPORTISTA)
 export async function enviarComprobante(
   cuotaId: number,
   file: Express.Multer.File
@@ -80,8 +80,8 @@ export async function enviarComprobante(
     throw new Error('Archivo demasiado grande (máx 5MB)');
 
   // Verificar que Supabase esté configurado
-  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
-    throw new Error('Supabase no está configurado. Configure las variables de entorno SUPABASE_URL y SUPABASE_SERVICE_KEY.');
+  if (!process.env.SUPABASE_URL) {
+    throw new Error('Supabase no está configurado. Configure la variable de entorno SUPABASE_URL.');
   }
 
   // Subir al bucket de Supabase (soporta multer disk o memory)
@@ -128,7 +128,7 @@ export async function getCuotasAdministrativo(
   const where: any = {};
   if (filtros.estado && filtros.estado !== 'Todas') where.estado = filtros.estado;
   if (filtros.nombre) {
-    where.Socio = {
+    where.Deportista = {
       OR: [
         { nombre: { contains: filtros.nombre, mode: 'insensitive' } },
         { apellido: { contains: filtros.nombre, mode: 'insensitive' } },
@@ -139,7 +139,7 @@ export async function getCuotasAdministrativo(
   const cuotas = await prisma.cuota.findMany({
     where,
     include: {
-      Socio: { select: { nombre: true, apellido: true, dni: true , fotoCarnet: true} },
+      Deportista: { select: { nombre: true, apellido: true, dni: true , fotoCarnet: true} },
       comprobantes: { where: { activo: true }, select: { url: true, subido_en: true } },
     },
     orderBy: { created_at: 'desc' },
@@ -147,8 +147,8 @@ export async function getCuotasAdministrativo(
 
   return cuotas.map((c) => ({
     id: c.id,
-    socioNombre: `${c.Socio.nombre} ${c.Socio.apellido}`,
-    dni: c.Socio.dni,
+    deportistaNombre: `${c.Deportista.nombre} ${c.Deportista.apellido}`,
+    dni: c.Deportista.dni,
     mes: c.mes!,
     monto: Number(c.monto),
     estado: c.estado,
@@ -156,7 +156,7 @@ export async function getCuotasAdministrativo(
     fechaCarga: c.comprobantes?.[0]?.subido_en
       ? toDDMMYYYY(c.comprobantes[0].subido_en)
       : undefined,
-    fotoCarnet: c.Socio.fotoCarnet ?? null,
+    fotoCarnet: c.Deportista.fotoCarnet ?? null,
   }));
 }
 
@@ -205,7 +205,7 @@ export async function getCuotasAdmin(
   if (filtros?.estado && filtros.estado !== 'Todas')
     where.estado = filtros.estado;
   if (filtros?.nombre) {
-    where.Socio = {
+    where.Deportista = {
       OR: [
         { nombre: { contains: filtros.nombre, mode: 'insensitive' } },
         { apellido: { contains: filtros.nombre, mode: 'insensitive' } },
@@ -216,7 +216,7 @@ export async function getCuotasAdmin(
   const cuotas = await prisma.cuota.findMany({
     where,
     include: {
-      Socio: { select: { id: true, nombre: true, apellido: true, dni: true } },
+      Deportista: { select: { id: true, nombre: true, apellido: true, dni: true } },
       comprobantes: { where: { activo: true }, select: { url: true, subido_en: true } },
     },
     orderBy: { created_at: 'desc' },
@@ -224,9 +224,9 @@ export async function getCuotasAdmin(
 
   return cuotas.map((c) => ({
     id: c.id,
-    socioId: c.Socio.id,
-    socioNombre: `${c.Socio.nombre} ${c.Socio.apellido}`,
-    dni: c.Socio.dni,
+    deportistaId: c.Deportista.id,
+    deportistaNombre: `${c.Deportista.nombre} ${c.Deportista.apellido}`,
+    dni: c.Deportista.dni,
     mes: c.mes!,
     monto: Number(c.monto),
     estado: c.estado,
@@ -249,9 +249,9 @@ export async function generarCuotas(
 ): Promise<GenerarCuotasResponse> {
   const { actividadId, mes, montoBase, preview } = data;
 
-  // 🔹 Traer socios activos
-  const socios = await prisma.socio.findMany({
-    where: { estado: 'ACTIVO' },
+  // 🔹 Traer deportistas activos
+  const deportistas = await prisma.deportista.findMany({
+    where: { estado: 'AL_DIA' },
   });
 
   let created = 0;
@@ -259,22 +259,22 @@ export async function generarCuotas(
   let skips = 0;
   const previewItems: PreviewItem[] = [];
 
-  // 🔹 Procesar cada socio
-  for (const socio of socios) {
+  // 🔹 Procesar cada deportista
+  for (const deportista of deportistas) {
     // 1️⃣ Buscar sus actividades (todas o filtradas)
-    const actividadesSocio = await prisma.actividadSocio.findMany({
+    const actividadesDeportista = await prisma.deportistaDisciplina.findMany({
       where: {
-        socioId: socio.id,
-        ...(actividadId ? { actividadId } : {}),
+        deportistaId: deportista.id,
+        ...(actividadId ? { disciplinaId: actividadId } : {}),
       },
       include: {
-        actividad: {
-          select: { id: true, nombre: true, monto: true, activo: true },
+        disciplina: {
+          select: { id: true, nombre: true, precioMensual: true, activa: true },
         },
       },
     });
 
-    if (!actividadesSocio.length) {
+    if (!actividadesDeportista.length) {
       skips++;
       continue;
     }
@@ -286,12 +286,12 @@ export async function generarCuotas(
       detalle.push({ tipo: 'base' as const, monto: montoBase });
     }
 
-    for (const a of actividadesSocio) {
+    for (const a of actividadesDeportista) {
       detalle.push({
         tipo: 'actividad' as const,
-        id: a.actividad.id,
-        nombre: a.actividad.nombre,
-        monto: Number(a.actividad.monto),
+        id: a.disciplina.id,
+        nombre: a.disciplina.nombre,
+        monto: Number(a.disciplina.precioMensual),
       });
     }
 
@@ -299,13 +299,13 @@ export async function generarCuotas(
 
     // 3️⃣ Si es solo previsualización → no toca BD
     if (preview) {
-      previewItems.push({ socioId: socio.id, total, detalle });
+      previewItems.push({ deportistaId: deportista.id, total, detalle });
       continue;
     }
 
     // 4️⃣ Ver si ya existe una cuota para ese mes
     const existente = await prisma.cuota.findFirst({
-      where: { socio_id: socio.id, mes },
+      where: { deportista_id: deportista.id, mes },
       include: { cuotaXactividad: true },
     });
 
@@ -313,7 +313,7 @@ export async function generarCuotas(
       // 5️⃣ Crear nueva cuota con detalle
       await prisma.cuota.create({
         data: {
-          socio_id: socio.id,
+          deportista_id: deportista.id,
           mes,
           monto: total,
           metodo_pago: $Enums.FormaDePago.EFECTIVO,
@@ -355,7 +355,7 @@ export async function generarCuotas(
 
   // 7️⃣ Devolver resultado
   return {
-    processedSocios: socios.length,
+    processedDeportistas: deportistas.length,
     created,
     updated,
     skips,
@@ -393,7 +393,7 @@ export interface CuotaPredefinida {
   estado: EstadoCuota;
   numero: number;
   emision: string;
-  socioNombre: string;
+  deportistaNombre: string;
 }
 
 export async function getCuotasPredefinidas(): Promise<CuotaPredefinida[]> {
@@ -402,7 +402,7 @@ export async function getCuotasPredefinidas(): Promise<CuotaPredefinida[]> {
       estado: { in: [estado_cuota.PENDIENTE, estado_cuota.VENCIDA] },
     },
     include: {
-      Socio: {
+      Deportista: {
         select: {
           nombre: true,
           apellido: true,
@@ -423,13 +423,13 @@ export async function getCuotasPredefinidas(): Promise<CuotaPredefinida[]> {
     estado: c.estado,
     numero: index + 1,
     emision: toDDMMYYYY(c.created_at),
-    socioNombre: `${c.Socio.nombre} ${c.Socio.apellido}`,
+    deportistaNombre: `${c.Deportista.nombre} ${c.Deportista.apellido}`,
   }));
 }
 
 // CU04 - Asignar Cuota
 export interface AsignarCuotaRequest {
-  socioId: number;
+  deportistaId: number;
   mes: Mes;
   monto: number;
   fechaVencimiento: Date;
@@ -437,19 +437,19 @@ export interface AsignarCuotaRequest {
 }
 
 export async function asignarCuota(data: AsignarCuotaRequest): Promise<CuotaAdminDTO> {
-  // Validar que el socio existe
-  const socio = await prisma.socio.findUnique({
-    where: { id: data.socioId },
+  // Validar que el deportista existe
+  const deportista = await prisma.deportista.findUnique({
+    where: { id: data.deportistaId },
   });
 
-  if (!socio) {
-    throw new Error('Socio no encontrado');
+  if (!deportista) {
+    throw new Error('Deportista no encontrado');
   }
 
   // Validar que no existe una cuota para ese mes
   const existente = await prisma.cuota.findFirst({
     where: {
-      socio_id: data.socioId,
+      deportista_id: data.deportistaId,
       mes: data.mes,
     },
   });
@@ -461,7 +461,7 @@ export async function asignarCuota(data: AsignarCuotaRequest): Promise<CuotaAdmi
   // Crear la cuota
   const nuevaCuota = await prisma.cuota.create({
     data: {
-      socio_id: data.socioId,
+      deportista_id: data.deportistaId,
       mes: data.mes,
       monto: data.monto,
       fecha_vencimiento: data.fechaVencimiento,
@@ -477,7 +477,7 @@ export async function asignarCuota(data: AsignarCuotaRequest): Promise<CuotaAdmi
       }),
     },
     include: {
-      Socio: {
+      Deportista: {
         select: {
           id: true,
           nombre: true,
@@ -494,9 +494,9 @@ export async function asignarCuota(data: AsignarCuotaRequest): Promise<CuotaAdmi
 
   return {
     id: nuevaCuota.id,
-    socioId: nuevaCuota.Socio.id,
-    socioNombre: `${nuevaCuota.Socio.nombre} ${nuevaCuota.Socio.apellido}`,
-    dni: nuevaCuota.Socio.dni,
+    deportistaId: nuevaCuota.Deportista.id,
+    deportistaNombre: `${nuevaCuota.Deportista.nombre} ${nuevaCuota.Deportista.apellido}`,
+    dni: nuevaCuota.Deportista.dni,
     mes: nuevaCuota.mes!,
     monto: Number(nuevaCuota.monto),
     estado: nuevaCuota.estado,
@@ -518,7 +518,7 @@ export async function actualizarCuota(
   const cuota = await prisma.cuota.findUnique({
     where: { id: cuotaId },
     include: {
-      Socio: {
+      Deportista: {
         select: {
           id: true,
           nombre: true,
@@ -546,7 +546,7 @@ export async function actualizarCuota(
     where: { id: cuotaId },
     data: updateData,
     include: {
-      Socio: {
+      Deportista: {
         select: {
           id: true,
           nombre: true,
@@ -563,9 +563,9 @@ export async function actualizarCuota(
 
   return {
     id: cuotaActualizada.id,
-    socioId: cuotaActualizada.Socio.id,
-    socioNombre: `${cuotaActualizada.Socio.nombre} ${cuotaActualizada.Socio.apellido}`,
-    dni: cuotaActualizada.Socio.dni,
+    deportistaId: cuotaActualizada.Deportista.id,
+    deportistaNombre: `${cuotaActualizada.Deportista.nombre} ${cuotaActualizada.Deportista.apellido}`,
+    dni: cuotaActualizada.Deportista.dni,
     mes: cuotaActualizada.mes!,
     monto: Number(cuotaActualizada.monto),
     estado: cuotaActualizada.estado,

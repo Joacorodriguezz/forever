@@ -9,13 +9,19 @@ import IniciarSesion from './pages/IniciarSesion';
 import Registrarse from './pages/Registrarse';
 import HomePage from './pages/HomePage';
 import Contacto from './pages/Contacto';
+import PagoSuccess from './pages/PagoSuccess';
+import PagoFailure from './pages/PagoFailure';
+import PagoPending from './pages/PagoPending';
+import HistorialPagos from './pages/HistorialPagos';
+import ReporteDeportistas from './pages/ReporteDeportistas';
+import ReportePagosPendientes from './pages/ReportePagosPendientes';
 
 // SOCIO
 import HomePageUser from './pages/HomePageUser';
 import CuotasTable from './pages/CuotasTable';
-import ReservaCancha from './pages/ReservaCanchaSocio';
-import SocioEntradas from './pages/SocioEntradas';
-import ActividadesSocio from './pages/ActividadesSocio';
+import ReservaCancha from './pages/ReservaCanchaDeportista';
+import DeportistaEntradas from './pages/DeportistaEntradas';
+import ActividadesDeportista from './pages/ActividadesDeportista';
 import MiPerfil from './pages/MiPerfil';
 import ModificarDatos from './pages/ModificarDatos';
 import MisReservas from './pages/MisReservas';
@@ -27,7 +33,7 @@ import ClasesAdmin from './pages/ClasesAdmin';
 import AdminEventos from './pages/AdminEventos';
 import ReservaCanchasAdmin from './pages/ReservaCanchaAdmin';
 import Canchas from './pages/Canchas';
-import SociosList from './pages/ListSocios';
+import DeportistasList from './pages/ListDeportistas';
 import MisReservasAdmin from './pages/MisReservasAdmin';
 
 // SOLO ADMIN
@@ -49,38 +55,47 @@ function App() {
             <Route path="/inicio" element={<HomePage />} />
             <Route path="/contacto" element={<Contacto />} />
 
+            {/* Mercado Pago - Resultados de pago */}
+            <Route path="/pago/success" element={<PagoSuccess />} />
+            <Route path="/pago/failure" element={<PagoFailure />} />
+            <Route path="/pago/pending" element={<PagoPending />} />
+
             {/* SOCIO */}
             <Route
-              path="/inicioSocio"
-              element={<PrivateRoute allowedRoles={['SOCIO']}><HomePageUser /></PrivateRoute>}
+              path="/historial-pagos"
+              element={<PrivateRoute allowedRoles={['DEPORTISTA']}><HistorialPagos /></PrivateRoute>}
+            />
+            <Route
+              path="/inicioDeportista"
+              element={<PrivateRoute allowedRoles={['DEPORTISTA']}><HomePageUser /></PrivateRoute>}
             />
             <Route
               path="/cuotas-table"
-              element={<PrivateRoute allowedRoles={['SOCIO']}><CuotasTable /></PrivateRoute>}
+              element={<PrivateRoute allowedRoles={['DEPORTISTA']}><CuotasTable /></PrivateRoute>}
             />
             <Route
-              path="/canchasSocio"
-              element={<PrivateRoute allowedRoles={['SOCIO']}><ReservaCancha /></PrivateRoute>}
+              path="/canchasDeportista"
+              element={<PrivateRoute allowedRoles={['DEPORTISTA']}><ReservaCancha /></PrivateRoute>}
             />
             <Route
               path="/modDatos"
               element={<PrivateRoute allowedRoles={['SOCIO', 'ADMINISTRATIVO']}><ModificarDatos /></PrivateRoute>}
             />
             <Route
-              path="/entradasSocio"
-              element={<PrivateRoute allowedRoles={['SOCIO']}><SocioEntradas /></PrivateRoute>}
+              path="/entradasDeportista"
+              element={<PrivateRoute allowedRoles={['DEPORTISTA']}><DeportistaEntradas /></PrivateRoute>}
             />
             <Route
               path="/perfil"
               element={<PrivateRoute allowedRoles={['SOCIO', 'ADMINISTRATIVO']}><MiPerfil /></PrivateRoute>}
             />
             <Route
-              path="/actividadesSocio"
-              element={<PrivateRoute allowedRoles={['SOCIO']}><ActividadesSocio /></PrivateRoute>}
+              path="/actividadesDeportista"
+              element={<PrivateRoute allowedRoles={['DEPORTISTA']}><ActividadesDeportista /></PrivateRoute>}
             />
             <Route
               path="/misReservas"
-              element={<PrivateRoute allowedRoles={['SOCIO']}><MisReservas /></PrivateRoute>}
+              element={<PrivateRoute allowedRoles={['DEPORTISTA']}><MisReservas /></PrivateRoute>}
             />
 
             {/* ADMINISTRATIVO + ADMIN */}
@@ -101,8 +116,8 @@ function App() {
               element={<PrivateRoute allowedRoles={['ADMINISTRATIVO', 'ADMIN']}><ClasesAdmin /></PrivateRoute>}
             />
             <Route
-              path="/socios"
-              element={<PrivateRoute allowedRoles={['ADMINISTRATIVO', 'ADMIN']}><SociosList /></PrivateRoute>}
+              path="/deportistas"
+              element={<PrivateRoute allowedRoles={['ADMINISTRATIVO', 'ADMIN']}><DeportistasList /></PrivateRoute>}
             />
             <Route
               path="/gestionCanchas"
@@ -115,6 +130,14 @@ function App() {
             <Route
               path="/misReservasAdmin"
               element={<PrivateRoute allowedRoles={['ADMINISTRATIVO', 'ADMIN']}><MisReservasAdmin /></PrivateRoute>}
+            />
+            <Route
+              path="/reportes/deportistas"
+              element={<PrivateRoute allowedRoles={['ADMINISTRATIVO', 'ADMIN']}><ReporteDeportistas /></PrivateRoute>}
+            />
+            <Route
+              path="/reportes/pagos-pendientes"
+              element={<PrivateRoute allowedRoles={['ADMINISTRATIVO', 'ADMIN']}><ReportePagosPendientes /></PrivateRoute>}
             />
 
             {/* SOLO ADMIN */}

@@ -1,13 +1,47 @@
+import React, { useState, useEffect } from 'react';
 import { Form, Button, Row, Col, Image, Card } from 'react-bootstrap';
 import Header from '../components/Header';
 
 function MiPerfil() {
-  const usuarioStr = localStorage.getItem("usuario");
-  const usuario = usuarioStr ? JSON.parse(usuarioStr) : null;
+  const [usuario, setUsuario] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const token = localStorage.getItem("token");
+  const BACKURL = import.meta.env.VITE_API_URL;
 
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await fetch(`${BACKURL}/api/users/profile/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setUsuario(data.data || data);
+          // Actualizar localStorage
+          if (data.data || data) {
+            localStorage.setItem("usuario", JSON.stringify(data.data || data));
+          }
+        } else {
+          // Fallback a localStorage
+          const usuarioStr = localStorage.getItem("usuario");
+          setUsuario(usuarioStr ? JSON.parse(usuarioStr) : null);
+        }
+      } catch (error) {
+        console.error("Error al cargar perfil:", error);
+        // Fallback a localStorage
+        const usuarioStr = localStorage.getItem("usuario");
+        setUsuario(usuarioStr ? JSON.parse(usuarioStr) : null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProfile();
+  }, [token, BACKURL]);
+
+  if (loading) return <p>Cargando...</p>;
   if (!usuario) return <p>No hay usuario logueado</p>;
 
-  const { role, socio, administrativo, email } = usuario;
+  const { role, deportista, administrativo, email } = usuario;
 
   const formatearFecha = (fechaNac) => {
     if (!fechaNac) return '';
@@ -21,12 +55,12 @@ function MiPerfil() {
     });
   };
 
-  const nombre = role === "SOCIO" ? socio?.nombre : administrativo?.nombre;
-  const apellido = role === "SOCIO" ? socio?.apellido : administrativo?.apellido;
-  const dni = role === "SOCIO" ? socio?.dni : administrativo?.dni;
-  const fechaNacimiento = role === "SOCIO" ? socio?.fechaNacimiento : null;
-  const sexo = role === "SOCIO" ? socio?.sexo : null;
-  const fotoActualURL = role === "SOCIO" ? socio?.fotoCarnet || null : null;
+  const nombre = role === "DEPORTISTA" ? deportista?.nombre : administrativo?.nombre;
+  const apellido = role === "DEPORTISTA" ? deportista?.apellido : administrativo?.apellido;
+  const dni = role === "DEPORTISTA" ? deportista?.dni : administrativo?.dni;
+  const fechaNacimiento = role === "DEPORTISTA" ? deportista?.fechaNacimiento : null;
+  const sexo = role === "DEPORTISTA" ? deportista?.sexo : null;
+  const fotoActualURL = role === "DEPORTISTA" ? deportista?.fotoCarnet || null : null;
 
   return (
     <>
@@ -98,7 +132,7 @@ function MiPerfil() {
                     {dni}
                   </Card>
 
-                  {role === "SOCIO" && (
+                  {role === "DEPORTISTA" && (
                     <>
                       <Form.Label style={{ marginTop: "1rem", fontWeight: "600", color: "#001a47" }}>Fecha de Nacimiento</Form.Label>
                       <Card body style={{ 
@@ -124,7 +158,7 @@ function MiPerfil() {
                 </Col>
 
                 <Col md={5} className="d-flex flex-column align-items-center justify-content-start">
-                  {role === "SOCIO" && (
+                  {role === "DEPORTISTA" && (
                     <>
                       <div className="mb-3 w-100">
                         <Form.Label style={{ 

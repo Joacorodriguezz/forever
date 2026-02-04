@@ -1,26 +1,26 @@
 
 import { Request, Response, NextFunction } from 'express';
 import * as cuotaService from '../services/cuotaService';
-import { GetCuotasSocioResponse, GetCuotasAdministrativoResponse, GetCuotasAdminResponse, EnviarComprobanteResponse, UpdateEstadoCuotaRequest, UpdateEstadoCuotaResponse, GenerarCuotasRequest, GenerarCuotasResponse, } from '../types/cuota';
+import { GetCuotasDeportistaResponse, GetCuotasAdministrativoResponse, GetCuotasAdminResponse, EnviarComprobanteResponse, UpdateEstadoCuotaRequest, UpdateEstadoCuotaResponse, GenerarCuotasRequest, GenerarCuotasResponse, } from '../types/cuota';
 
-// SOCIO
-export async function getCuotasSocio(
+// DEPORTISTA
+export async function getCuotasDeportista(
   req: Request,
-  res: Response<GetCuotasSocioResponse>,
+  res: Response<GetCuotasDeportistaResponse>,
   next: NextFunction
 ) {
   try {
-    const socioIdRaw = (req as any).user?.socioId; // viene del token JWT
-    console.log('[Cuotas] socioId del token:', socioIdRaw);
-    const socioId = Number(socioIdRaw);
-    if (!socioId || Number.isNaN(socioId)) {
+    const deportistaIdRaw = (req as any).user?.deportistaId; // viene del token JWT
+    console.log('[Cuotas] deportistaId del token:', deportistaIdRaw);
+    const deportistaId = Number(deportistaIdRaw);
+    if (!deportistaId || Number.isNaN(deportistaId)) {
       return res.status(400).json({ cuotas: [] as any });
     }
-    const cuotas = await cuotaService.getCuotasSocio(socioId);
+    const cuotas = await cuotaService.getCuotasDeportista(deportistaId);
     res.json({ cuotas });
   } catch (error) {
     const msg = (error as any)?.message || String(error);
-    console.error('[Cuotas] Error en getCuotasSocio:', msg);
+    console.error('[Cuotas] Error en getCuotasDeportista:', msg);
     res.setHeader('X-Error-Message', msg);
     return res.status(500).json({ cuotas: [] });
   }
@@ -149,9 +149,9 @@ export async function getCuotasPredefinidas(req: Request, res: Response, next: N
 // CU04 - Asignar Cuota
 export async function asignarCuota(req: Request, res: Response, next: NextFunction) {
   try {
-    const { socioId, mes, monto, fechaVencimiento, actividadId } = req.body;
+    const { deportistaId, mes, monto, fechaVencimiento, actividadId } = req.body;
 
-    if (!socioId || !mes || !monto || !fechaVencimiento) {
+    if (!deportistaId || !mes || !monto || !fechaVencimiento) {
       return res.status(400).json({
         success: false,
         message: 'Faltan datos requeridos',
@@ -159,7 +159,7 @@ export async function asignarCuota(req: Request, res: Response, next: NextFuncti
     }
 
     const cuota = await cuotaService.asignarCuota({
-      socioId,
+      deportistaId,
       mes,
       monto,
       fechaVencimiento: new Date(fechaVencimiento),

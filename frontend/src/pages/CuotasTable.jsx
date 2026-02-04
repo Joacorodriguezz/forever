@@ -54,8 +54,8 @@ const CuotasTable = () => {
       const lista = Array.isArray(data?.cuotas)
         ? data.cuotas
         : Array.isArray(data)
-        ? data
-        : [];
+          ? data
+          : [];
 
       const adaptadas = lista.map((r, i) => ({
         id: r.id,
@@ -126,6 +126,31 @@ const CuotasTable = () => {
     return key === "PENDIENTE" || key === "VENCIDA";
   };
 
+  // 🔹 Pagar con Mercado Pago
+  const pagarConMercadoPago = async (cuotaId) => {
+    try {
+      setErrorMsg("");
+      setLoading(true);
+
+      // Llamar al backend para crear preferencia de pago
+      const { data } = await api.post("/api/pagos", { cuotaId });
+
+      if (data.success && data.data?.initPoint) {
+        // Redirigir al checkout de Mercado Pago
+        window.location.href = data.data.initPoint;
+      } else {
+        throw new Error("No se pudo crear la preferencia de pago");
+      }
+    } catch (error) {
+      console.error("Error al iniciar pago:", error);
+      setErrorMsg(
+        error.response?.data?.error ||
+        "No se pudo proccesar el pago. Intentá nuevamente."
+      );
+      setLoading(false);
+    }
+  };
+
   return (
     <>
       <Header />
@@ -146,140 +171,153 @@ const CuotasTable = () => {
                       radial-gradient(circle at 85% 75%, rgba(74, 144, 226, 0.03) 0%, transparent 50%)`,
           pointerEvents: 'none'
         }}></div>
-      <div className="container" style={{ position: 'relative', zIndex: 1, marginTop: '2rem', marginBottom: '2rem' }}>
-        <div className="card border-0 rounded-4 px-4 py-3" style={{
-          boxShadow: '0 8px 24px rgba(0, 26, 71, 0.25)',
-          borderTop: '6px solid #001a47'
-        }}>
-          <div className="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
-            <h3 className="fw-bold mb-0" style={{ color: '#001a47' }}>Mis Cuotas</h3>
-            {loading && (
-              <div className="spinner-border spinner-border-sm" style={{ color: '#001a47' }} role="status" />
-            )}
-          </div>
+        <div className="container" style={{ position: 'relative', zIndex: 1, marginTop: '2rem', marginBottom: '2rem' }}>
+          <div className="card border-0 rounded-4 px-4 py-3" style={{
+            boxShadow: '0 8px 24px rgba(0, 26, 71, 0.25)',
+            borderTop: '6px solid #001a47'
+          }}>
+            <div className="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+              <h3 className="fw-bold mb-0" style={{ color: '#001a47' }}>Mis Cuotas</h3>
+              {loading && (
+                <div className="spinner-border spinner-border-sm" style={{ color: '#001a47' }} role="status" />
+              )}
+            </div>
 
-          <div className="card-body px-0">
-            {errorMsg && (
-              <div className="alert alert-danger text-center fw-semibold" role="alert">
-                {errorMsg}
+            <div className="card-body px-0">
+              {errorMsg && (
+                <div className="alert alert-danger text-center fw-semibold" role="alert">
+                  {errorMsg}
+                </div>
+              )}
+
+              <div className="table-responsive">
+                <table className="table align-middle table-hover">
+                  <thead style={{ background: 'linear-gradient(135deg, #e3f2fd 0%, #f5f5f5 100%)', color: '#001a47' }}>
+                    <tr>
+                      <th>#</th>
+                      <th>Mes</th>
+                      <th>Vencimiento</th>
+                      <th>Monto</th>
+                      <th>Estado</th>
+                      <th className="text-end">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {!loading && cuotas.length === 0 && (
+                      <tr>
+                        <td colSpan="6" className="text-muted text-center py-4">
+                          No hay cuotas para mostrar.
+                        </td>
+                      </tr>
+                    )}
+
+                    {cuotas.map((cuota) => (
+                      <tr key={cuota.id}>
+                        <td className="fw-semibold">{cuota.nroCuota}</td>
+                        <td>{cuota.mes}</td>
+                        <td>{formatDate(cuota.fechaVencimiento)}</td>
+                        <td>{formatCurrency(cuota.monto)}</td>
+                        <td>{getEstadoBadge(cuota.estadoDb)}</td>
+                        <td className="text-end">
+                          {cuota.comprobanteUrl ? (
+                            <button
+                              className="btn btn-sm me-2"
+                              style={{
+                                background: 'transparent',
+                                border: '2px solid #001a47',
+                                color: '#001a47'
+                              }}
+                              onClick={() => abrirModalVer(cuota.comprobanteUrl)}
+                            >
+                              Ver comprobante
+                            </button>
+                          ) : puedePagar(cuota.estadoDb) ? (
+                            <>
+                              <button
+                                className="btn btn-sm me-2"
+                                style={{
+                                  background: 'linear-gradient(135deg, #001a47 0%, #002d6b 100%)',
+                                  border: 'none',
+                                  color: 'white',
+                                  fontWeight: '600',
+                                  padding: '0.5rem 1rem'
+                                }}
+                                onClick={() => pagarConMercadoPago(cuota.id)}
+                                disabled={loading}
+                              >
+                                {loading ? '⏳ Procesando...' : '💳 Pagar con Mercado Pago'}
+                              </button>
+                              <button
+                                className="btn btn-outline-secondary btn-sm"
+                                onClick={() => abrirModalAdjuntar(cuota.id)}
+                                disabled={loading}
+                                title="Adjuntar comprobante de pago bancario"
+                              >
+                                📄 Adjuntar transferencia
+                              </button>
+                            </>
+                          ) : (
+                            <button className="btn btn-outline-secondary btn-sm" disabled>
+                              Sin acciones
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+
+                    {loading && (
+                      <tr>
+                        <td colSpan="6" className="text-center py-4">
+                          <div className="spinner-border" style={{ color: '#001a47' }} role="status" />
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
-            )}
-
-            <div className="table-responsive">
-              <table className="table align-middle table-hover">
-                <thead style={{ background: 'linear-gradient(135deg, #e3f2fd 0%, #f5f5f5 100%)', color: '#001a47' }}>
-                  <tr>
-                    <th>#</th>
-                    <th>Mes</th>
-                    <th>Vencimiento</th>
-                    <th>Monto</th>
-                    <th>Estado</th>
-                    <th className="text-end">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {!loading && cuotas.length === 0 && (
-                    <tr>
-                      <td colSpan="6" className="text-muted text-center py-4">
-                        No hay cuotas para mostrar.
-                      </td>
-                    </tr>
-                  )}
-
-                  {cuotas.map((cuota) => (
-                    <tr key={cuota.id}>
-                      <td className="fw-semibold">{cuota.nroCuota}</td>
-                      <td>{cuota.mes}</td>
-                      <td>{formatDate(cuota.fechaVencimiento)}</td>
-                      <td>{formatCurrency(cuota.monto)}</td>
-                      <td>{getEstadoBadge(cuota.estadoDb)}</td>
-                      <td className="text-end">
-                        {cuota.comprobanteUrl ? (
-                          <button
-                            className="btn btn-sm me-2"
-                            style={{
-                              background: 'transparent',
-                              border: '2px solid #001a47',
-                              color: '#001a47'
-                            }}
-                            onClick={() => abrirModalVer(cuota.comprobanteUrl)}
-                          >
-                            Ver comprobante
-                          </button>
-                        ) : puedePagar(cuota.estadoDb) ? (
-                          <button
-                            className="btn btn-sm"
-                            style={{
-                              background: 'linear-gradient(135deg, #001a47 0%, #002d6b 100%)',
-                              border: 'none',
-                              color: 'white'
-                            }}
-                            onClick={() => abrirModalAdjuntar(cuota.id)}
-                          >
-                            Adjuntar comprobante
-                          </button>
-                        ) : (
-                          <button className="btn btn-outline-secondary btn-sm" disabled>
-                            Sin acciones
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-
-                  {loading && (
-                    <tr>
-                      <td colSpan="6" className="text-center py-4">
-                        <div className="spinner-border" style={{ color: '#001a47' }} role="status" />
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Modal Adjuntar */}
-      <AdjuntarComprobante
-        show={showAdjuntarModal}
-        onHide={cerrarModalAdjuntar}
-        cuotaId={cuotaSeleccionada}
-        onAdjuntar={handleAdjuntar}
-      />
+        {/* Modal Adjuntar */}
+        <AdjuntarComprobante
+          show={showAdjuntarModal}
+          onHide={cerrarModalAdjuntar}
+          cuotaId={cuotaSeleccionada}
+          onAdjuntar={handleAdjuntar}
+        />
 
-      {/* Modal Ver comprobante */}
-      <Modal show={showVerModal} onHide={cerrarModalVer} size="lg" centered>
-        <Modal.Header closeButton>
-          <Modal.Title className="fw-bold">Comprobante de pago</Modal.Title>
-        </Modal.Header>
-        <Modal.Body style={{ textAlign: "center" }}>
-          {comprobanteUrl.endsWith(".pdf") ? (
-            <embed
-              src={comprobanteUrl}
-              type="application/pdf"
-              width="100%"
-              height="600px"
-            />
-          ) : (
-            <img
-              src={comprobanteUrl}
-              alt="Comprobante"
-              style={{ maxWidth: "100%", borderRadius: "8px" }}
-            />
-          )}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button onClick={cerrarModalVer} style={{
-            background: 'linear-gradient(135deg, #001a47 0%, #002d6b 100%)',
-            border: 'none',
-            color: 'white'
-          }}>
-            Cerrar
-          </Button>
-        </Modal.Footer>
-      </Modal>
+        {/* Modal Ver comprobante */}
+        <Modal show={showVerModal} onHide={cerrarModalVer} size="lg" centered>
+          <Modal.Header closeButton>
+            <Modal.Title className="fw-bold">Comprobante de pago</Modal.Title>
+          </Modal.Header>
+          <Modal.Body style={{ textAlign: "center" }}>
+            {comprobanteUrl.endsWith(".pdf") ? (
+              <embed
+                src={comprobanteUrl}
+                type="application/pdf"
+                width="100%"
+                height="600px"
+              />
+            ) : (
+              <img
+                src={comprobanteUrl}
+                alt="Comprobante"
+                style={{ maxWidth: "100%", borderRadius: "8px" }}
+              />
+            )}
+          </Modal.Body>
+          <Modal.Footer>
+            <Button onClick={cerrarModalVer} style={{
+              background: 'linear-gradient(135deg, #001a47 0%, #002d6b 100%)',
+              border: 'none',
+              color: 'white'
+            }}>
+              Cerrar
+            </Button>
+          </Modal.Footer>
+        </Modal>
       </div>
     </>
   );

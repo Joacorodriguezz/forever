@@ -1,6 +1,6 @@
+// Define tu datasource y generator aquí (ej. PostgreSQL)
 generator client {
   provider = "prisma-client-js"
-  binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
 datasource db {
@@ -8,282 +8,126 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ============================================
-// MODELOS BASE SEGÚN DIAGRAMA ER
-// ============================================
-
-// Localidad (según diagrama ER)
-model Localidad {
-  id            Int         @id @default(autoincrement())
-  codigoPostal  Int
-  nombre        String      @db.VarChar(50)
-  domicilios    Domicilio[]
-}
-
-// Domicilio (según diagrama ER)
-model Domicilio {
-  id            Int         @id @default(autoincrement())
-  id_localidad  Int
-  calle         String      @db.VarChar(100)
-  numero        Int
-  localidad     Localidad   @relation(fields: [id_localidad], references: [id])
-  deportistas   Deportista[]
-}
-
-// Enfermedad (según diagrama ER)
-model Enfermedad {
-  id            Int                    @id @default(autoincrement())
-  nombre        String                 @db.VarChar(50)
-  deportistas   DeportistaEnfermedad[]
-}
-
-// Telefono (según diagrama ER)
-model Telefono {
-  id            Int                @id @default(autoincrement())
-  numero        String              @db.VarChar(50)
-  deportistas   DeportistaTelefono[]
-}
-
-// CuentaUsuario (según diagrama ER)
-model Usuario {
-  id            Int           @id @default(autoincrement())
-  email         String        @unique @db.VarChar(50)
-  password      String        @db.VarChar(255)
-  creadoEn      DateTime      @default(now())
-  deportista    Deportista?
-  administrativo Administrativo?
-}
-
-// Administrativo (según diagrama ER)
-model Administrativo {
-  id        Int      @id @default(autoincrement())
-  nombre    String   @db.VarChar(50)
-  apellido  String   @db.VarChar(50)
-  dni       Int      @unique
-  activo    Boolean  @default(true)
-  usuarioId Int      @unique
-  usuario   Usuario  @relation(fields: [usuarioId], references: [id])
-}
-
-// Disciplina (según diagrama ER - renombrado de Actividad)
-model Disciplina {
-  id            Int                    @id @default(autoincrement())
-  nombre        String                 @db.VarChar(50)
-  precioMensual Float
-  deportistas   DeportistaDisciplina[]
-  deportistasPrincipales Deportista[]   @relation("DisciplinaPrincipal")
-  cuotas        Cuota[]
-}
-
-// Deportista (según diagrama ER - renombrado de Socio)
-model Deportista {
-  id              Int                    @id @default(autoincrement())
-  nombre          String                 @db.VarChar(50)
-  apellido        String                 @db.VarChar(50)
-  dni             Int                    @unique
-  estado          EstadoDeportista       @default(AL_DIA)
-  categoria       String?                @db.VarChar(50)
-  fechaNacimiento DateTime
-  obraSocial      String?                @db.VarChar(50)
-  fotoCarnet      String?
-  sexo            Sexo
-  pais            paisesLatam
-  // Relaciones según diagrama ER
-  id_disciplina   Int?
-  id_cuenta       Int                    @unique
-  id_domicilio    Int?
-  disciplina      Disciplina?            @relation("DisciplinaPrincipal", fields: [id_disciplina], references: [id])
-  usuario         Usuario                @relation(fields: [id_cuenta], references: [id])
-  domicilio       Domicilio?             @relation(fields: [id_domicilio], references: [id])
-  // Relaciones many-to-many
-  disciplinas     DeportistaDisciplina[]
-  enfermedades    DeportistaEnfermedad[]
-  telefonos       DeportistaTelefono[]
-  // Relaciones one-to-many
-  cuotas          Cuota[]
-  pagos           Pago[]
-  // Relaciones de grupo familiar
-  grupoFamiliarPrincipal GrupoFamiliar[] @relation("Principal")
-  grupoFamiliarMiembros  GrupoFamiliarMiembro[]
-  // Adulto responsable (self-referencing)
-  adultoResponsableId    Int?
-  adultoResponsable      Deportista?     @relation("AdultoResponsable", fields: [adultoResponsableId], references: [id])
-  dependientes           Deportista[]    @relation("AdultoResponsable")
-}
-
-// Tabla de relación many-to-many: Deportista - Disciplina
-model DeportistaDisciplina {
-  id           Int        @id @default(autoincrement())
-  deportistaId Int
-  disciplinaId Int
-  deportista   Deportista @relation(fields: [deportistaId], references: [id], onDelete: Cascade)
-  disciplina   Disciplina @relation(fields: [disciplinaId], references: [id], onDelete: Cascade)
-
-  @@unique([deportistaId, disciplinaId])
-}
-
-// Tabla de relación many-to-many: Deportista - Enfermedad
-model DeportistaEnfermedad {
-  id            Int         @id @default(autoincrement())
-  deportistaId  Int
-  enfermedadId  Int
-  deportista    Deportista  @relation(fields: [deportistaId], references: [id], onDelete: Cascade)
-  enfermedad    Enfermedad  @relation(fields: [enfermedadId], references: [id], onDelete: Cascade)
-
-  @@unique([deportistaId, enfermedadId])
-}
-
-// Tabla de relación many-to-many: Deportista - Telefono
-model DeportistaTelefono {
-  id           Int         @id @default(autoincrement())
-  deportistaId Int
-  telefonoId   Int
-  deportista   Deportista  @relation(fields: [deportistaId], references: [id], onDelete: Cascade)
-  telefono     Telefono    @relation(fields: [telefonoId], references: [id], onDelete: Cascade)
-
-  @@unique([deportistaId, telefonoId])
-}
-
-// Grupo Familiar (para manejar familiares y adulto responsable)
-model GrupoFamiliar {
-  id                    Int                      @id @default(autoincrement())
-  nombre                String                   @db.VarChar(100)
-  deportistaPrincipalId Int
-  deportistaPrincipal   Deportista               @relation("Principal", fields: [deportistaPrincipalId], references: [id])
-  miembros              GrupoFamiliarMiembro[]
-  creadoEn              DateTime                 @default(now())
-}
-
-// Miembros del Grupo Familiar
-model GrupoFamiliarMiembro {
-  id                Int            @id @default(autoincrement())
-  grupoFamiliarId   Int
-  deportistaId      Int
-  vinculo           VinculoFamiliar
-  grupoFamiliar     GrupoFamiliar  @relation(fields: [grupoFamiliarId], references: [id], onDelete: Cascade)
-  deportista        Deportista     @relation(fields: [deportistaId], references: [id], onDelete: Cascade)
-
-  @@unique([grupoFamiliarId, deportistaId])
-}
-
-// Pago (según diagrama ER)
-model Pago {
-  id              Int            @id @default(autoincrement())
-  fechaPago       DateTime
-  estadoPago      EstadoPago     @default(APROBADO)
-  linkComprobante String?        @db.VarChar(255)
-  id_cuota        Int            @unique
-  id_deportista   Int
-  cuota           Cuota          @relation(fields: [id_cuota], references: [id])
-  deportista      Deportista     @relation(fields: [id_deportista], references: [id])
-}
-
-// Cuota (según diagrama ER)
-model Cuota {
-  id                Int               @id @default(autoincrement())
-  id_disciplina     Int?
-  id_pago           Int?              @unique
-  monto             Decimal           @db.Decimal(12, 3)
-  fechaVencimiento  DateTime          @db.Date
-  estadoCuota       EstadoCuota       @default(PENDIENTE)
-  nroCuota          Int?
-  fechaEmision      DateTime          @default(now())
-  deportista_id     Int
-  mes               Mes?
-  disciplina        Disciplina?       @relation(fields: [id_disciplina], references: [id])
-  pago              Pago?
-  deportista        Deportista        @relation(fields: [deportista_id], references: [id], onUpdate: NoAction)
-  comprobantes      Comprobante[]
-
-  @@unique([deportista_id, mes])
-  @@index([estadoCuota], map: "id_cuota_estado")
-}
-
-// Comprobante (mantener para compatibilidad)
-model Comprobante {
-  id        Int      @id @default(autoincrement())
-  cuotaId   Int
-  url       String
-  activo    Boolean  @default(true)
-  subido_en DateTime @default(now())
-  Cuota     Cuota    @relation(fields: [cuotaId], references: [id])
-
-  @@unique([cuotaId, activo])
-}
-
-// ============================================
-// ENUMS
-// ============================================
-
-enum Sexo {
-  MASCULINO
-  FEMENINO
-  OTRO
-}
-
-enum EstadoCuota {
-  PENDIENTE
-  VENCIDA
-  PAGADA
-  EN_REVISION
-}
-
-enum EstadoPago {
-  APROBADO
-  RECHAZADO
-}
-
 enum EstadoDeportista {
-  EN_DEUDA
   AL_DIA
+  EN_DEUDA
   MOROSA
   INACTIVA
 }
 
-enum Mes {
-  ENERO
-  FEBRERO
-  MARZO
-  ABRIL
-  MAYO
-  JUNIO
-  JULIO
-  AGOSTO
-  SEPTIEMBRE
-  OCTUBRE
-  NOVIEMBRE
-  DICIEMBRE
+model Localidad {
+  id_localidad Int         @id @default(autoincrement())
+  codigoPostal Int
+  nombre       String      @db.VarChar(50)
+  domicilios   Domicilio[]
 }
 
-enum VinculoFamiliar {
-  HIJO
-  HIJA
-  PADRE
-  MADRE
-  HERMANO
-  HERMANA
-  OTRO
+model Domicilio {
+  id_domicilio Int          @id @default(autoincrement())
+  id_localidad Int
+  localidad    Localidad    @relation(fields: [id_localidad], references: [id_localidad])
+  deportistas  Deportista[]
 }
 
-enum paisesLatam {
-  ARGENTINA
-  BOLIVIA
-  BRASIL
-  CHILE
-  COLOMBIA
-  COSTA_RICA           @map("COSTA RICA")
-  CUBA
-  ECUADOR
-  EL_SALVADOR          @map("EL SALVADOR")
-  GUATEMALA
-  HONDURAS
-  MEXICO
-  NICARAGUA
-  PANAMA
-  PARAGUAY
-  PERU
-  PUERTO_RICO          @map("PUERTO RICO")
-  REPUBLICA_DOMINICANA @map("REPUBLICA DOMINICANA")
-  URUGUAY
-  VENEZUELA
+model CuentaUsuario {
+  id_cuenta      Int             @id @default(autoincrement())
+  mail           String          @unique @db.VarChar(50)
+  contrasena     String          @db.VarChar(255) // Increased for bcrypt hash
+  deportista     Deportista?
+  administrativo Administrativo?
+}
+
+model Administrativo {
+  id_administrativo Int           @id @default(autoincrement())
+  nombre            String        @db.VarChar(50)
+  apellido          String        @db.VarChar(50)
+  dni               Int           @unique
+  // Relación inferida 1:1 con CuentaUsuario (basado en la línea del diagrama)
+  id_cuenta         Int           @unique
+  cuenta            CuentaUsuario @relation(fields: [id_cuenta], references: [id_cuenta])
+}
+
+model Deportista {
+  id_deportista Int              @id @default(autoincrement())
+  estado        EstadoDeportista
+  categoria     String           @db.VarChar(50)
+  fechaNac      DateTime
+  obraSocial    String           @db.VarChar(50)
+  nombre        String           @db.VarChar(50)
+  apellido      String           @db.VarChar(50)
+  dni           Int              @unique
+
+  // Campos opcionales
+  sexo       String? @db.VarChar(20)
+  fotoCarnet String? @db.VarChar(255) // URL de la imagen
+
+  // Relaciones (FKs)
+  id_disciplina Int
+  disciplina    Disciplina @relation(fields: [id_disciplina], references: [id_disciplina])
+
+  id_cuenta Int           @unique // 1:1 con Cuenta
+  cuenta    CuentaUsuario @relation(fields: [id_cuenta], references: [id_cuenta])
+
+  id_domicilio Int?
+  domicilio    Domicilio? @relation(fields: [id_domicilio], references: [id_domicilio])
+
+  // Colecciones
+  telefonos    Telefono[]
+  cuotas       Cuota[]
+  pagos        Pago[]
+  enfermedades Enfermedad[] // Relación implícita N:M
+}
+
+model Enfermedad {
+  id_enfermedad Int          @id @default(autoincrement())
+  nombre        String       @db.VarChar(50)
+  deportistas   Deportista[] // Prisma crea la tabla intermedia automáticamente
+}
+
+model Telefono {
+  id_telefono   String     @id @default(uuid()) // El diagrama dice varchar, asumo UUID
+  numero        Int
+  // Relación inferida: El diagrama conecta Telefono a Deportista, 
+  // por lo que Telefono necesita la FK.
+  id_deportista Int
+  deportista    Deportista @relation(fields: [id_deportista], references: [id_deportista])
+}
+
+model Disciplina {
+  id_disciplina Int          @id @default(autoincrement())
+  nombre        String       @db.VarChar(50)
+  precioMensual Float // O Decimal si prefieres exactitud financiera
+  deportistas   Deportista[]
+  cuotas        Cuota[]
+}
+
+model Cuota {
+  id_cuota         Int      @id @default(autoincrement())
+  monto            Decimal  @db.Money // Mapeo de tipo 'money'
+  fechaVencimiento DateTime
+  estadoCuota      String   @db.VarChar(50)
+  nroCuota         Int
+  fechaEmision     DateTime
+  mes              String?  @db.VarChar(20) // e.g. "ENERO", "FEBRERO"
+
+  id_disciplina Int
+  disciplina    Disciplina @relation(fields: [id_disciplina], references: [id_disciplina])
+
+  deportista_id Int
+  deportista    Deportista @relation(fields: [deportista_id], references: [id_deportista])
+
+  pagos Pago[]
+}
+
+model Pago {
+  id_pago         Int      @id @default(autoincrement())
+  fechaPago       DateTime
+  estadoPago      String   @db.VarChar(50)
+  linkComprobante String?  @db.VarChar(50) // Puede ser opcional
+
+  id_cuota Int
+  cuota    Cuota @relation(fields: [id_cuota], references: [id_cuota])
+
+  id_deportista Int
+  deportista    Deportista @relation(fields: [id_deportista], references: [id_deportista])
 }

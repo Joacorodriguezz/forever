@@ -30,15 +30,15 @@ export async function getAdministrativos(req: Request, res: Response) {
   }
 }
 
-// Obtener todos los socios
-export async function getSocios(req: Request, res: Response) {
+// Obtener todos los deportistas
+export async function getDeportistas(req: Request, res: Response) {
   try {
-    const socios = await userService.getAllSocios();
-    res.json({ success: true, data: socios });
+    const deportistas = await userService.getAllDeportistas();
+    res.json({ success: true, data: deportistas });
   } catch (error: any) {
     res.status(500).json({
       success: false,
-      message: error.message || "Error al obtener socios",
+      message: error.message || "Error al obtener deportistas",
     });
   }
 }
@@ -64,8 +64,8 @@ export async function updateUser(req: Request, res: Response) {
 
     if (req.file) {
       // Verificar que Supabase esté configurado
-      if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
-        throw new Error('Supabase no está configurado. Configure las variables de entorno SUPABASE_URL y SUPABASE_SERVICE_KEY.');
+      if (!process.env.SUPABASE_URL) {
+        throw new Error('Supabase no está configurado. Configure la variable de entorno SUPABASE_URL.');
       }
 
       const ext = req.file.originalname.split(".").pop();
@@ -91,8 +91,8 @@ export async function updateUser(req: Request, res: Response) {
     const bodyData = { ...req.body };
 
     if (fotoCarnetUrl) {
-      if (!bodyData.socio) bodyData.socio = {};
-      bodyData.socio.fotoCarnet = fotoCarnetUrl;
+      if (!bodyData.deportista) bodyData.deportista = {};
+      bodyData.deportista.fotoCarnet = fotoCarnetUrl;
     }
 
     const updated = await userService.updateUser(userId, bodyData);
@@ -167,39 +167,6 @@ export async function updateOwnProfile(req: Request, res: Response) {
     return res.status(error.statusCode || 400).json({
       success: false,
       message: error.message || 'Error al actualizar perfil',
-    });
-  }
-}
-
-// CU03 - Asignar Rol
-export async function assignRole(req: Request, res: Response) {
-  try {
-    const userId = parseInt(req.params.id, 10);
-    const { role } = req.body;
-    const currentAdminId = req.user?.id;
-
-    if (!currentAdminId) {
-      return res.status(401).json({ success: false, message: 'No autenticado' });
-    }
-
-    if (!['ADMIN', 'ADMINISTRATIVO', 'SOCIO'].includes(role)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Rol inválido',
-      });
-    }
-
-    const updated = await userService.assignRole(userId, role, currentAdminId);
-    return res.status(200).json({
-      success: true,
-      message: 'Rol actualizado correctamente',
-      data: updated,
-    });
-  } catch (error: any) {
-    console.error('Error al asignar rol:', error);
-    return res.status(error.statusCode || 400).json({
-      success: false,
-      message: error.message || 'Error al asignar rol',
     });
   }
 }

@@ -1,0 +1,19 @@
+.historial-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e3f2fd 50%, #f5f5f5 100%);
+    padding: 2rem 1rem;
+}
+
+.historial-container .card {
+    box-shadow: 0 8px 24px rgba(0, 26, 71, 0.25);
+    border-top: 6px solid #001a47;
+    margin-top: 2rem;
+}
+
+.historial-container .table thead {
+    color: #001a47;
+}
+
+.historial-container .table tbody tr:hover {
+    background-color: rgba(0, 26, 71, 0.05);
+}

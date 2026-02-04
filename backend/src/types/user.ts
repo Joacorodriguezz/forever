@@ -1,29 +1,30 @@
-import { Socio } from './Socio';
-export type Sexo = 'MASCULINO' | 'FEMENINO' | 'OTRO';
-export type Role = 'ADMIN' | 'ADMINISTRATIVO' | 'SOCIO';
+import { Deportista } from './Deportista';
 import { Administrativo } from './administrativo';
 
+export type Role = 'ADMIN' | 'ADMINISTRATIVO' | 'DEPORTISTA';
+
 export interface UserData {
-  id: number;
-  email: string;
-  role: Role;
-  creadoEn: Date;
-  socio?: Socio | null; 
-  administrativo?: Administrativo| null;
+  id_cuenta: number;
+  mail: string;
+  deportista?: Deportista | null;
+  administrativo?: Administrativo | null;
 }
 
 export interface CreateUserRequest {
-  email: string;
-  password: string;
-  role: Role;
-  socio?: {
+  mail: string;
+  contrasena: string;
+  deportista?: {
     nombre: string;
     apellido: string;
     dni: number;
     fechaNacimiento: Date;
-    pais: string;
-    sexo: Sexo;
-    fotoCarnet?: string | null;
+    estado: 'AL_DIA' | 'EN_DEUDA' | 'MOROSA' | 'INACTIVA';
+    categoria: string;
+    obraSocial: string;
+    id_disciplina: number;
+    id_domicilio?: number;
+    sexo?: string;
+    fotoCarnet?: string;
   };
   administrativo?: {
     nombre: string;
@@ -33,22 +34,25 @@ export interface CreateUserRequest {
 }
 
 export interface UpdateUserRequest {
-  email?: string;
-  password?: string;
-  role?: Role;
-  socio?: {
-    nombre: string;
-    apellido: string;
-    dni: number;
-    fechaNacimiento: Date;
-    pais: string;
-    sexo: Sexo;
-    fotoCarnet?: string | null;
-  }; 
+  mail?: string;
+  contrasena?: string;
+  deportista?: {
+    nombre?: string;
+    apellido?: string;
+    dni?: number;
+    fechaNacimiento?: Date;
+    estado?: 'AL_DIA' | 'EN_DEUDA' | 'MOROSA' | 'INACTIVA';
+    categoria?: string;
+    obraSocial?: string;
+    id_disciplina?: number;
+    id_domicilio?: number;
+    sexo?: string;
+    fotoCarnet?: string;
+  };
   administrativo?: {
-    nombre: string;
-    apellido: string;
-    dni: number;
+    nombre?: string;
+    apellido?: string;
+    dni?: number;
   };
 }
 
