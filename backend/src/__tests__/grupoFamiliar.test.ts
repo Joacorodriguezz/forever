@@ -1,10 +1,63 @@
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import app from '../app';
-import { prismaMock } from './mocks/prisma.mock';
 import { Rol, Vinculo } from '@prisma/client';
 
+// Mock prisma
+jest.mock('../config/prisma', () => {
+  const mockPrisma = {
+    cuentaUsuario: {
+      findUnique: jest.fn(),
+    },
+    deportista: {
+      findMany: jest.fn(),
+    },
+    grupoFamiliar: {
+      findUnique: jest.fn(),
+      findMany: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+      count: jest.fn(),
+    },
+    grupoFamiliarIntegrante: {
+      deleteMany: jest.fn(),
+      create: jest.fn(),
+    },
+    $transaction: jest.fn(),
+  };
+  return { __esModule: true, default: mockPrisma, prisma: mockPrisma };
+});
+
+import prisma from '../config/prisma';
+
+const mockPrisma = prisma as jest.Mocked<typeof prisma>;
+
 describe('Grupo Familiar Module', () => {
+  const adminUser = {
+    id: 1,
+    email: 'admin@test.com',
+    password: 'hashed',
+    rol: Rol.ADMINISTRATIVO,
+    activo: true,
+    intentosFallidos: 0,
+    bloqueadoHasta: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  const deportistaUser = {
+    id: 2,
+    email: 'deportista@test.com',
+    password: 'hashed',
+    rol: Rol.DEPORTISTA,
+    activo: true,
+    intentosFallidos: 0,
+    bloqueadoHasta: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
   const adminToken = jwt.sign(
     { id: 1, email: 'admin@test.com', rol: Rol.ADMINISTRATIVO },
     process.env.JWT_SECRET!
@@ -16,17 +69,7 @@ describe('Grupo Familiar Module', () => {
   );
 
   beforeEach(() => {
-    prismaMock.cuentaUsuario.findUnique.mockResolvedValue({
-      id: 1,
-      email: 'admin@test.com',
-      password: 'hashed',
-      rol: Rol.ADMINISTRATIVO,
-      activo: true,
-      intentosFallidos: 0,
-      bloqueadoHasta: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    } as any);
+    jest.clearAllMocks();
   });
 
   describe('POST /api/grupos-familiares', () => {
@@ -47,17 +90,7 @@ describe('Grupo Familiar Module', () => {
     });
 
     it('deberia retornar 403 si no es Administrativo', async () => {
-      prismaMock.cuentaUsuario.findUnique.mockResolvedValue({
-        id: 2,
-        email: 'deportista@test.com',
-        password: 'hashed',
-        rol: Rol.DEPORTISTA,
-        activo: true,
-        intentosFallidos: 0,
-        bloqueadoHasta: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      } as any);
+      (mockPrisma.cuentaUsuario.findUnique as jest.Mock).mockResolvedValue(deportistaUser);
 
       const response = await request(app)
         .post('/api/grupos-familiares')
@@ -68,6 +101,8 @@ describe('Grupo Familiar Module', () => {
     });
 
     it('deberia retornar 400 si faltan integrantes', async () => {
+      (mockPrisma.cuentaUsuario.findUnique as jest.Mock).mockResolvedValue(adminUser);
+
       const response = await request(app)
         .post('/api/grupos-familiares')
         .set('Authorization', `Bearer ${adminToken}`)
@@ -77,6 +112,8 @@ describe('Grupo Familiar Module', () => {
     });
 
     it('deberia retornar 400 si hay menos de 2 integrantes', async () => {
+      (mockPrisma.cuentaUsuario.findUnique as jest.Mock).mockResolvedValue(adminUser);
+
       const response = await request(app)
         .post('/api/grupos-familiares')
         .set('Authorization', `Bearer ${adminToken}`)
@@ -89,6 +126,8 @@ describe('Grupo Familiar Module', () => {
     });
 
     it('deberia retornar 400 si no hay integrante principal', async () => {
+      (mockPrisma.cuentaUsuario.findUnique as jest.Mock).mockResolvedValue(adminUser);
+
       const response = await request(app)
         .post('/api/grupos-familiares')
         .set('Authorization', `Bearer ${adminToken}`)
@@ -104,7 +143,8 @@ describe('Grupo Familiar Module', () => {
     });
 
     it('deberia retornar 404 si algun deportista no existe', async () => {
-      prismaMock.deportista.findMany.mockResolvedValue([{ id: 1 }] as any);
+      (mockPrisma.cuentaUsuario.findUnique as jest.Mock).mockResolvedValue(adminUser);
+      (mockPrisma.deportista.findMany as jest.Mock).mockResolvedValue([{ id: 1 }]);
 
       const response = await request(app)
         .post('/api/grupos-familiares')
@@ -115,16 +155,17 @@ describe('Grupo Familiar Module', () => {
     });
 
     it('deberia retornar 201 al crear grupo familiar', async () => {
-      prismaMock.deportista.findMany.mockResolvedValue([{ id: 1 }, { id: 2 }] as any);
-      prismaMock.grupoFamiliar.findMany.mockResolvedValue([]);
-      prismaMock.grupoFamiliar.create.mockResolvedValue({
+      (mockPrisma.cuentaUsuario.findUnique as jest.Mock).mockResolvedValue(adminUser);
+      (mockPrisma.deportista.findMany as jest.Mock).mockResolvedValue([{ id: 1 }, { id: 2 }]);
+      (mockPrisma.grupoFamiliar.findMany as jest.Mock).mockResolvedValue([]);
+      (mockPrisma.grupoFamiliar.create as jest.Mock).mockResolvedValue({
         id: 1,
         nombre: 'Familia Perez',
         integrantes: [
           { deportistaId: 1, vinculo: Vinculo.PADRE, esPrincipal: true, deportista: { nombre: 'Juan' } },
           { deportistaId: 2, vinculo: Vinculo.HIJO, esPrincipal: false, deportista: { nombre: 'Pedro' } },
         ],
-      } as any);
+      });
 
       const response = await request(app)
         .post('/api/grupos-familiares')
@@ -136,13 +177,14 @@ describe('Grupo Familiar Module', () => {
     });
 
     it('deberia retornar 409 si el grupo ya existe', async () => {
-      prismaMock.deportista.findMany.mockResolvedValue([{ id: 1 }, { id: 2 }] as any);
-      prismaMock.grupoFamiliar.findMany.mockResolvedValue([
+      (mockPrisma.cuentaUsuario.findUnique as jest.Mock).mockResolvedValue(adminUser);
+      (mockPrisma.deportista.findMany as jest.Mock).mockResolvedValue([{ id: 1 }, { id: 2 }]);
+      (mockPrisma.grupoFamiliar.findMany as jest.Mock).mockResolvedValue([
         {
           id: 1,
           integrantes: [{ deportistaId: 1 }, { deportistaId: 2 }],
         },
-      ] as any);
+      ]);
 
       const response = await request(app)
         .post('/api/grupos-familiares')
@@ -155,7 +197,8 @@ describe('Grupo Familiar Module', () => {
 
   describe('GET /api/grupos-familiares', () => {
     it('deberia retornar lista de grupos familiares', async () => {
-      prismaMock.grupoFamiliar.findMany.mockResolvedValue([
+      (mockPrisma.cuentaUsuario.findUnique as jest.Mock).mockResolvedValue(adminUser);
+      (mockPrisma.grupoFamiliar.findMany as jest.Mock).mockResolvedValue([
         {
           id: 1,
           nombre: 'Familia Perez',
@@ -164,8 +207,8 @@ describe('Grupo Familiar Module', () => {
             { deportista: { nombre: 'Pedro' }, vinculo: Vinculo.HIJO },
           ],
         },
-      ] as any);
-      prismaMock.grupoFamiliar.count.mockResolvedValue(1);
+      ]);
+      (mockPrisma.grupoFamiliar.count as jest.Mock).mockResolvedValue(1);
 
       const response = await request(app)
         .get('/api/grupos-familiares')
@@ -178,13 +221,14 @@ describe('Grupo Familiar Module', () => {
 
   describe('GET /api/grupos-familiares/:id', () => {
     it('deberia retornar grupo familiar por ID', async () => {
-      prismaMock.grupoFamiliar.findUnique.mockResolvedValue({
+      (mockPrisma.cuentaUsuario.findUnique as jest.Mock).mockResolvedValue(adminUser);
+      (mockPrisma.grupoFamiliar.findUnique as jest.Mock).mockResolvedValue({
         id: 1,
         nombre: 'Familia Perez',
         integrantes: [
           { deportista: { nombre: 'Juan', disciplina: { nombre: 'Futbol' } }, vinculo: Vinculo.PADRE },
         ],
-      } as any);
+      });
 
       const response = await request(app)
         .get('/api/grupos-familiares/1')
@@ -195,7 +239,8 @@ describe('Grupo Familiar Module', () => {
     });
 
     it('deberia retornar 404 si no existe', async () => {
-      prismaMock.grupoFamiliar.findUnique.mockResolvedValue(null);
+      (mockPrisma.cuentaUsuario.findUnique as jest.Mock).mockResolvedValue(adminUser);
+      (mockPrisma.grupoFamiliar.findUnique as jest.Mock).mockResolvedValue(null);
 
       const response = await request(app)
         .get('/api/grupos-familiares/999')
@@ -207,23 +252,24 @@ describe('Grupo Familiar Module', () => {
 
   describe('PUT /api/grupos-familiares/:id', () => {
     it('deberia actualizar nombre del grupo', async () => {
-      prismaMock.grupoFamiliar.findUnique.mockResolvedValue({
-        id: 1,
-        nombre: 'Familia Perez',
-      } as any);
+      (mockPrisma.cuentaUsuario.findUnique as jest.Mock).mockResolvedValue(adminUser);
+      (mockPrisma.grupoFamiliar.findUnique as jest.Mock)
+        .mockResolvedValueOnce({
+          id: 1,
+          nombre: 'Familia Perez',
+        })
+        .mockResolvedValueOnce({
+          id: 1,
+          nombre: 'Familia Garcia',
+          integrantes: [],
+        });
 
-      prismaMock.$transaction.mockImplementation(async (callback: any) => {
+      (mockPrisma.$transaction as jest.Mock).mockImplementation(async (callback: any) => {
         return callback({
           grupoFamiliar: { update: jest.fn().mockResolvedValue({}) },
           grupoFamiliarIntegrante: { deleteMany: jest.fn(), create: jest.fn() },
         });
       });
-
-      prismaMock.grupoFamiliar.findUnique.mockResolvedValue({
-        id: 1,
-        nombre: 'Familia Garcia',
-        integrantes: [],
-      } as any);
 
       const response = await request(app)
         .put('/api/grupos-familiares/1')
@@ -236,11 +282,12 @@ describe('Grupo Familiar Module', () => {
 
   describe('DELETE /api/grupos-familiares/:id', () => {
     it('deberia eliminar grupo familiar', async () => {
-      prismaMock.grupoFamiliar.findUnique.mockResolvedValue({
+      (mockPrisma.cuentaUsuario.findUnique as jest.Mock).mockResolvedValue(adminUser);
+      (mockPrisma.grupoFamiliar.findUnique as jest.Mock).mockResolvedValue({
         id: 1,
         nombre: 'Familia Perez',
-      } as any);
-      prismaMock.grupoFamiliar.delete.mockResolvedValue({} as any);
+      });
+      (mockPrisma.grupoFamiliar.delete as jest.Mock).mockResolvedValue({});
 
       const response = await request(app)
         .delete('/api/grupos-familiares/1')
@@ -251,7 +298,8 @@ describe('Grupo Familiar Module', () => {
     });
 
     it('deberia retornar 404 si no existe', async () => {
-      prismaMock.grupoFamiliar.findUnique.mockResolvedValue(null);
+      (mockPrisma.cuentaUsuario.findUnique as jest.Mock).mockResolvedValue(adminUser);
+      (mockPrisma.grupoFamiliar.findUnique as jest.Mock).mockResolvedValue(null);
 
       const response = await request(app)
         .delete('/api/grupos-familiares/999')

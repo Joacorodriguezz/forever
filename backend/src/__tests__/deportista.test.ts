@@ -363,5 +363,106 @@ describe('Deportista Module', () => {
       expect(response.body.data.nombre).toBe('Juan');
     });
   });
+
+  describe('GET /api/deportistas/mi-historial', () => {
+    it('deberia retornar 401 sin token', async () => {
+      const response = await request(app).get('/api/deportistas/mi-historial');
+      expect(response.status).toBe(401);
+    });
+
+    it('deberia retornar 403 si no es deportista', async () => {
+      (mockPrisma.cuentaUsuario.findUnique as jest.Mock).mockResolvedValue(adminUser);
+
+      const response = await request(app)
+        .get('/api/deportistas/mi-historial')
+        .set('Authorization', `Bearer ${adminToken}`);
+
+      expect(response.status).toBe(403);
+    });
+
+    it('deberia retornar historial del deportista logueado', async () => {
+      (mockPrisma.cuentaUsuario.findUnique as jest.Mock).mockResolvedValue(deportistaUser);
+      (mockPrisma.deportista.findUnique as jest.Mock).mockResolvedValue({
+        id: 1,
+        nombre: 'Juan',
+        cuentaId: 2,
+      });
+      (mockPrisma.pago.findMany as jest.Mock).mockResolvedValue([
+        {
+          id: 1,
+          fechaPago: new Date(),
+          monto: 5000,
+          estadoPago: 'APROBADO',
+          cuota: { nroCuota: 1, disciplina: { nombre: 'Futbol' } },
+        },
+      ]);
+
+      const response = await request(app)
+        .get('/api/deportistas/mi-historial')
+        .set('Authorization', `Bearer ${deportistaToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+    });
+  });
+
+  describe('GET /api/deportistas/:id/historial', () => {
+    it('deberia retornar 401 sin token', async () => {
+      const response = await request(app).get('/api/deportistas/1/historial');
+      expect(response.status).toBe(401);
+    });
+
+    it('deberia retornar 403 si no es administrativo', async () => {
+      (mockPrisma.cuentaUsuario.findUnique as jest.Mock).mockResolvedValue(deportistaUser);
+
+      const response = await request(app)
+        .get('/api/deportistas/1/historial')
+        .set('Authorization', `Bearer ${deportistaToken}`);
+
+      expect(response.status).toBe(403);
+    });
+
+    it('deberia retornar historial de pagos de un deportista', async () => {
+      (mockPrisma.cuentaUsuario.findUnique as jest.Mock).mockResolvedValue(adminUser);
+      (mockPrisma.deportista.findUnique as jest.Mock).mockResolvedValue({
+        id: 1,
+        nombre: 'Juan',
+      });
+      (mockPrisma.pago.findMany as jest.Mock).mockResolvedValue([
+        {
+          id: 1,
+          fechaPago: new Date(),
+          monto: 5000,
+          estadoPago: 'APROBADO',
+          cuota: { nroCuota: 1, disciplina: { nombre: 'Futbol' } },
+        },
+        {
+          id: 2,
+          fechaPago: new Date(),
+          monto: 4500,
+          estadoPago: 'PENDIENTE',
+          cuota: { nroCuota: 2, disciplina: { nombre: 'Futbol' } },
+        },
+      ]);
+
+      const response = await request(app)
+        .get('/api/deportistas/1/historial')
+        .set('Authorization', `Bearer ${adminToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+    });
+
+    it('deberia retornar 404 si el deportista no existe', async () => {
+      (mockPrisma.cuentaUsuario.findUnique as jest.Mock).mockResolvedValue(adminUser);
+      (mockPrisma.deportista.findUnique as jest.Mock).mockResolvedValue(null);
+
+      const response = await request(app)
+        .get('/api/deportistas/999/historial')
+        .set('Authorization', `Bearer ${adminToken}`);
+
+      expect(response.status).toBe(404);
+    });
+  });
 });
 

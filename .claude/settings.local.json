@@ -10,7 +10,8 @@
       "Bash(DIRECT_URL=\"postgresql://postgres:c1upwSGK7t6kFm8w@db.ewygzgwdoqedobborkxy.supabase.co:5432/postgres\" npx prisma db push:*)",
       "Bash(npx prisma generate)",
       "Bash(npm test:*)",
-      "Bash(npx jest src/tests/seed.test.ts --verbose --runInBand)"
+      "Bash(npx jest src/tests/seed.test.ts --verbose --runInBand)",
+      "Bash(npm run test:integration:*)"
     ]
   },
   "mcpServers": {

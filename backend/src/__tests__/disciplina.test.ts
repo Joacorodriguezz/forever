@@ -1,10 +1,57 @@
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import app from '../app';
-import { prismaMock } from './mocks/prisma.mock';
 import { Rol } from '@prisma/client';
 
+// Mock prisma
+jest.mock('../config/prisma', () => {
+  const mockPrisma = {
+    cuentaUsuario: {
+      findUnique: jest.fn(),
+    },
+    disciplina: {
+      findUnique: jest.fn(),
+      findMany: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+    },
+    deportista: {
+      findMany: jest.fn(),
+      count: jest.fn(),
+    },
+  };
+  return { __esModule: true, default: mockPrisma, prisma: mockPrisma };
+});
+
+import prisma from '../config/prisma';
+
+const mockPrisma = prisma as jest.Mocked<typeof prisma>;
+
 describe('Disciplina Module', () => {
+  const adminUser = {
+    id: 1,
+    email: 'admin@test.com',
+    password: 'hashed',
+    rol: Rol.ADMINISTRATIVO,
+    activo: true,
+    intentosFallidos: 0,
+    bloqueadoHasta: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  const deportistaUser = {
+    id: 2,
+    email: 'deportista@test.com',
+    password: 'hashed',
+    rol: Rol.DEPORTISTA,
+    activo: true,
+    intentosFallidos: 0,
+    bloqueadoHasta: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
   const adminToken = jwt.sign(
     { id: 1, email: 'admin@test.com', rol: Rol.ADMINISTRATIVO },
     process.env.JWT_SECRET!
@@ -16,17 +63,7 @@ describe('Disciplina Module', () => {
   );
 
   beforeEach(() => {
-    prismaMock.cuentaUsuario.findUnique.mockResolvedValue({
-      id: 1,
-      email: 'admin@test.com',
-      password: 'hashed',
-      rol: Rol.ADMINISTRATIVO,
-      activo: true,
-      intentosFallidos: 0,
-      bloqueadoHasta: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    } as any);
+    jest.clearAllMocks();
   });
 
   describe('POST /api/disciplinas', () => {
@@ -45,17 +82,7 @@ describe('Disciplina Module', () => {
     });
 
     it('deberia retornar 403 si no es Administrativo', async () => {
-      prismaMock.cuentaUsuario.findUnique.mockResolvedValue({
-        id: 2,
-        email: 'deportista@test.com',
-        password: 'hashed',
-        rol: Rol.DEPORTISTA,
-        activo: true,
-        intentosFallidos: 0,
-        bloqueadoHasta: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      } as any);
+      (mockPrisma.cuentaUsuario.findUnique as jest.Mock).mockResolvedValue(deportistaUser);
 
       const response = await request(app)
         .post('/api/disciplinas')
@@ -66,6 +93,8 @@ describe('Disciplina Module', () => {
     });
 
     it('deberia retornar 400 si falta nombre', async () => {
+      (mockPrisma.cuentaUsuario.findUnique as jest.Mock).mockResolvedValue(adminUser);
+
       const response = await request(app)
         .post('/api/disciplinas')
         .set('Authorization', `Bearer ${adminToken}`)
@@ -75,6 +104,8 @@ describe('Disciplina Module', () => {
     });
 
     it('deberia retornar 400 si precio es negativo', async () => {
+      (mockPrisma.cuentaUsuario.findUnique as jest.Mock).mockResolvedValue(adminUser);
+
       const response = await request(app)
         .post('/api/disciplinas')
         .set('Authorization', `Bearer ${adminToken}`)
@@ -84,7 +115,8 @@ describe('Disciplina Module', () => {
     });
 
     it('deberia retornar 409 si el nombre ya existe', async () => {
-      prismaMock.disciplina.findUnique.mockResolvedValue({ id: 1 } as any);
+      (mockPrisma.cuentaUsuario.findUnique as jest.Mock).mockResolvedValue(adminUser);
+      (mockPrisma.disciplina.findUnique as jest.Mock).mockResolvedValue({ id: 1 });
 
       const response = await request(app)
         .post('/api/disciplinas')
@@ -95,14 +127,15 @@ describe('Disciplina Module', () => {
     });
 
     it('deberia retornar 201 al crear disciplina', async () => {
-      prismaMock.disciplina.findUnique.mockResolvedValue(null);
-      prismaMock.disciplina.create.mockResolvedValue({
+      (mockPrisma.cuentaUsuario.findUnique as jest.Mock).mockResolvedValue(adminUser);
+      (mockPrisma.disciplina.findUnique as jest.Mock).mockResolvedValue(null);
+      (mockPrisma.disciplina.create as jest.Mock).mockResolvedValue({
         id: 1,
         nombre: 'Futbol',
         descripcion: 'Futbol 11',
         precioMensual: 5000,
         activa: true,
-      } as any);
+      });
 
       const response = await request(app)
         .post('/api/disciplinas')
@@ -116,10 +149,11 @@ describe('Disciplina Module', () => {
 
   describe('GET /api/disciplinas', () => {
     it('deberia retornar lista de disciplinas', async () => {
-      prismaMock.disciplina.findMany.mockResolvedValue([
+      (mockPrisma.cuentaUsuario.findUnique as jest.Mock).mockResolvedValue(adminUser);
+      (mockPrisma.disciplina.findMany as jest.Mock).mockResolvedValue([
         { id: 1, nombre: 'Futbol', precioMensual: 5000, activa: true, _count: { deportistas: 10 } },
         { id: 2, nombre: 'Basquet', precioMensual: 4500, activa: true, _count: { deportistas: 8 } },
-      ] as any);
+      ]);
 
       const response = await request(app)
         .get('/api/disciplinas')
@@ -130,9 +164,10 @@ describe('Disciplina Module', () => {
     });
 
     it('deberia filtrar disciplinas activas por defecto', async () => {
-      prismaMock.disciplina.findMany.mockResolvedValue([
+      (mockPrisma.cuentaUsuario.findUnique as jest.Mock).mockResolvedValue(adminUser);
+      (mockPrisma.disciplina.findMany as jest.Mock).mockResolvedValue([
         { id: 1, nombre: 'Futbol', activa: true },
-      ] as any);
+      ]);
 
       const response = await request(app)
         .get('/api/disciplinas')
@@ -142,10 +177,11 @@ describe('Disciplina Module', () => {
     });
 
     it('deberia incluir inactivas si se solicita', async () => {
-      prismaMock.disciplina.findMany.mockResolvedValue([
+      (mockPrisma.cuentaUsuario.findUnique as jest.Mock).mockResolvedValue(adminUser);
+      (mockPrisma.disciplina.findMany as jest.Mock).mockResolvedValue([
         { id: 1, nombre: 'Futbol', activa: true },
         { id: 2, nombre: 'Tenis', activa: false },
-      ] as any);
+      ]);
 
       const response = await request(app)
         .get('/api/disciplinas?includeInactive=true')
@@ -157,14 +193,15 @@ describe('Disciplina Module', () => {
 
   describe('GET /api/disciplinas/:id', () => {
     it('deberia retornar disciplina por ID', async () => {
-      prismaMock.disciplina.findUnique.mockResolvedValue({
+      (mockPrisma.cuentaUsuario.findUnique as jest.Mock).mockResolvedValue(adminUser);
+      (mockPrisma.disciplina.findUnique as jest.Mock).mockResolvedValue({
         id: 1,
         nombre: 'Futbol',
         descripcion: 'Futbol 11',
         precioMensual: 5000,
         activa: true,
         _count: { deportistas: 10 },
-      } as any);
+      });
 
       const response = await request(app)
         .get('/api/disciplinas/1')
@@ -175,7 +212,8 @@ describe('Disciplina Module', () => {
     });
 
     it('deberia retornar 404 si no existe', async () => {
-      prismaMock.disciplina.findUnique.mockResolvedValue(null);
+      (mockPrisma.cuentaUsuario.findUnique as jest.Mock).mockResolvedValue(adminUser);
+      (mockPrisma.disciplina.findUnique as jest.Mock).mockResolvedValue(null);
 
       const response = await request(app)
         .get('/api/disciplinas/999')
@@ -187,16 +225,17 @@ describe('Disciplina Module', () => {
 
   describe('PUT /api/disciplinas/:id', () => {
     it('deberia actualizar precio mensual', async () => {
-      prismaMock.disciplina.findUnique.mockResolvedValue({
+      (mockPrisma.cuentaUsuario.findUnique as jest.Mock).mockResolvedValue(adminUser);
+      (mockPrisma.disciplina.findUnique as jest.Mock).mockResolvedValue({
         id: 1,
         nombre: 'Futbol',
         precioMensual: 5000,
-      } as any);
-      prismaMock.disciplina.update.mockResolvedValue({
+      });
+      (mockPrisma.disciplina.update as jest.Mock).mockResolvedValue({
         id: 1,
         nombre: 'Futbol',
         precioMensual: 6000,
-      } as any);
+      });
 
       const response = await request(app)
         .put('/api/disciplinas/1')
@@ -207,16 +246,17 @@ describe('Disciplina Module', () => {
     });
 
     it('deberia desactivar disciplina', async () => {
-      prismaMock.disciplina.findUnique.mockResolvedValue({
+      (mockPrisma.cuentaUsuario.findUnique as jest.Mock).mockResolvedValue(adminUser);
+      (mockPrisma.disciplina.findUnique as jest.Mock).mockResolvedValue({
         id: 1,
         nombre: 'Futbol',
         activa: true,
-      } as any);
-      prismaMock.disciplina.update.mockResolvedValue({
+      });
+      (mockPrisma.disciplina.update as jest.Mock).mockResolvedValue({
         id: 1,
         nombre: 'Futbol',
         activa: false,
-      } as any);
+      });
 
       const response = await request(app)
         .put('/api/disciplinas/1')
@@ -227,9 +267,10 @@ describe('Disciplina Module', () => {
     });
 
     it('deberia retornar 409 si nombre duplicado', async () => {
-      prismaMock.disciplina.findUnique
-        .mockResolvedValueOnce({ id: 1, nombre: 'Futbol' } as any)
-        .mockResolvedValueOnce({ id: 2, nombre: 'Basquet' } as any);
+      (mockPrisma.cuentaUsuario.findUnique as jest.Mock).mockResolvedValue(adminUser);
+      (mockPrisma.disciplina.findUnique as jest.Mock)
+        .mockResolvedValueOnce({ id: 1, nombre: 'Futbol' })
+        .mockResolvedValueOnce({ id: 2, nombre: 'Basquet' });
 
       const response = await request(app)
         .put('/api/disciplinas/1')
@@ -242,12 +283,13 @@ describe('Disciplina Module', () => {
 
   describe('GET /api/disciplinas/:id/deportistas', () => {
     it('deberia retornar deportistas de una disciplina', async () => {
-      prismaMock.disciplina.findUnique.mockResolvedValue({ id: 1 } as any);
-      prismaMock.deportista.findMany.mockResolvedValue([
+      (mockPrisma.cuentaUsuario.findUnique as jest.Mock).mockResolvedValue(adminUser);
+      (mockPrisma.disciplina.findUnique as jest.Mock).mockResolvedValue({ id: 1 });
+      (mockPrisma.deportista.findMany as jest.Mock).mockResolvedValue([
         { id: 1, nombre: 'Juan', apellido: 'Perez', cuenta: { email: 'juan@test.com' } },
         { id: 2, nombre: 'Maria', apellido: 'Garcia', cuenta: { email: 'maria@test.com' } },
-      ] as any);
-      prismaMock.deportista.count.mockResolvedValue(2);
+      ]);
+      (mockPrisma.deportista.count as jest.Mock).mockResolvedValue(2);
 
       const response = await request(app)
         .get('/api/disciplinas/1/deportistas')
@@ -258,7 +300,8 @@ describe('Disciplina Module', () => {
     });
 
     it('deberia retornar 404 si disciplina no existe', async () => {
-      prismaMock.disciplina.findUnique.mockResolvedValue(null);
+      (mockPrisma.cuentaUsuario.findUnique as jest.Mock).mockResolvedValue(adminUser);
+      (mockPrisma.disciplina.findUnique as jest.Mock).mockResolvedValue(null);
 
       const response = await request(app)
         .get('/api/disciplinas/999/deportistas')
