@@ -3,7 +3,7 @@ import { cuotaService } from '../services/cuota.service';
 import { deportistaService } from '../services/deportista.service';
 import { sendSuccess, sendCreated } from '../utils/response';
 import { AuthenticatedRequest } from '../types';
-import { AsignarCuotaInput, UpdateCuotaInput, CuotasQuery } from '../validators/cuota.validator';
+import { AsignarCuotaInput, UpdateCuotaInput, CuotasQuery, GenerarCuotasInput } from '../validators/cuota.validator';
 import { Rol } from '@prisma/client';
 
 export class CuotaController {
@@ -84,6 +84,16 @@ export class CuotaController {
       const deportista = await deportistaService.getByUserId(req.user!.id);
       const result = await cuotaService.getEstadoCuenta(deportista.id);
       sendSuccess(res, result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async generarMensuales(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const data = req.body as GenerarCuotasInput;
+      const result = await cuotaService.generarCuotasMensuales(data.mes, data.anio);
+      sendCreated(res, result, 'Cuotas generadas exitosamente');
     } catch (error) {
       next(error);
     }

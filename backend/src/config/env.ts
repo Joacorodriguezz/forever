@@ -18,6 +18,7 @@ export const env = {
   MAX_LOGIN_ATTEMPTS: parseInt(process.env.MAX_LOGIN_ATTEMPTS || '5', 10),
   LOGIN_BLOCK_TIME: parseInt(process.env.LOGIN_BLOCK_TIME || '15', 10),
   CLUB_NAME: process.env.CLUB_NAME || 'Club Deportivo Forever',
+  DESCUENTO_FAMILIAR: parseFloat(process.env.DESCUENTO_FAMILIAR || '0.30'),
 };
 
 export default env;

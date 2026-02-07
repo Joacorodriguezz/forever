@@ -32,11 +32,14 @@ export class CuotaService {
       throw new ConflictError(ErrorMessages.CUOTA_ALREADY_ASSIGNED);
     }
 
+    const fechaEmision = new Date(data.fechaEmision);
+
     const cuota = await prisma.cuota.create({
       data: {
         nroCuota: data.nroCuota,
+        anio: fechaEmision.getFullYear(),
         monto: data.monto,
-        fechaEmision: new Date(data.fechaEmision),
+        fechaEmision: fechaEmision,
         fechaVencimiento: new Date(data.fechaVencimiento),
         disciplinaId: data.disciplinaId,
         deportistaId: data.deportistaId,
@@ -220,6 +223,106 @@ export class CuotaService {
     });
 
     return { actualizadas: result.count };
+  }
+
+  async generarCuotasMensuales(mes: number, anio: number) {
+    const { env } = await import('../config/env');
+    const DESCUENTO_FAMILIAR = env.DESCUENTO_FAMILIAR;
+
+    // Obtener todos los deportistas activos con su disciplina
+    const deportistas = await prisma.deportista.findMany({
+      where: {
+        estado: { not: 'INACTIVA' },
+        cuenta: { activo: true },
+      },
+      include: {
+        disciplina: true,
+      },
+    });
+
+    const resultados = {
+      cuotasGeneradas: 0,
+      cuotasOmitidas: 0, // Ya existían
+      descuentosAplicados: 0,
+      montoTotalSinDescuento: 0,
+      montoTotalConDescuento: 0,
+      detalles: [] as Array<{
+        deportistaId: number;
+        nombre: string;
+        monto: number;
+        descuentoAplicado: boolean;
+      }>,
+    };
+
+    // Calcular fechas para el mes
+    const fechaEmision = new Date(anio, mes - 1, 1);
+    const fechaVencimiento = new Date(anio, mes - 1, 15); // Vence el día 15
+
+    for (const deportista of deportistas) {
+      // Verificar si ya existe cuota para este mes/anio/disciplina
+      const cuotaExistente = await prisma.cuota.findFirst({
+        where: {
+          deportistaId: deportista.id,
+          disciplinaId: deportista.disciplinaId,
+          nroCuota: mes,
+          anio: anio,
+        },
+      });
+
+      if (cuotaExistente) {
+        resultados.cuotasOmitidas++;
+        continue;
+      }
+
+      // Verificar si pertenece a grupo familiar como NO principal
+      const integranteGrupo = await prisma.grupoFamiliarIntegrante.findFirst({
+        where: {
+          deportistaId: deportista.id,
+          esPrincipal: false, // Solo aplica descuento a NO principales
+        },
+      });
+
+      const precioBase = Number(deportista.disciplina.precioMensual);
+      const aplicaDescuento = integranteGrupo !== null;
+      const monto = aplicaDescuento
+        ? precioBase * (1 - DESCUENTO_FAMILIAR)
+        : precioBase;
+
+      // Crear la cuota
+      await prisma.cuota.create({
+        data: {
+          nroCuota: mes,
+          anio: anio,
+          monto: monto,
+          fechaEmision: fechaEmision,
+          fechaVencimiento: fechaVencimiento,
+          disciplinaId: deportista.disciplinaId,
+          deportistaId: deportista.id,
+          periodicidad: Periodicidad.MENSUAL,
+        },
+      });
+
+      resultados.cuotasGeneradas++;
+      resultados.montoTotalSinDescuento += precioBase;
+      resultados.montoTotalConDescuento += monto;
+
+      if (aplicaDescuento) {
+        resultados.descuentosAplicados++;
+      }
+
+      resultados.detalles.push({
+        deportistaId: deportista.id,
+        nombre: `${deportista.nombre} ${deportista.apellido}`,
+        monto: monto,
+        descuentoAplicado: aplicaDescuento,
+      });
+    }
+
+    return {
+      mensaje: `Generación de cuotas completada para ${mes}/${anio}`,
+      porcentajeDescuento: `${DESCUENTO_FAMILIAR * 100}%`,
+      ...resultados,
+    };
   }
 }
 

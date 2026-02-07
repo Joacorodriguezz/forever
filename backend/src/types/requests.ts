@@ -121,6 +121,11 @@ export interface AsignarCuotaDTO {
   disciplinaId: number;
 }
 
+export interface GenerarCuotasDTO {
+  mes: number;
+  anio: number;
+}
+
 // =============================================================================
 // PAGO DTOs
 // =============================================================================

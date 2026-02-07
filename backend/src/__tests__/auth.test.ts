@@ -13,9 +13,6 @@ jest.mock('../config/prisma', () => {
       findUnique: jest.fn(),
       create: jest.fn(),
     },
-    auditoriaAcceso: {
-      create: jest.fn(),
-    },
     $transaction: jest.fn(),
   };
   return { __esModule: true, default: mockPrisma, prisma: mockPrisma };
@@ -70,7 +67,6 @@ describe('Auth Module', () => {
 
     it('deberia retornar 401 si el usuario no existe', async () => {
       (mockPrisma.cuentaUsuario.findUnique as jest.Mock).mockResolvedValue(null);
-      (mockPrisma.auditoriaAcceso.create as jest.Mock).mockResolvedValue({});
 
       const response = await request(app)
         .post('/api/auth/login')
@@ -132,7 +128,6 @@ describe('Auth Module', () => {
         deportista: null,
       });
       (mockPrisma.cuentaUsuario.update as jest.Mock).mockResolvedValue({});
-      (mockPrisma.auditoriaAcceso.create as jest.Mock).mockResolvedValue({});
 
       const response = await request(app)
         .post('/api/auth/login')

@@ -189,6 +189,7 @@ model GrupoFamiliarIntegrante {
 model Cuota {
   id               Int          @id @default(autoincrement()) @map("id_cuota")
   nroCuota         Int          @map("nro_cuota")
+  anio             Int          @map("anio")
   monto            Decimal      @db.Decimal(10, 2)
   fechaEmision     DateTime     @map("fecha_emision")
   fechaVencimiento DateTime     @map("fecha_vencimiento")
@@ -202,7 +203,7 @@ model Cuota {
   createdAt        DateTime     @default(now()) @map("created_at")
   updatedAt        DateTime     @updatedAt @map("updated_at")
 
-  @@unique([deportistaId, nroCuota, disciplinaId])
+  @@unique([deportistaId, nroCuota, anio, disciplinaId])
   @@map("cuotas")
 }
 
@@ -223,34 +224,4 @@ model Pago {
   updatedAt          DateTime    @updatedAt @map("updated_at")
 
   @@map("pagos")
-}
-
-// =============================================================================
-// AUDITORÍA
-// =============================================================================
-
-model AuditoriaAcceso {
-  id        Int      @id @default(autoincrement())
-  cuentaId  Int      @map("id_cuenta")
-  accion    String
-  ip        String?
-  userAgent String?  @map("user_agent")
-  exitoso   Boolean  @default(true)
-  mensaje   String?
-  createdAt DateTime @default(now()) @map("created_at")
-
-  @@map("auditoria_accesos")
-}
-
-model AuditoriaCambios {
-  id          Int      @id @default(autoincrement())
-  cuentaId    Int      @map("id_cuenta")
-  entidad     String
-  entidadId   Int      @map("entidad_id")
-  accion      String
-  datosAntes  String?  @map("datos_antes") @db.Text
-  datosDespues String? @map("datos_despues") @db.Text
-  createdAt   DateTime @default(now()) @map("created_at")
-
-  @@map("auditoria_cambios")
 }

@@ -18,8 +18,6 @@ export async function cleanDatabase() {
   await prismaTest.domicilio.deleteMany();
   await prismaTest.disciplina.deleteMany();
   await prismaTest.localidad.deleteMany();
-  await prismaTest.auditoriaAcceso.deleteMany();
-  await prismaTest.auditoriaCambios.deleteMany();
 }
 
 // Datos de prueba base

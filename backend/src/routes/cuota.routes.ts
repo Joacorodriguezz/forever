@@ -6,7 +6,7 @@ import {
   requireDeportista,
 } from '../middlewares/auth.middleware';
 import { validateBody, validateParams, validateQuery } from '../middlewares/validation.middleware';
-import { asignarCuotaSchema, updateCuotaSchema, cuotasQuerySchema } from '../validators/cuota.validator';
+import { asignarCuotaSchema, updateCuotaSchema, cuotasQuerySchema, generarCuotasSchema } from '../validators/cuota.validator';
 import { idParamSchema } from '../validators/user.validator';
 
 const router = Router();
@@ -17,6 +17,15 @@ router.get(
   authenticateToken,
   requireAdministrativo,
   cuotaController.getPredefinidas.bind(cuotaController)
+);
+
+// POST /api/cuotas/generar-mensual - Generar cuotas del mes para todos los deportistas
+router.post(
+  '/generar-mensual',
+  authenticateToken,
+  requireAdministrativo,
+  validateBody(generarCuotasSchema),
+  cuotaController.generarMensuales.bind(cuotaController)
 );
 
 // GET /api/cuotas/mi-estado - CU07 Estado de cuenta del deportista logueado

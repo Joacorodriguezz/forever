@@ -7,8 +7,6 @@ async function main() {
     console.log('🌱 Iniciando seed de datos...');
 
     // Limpiar datos existentes (opcional)
-    await prisma.auditoriaCambios.deleteMany();
-    await prisma.auditoriaAcceso.deleteMany();
     await prisma.pago.deleteMany();
     await prisma.cuota.deleteMany();
     await prisma.grupoFamiliarIntegrante.deleteMany();
@@ -275,6 +273,7 @@ async function main() {
     const cuota1 = await prisma.cuota.create({
         data: {
             nroCuota: 1,
+            anio: 2026,
             monto: futbol.precioMensual,
             fechaEmision: new Date('2026-01-01'),
             fechaVencimiento: new Date('2026-01-10'),
@@ -288,6 +287,7 @@ async function main() {
     const cuota2 = await prisma.cuota.create({
         data: {
             nroCuota: 2,
+            anio: 2026,
             monto: futbol.precioMensual,
             fechaEmision: new Date('2026-02-01'),
             fechaVencimiento: new Date('2026-02-10'),
@@ -301,6 +301,7 @@ async function main() {
     const cuota3 = await prisma.cuota.create({
         data: {
             nroCuota: 1,
+            anio: 2026,
             monto: natacion.precioMensual,
             fechaEmision: new Date('2026-01-01'),
             fechaVencimiento: new Date('2026-01-10'),
@@ -314,6 +315,7 @@ async function main() {
     const cuota4 = await prisma.cuota.create({
         data: {
             nroCuota: 1,
+            anio: 2025,
             monto: tenis.precioMensual,
             fechaEmision: new Date('2025-12-01'),
             fechaVencimiento: new Date('2025-12-10'),
@@ -327,6 +329,7 @@ async function main() {
     const cuota5 = await prisma.cuota.create({
         data: {
             nroCuota: 2,
+            anio: 2026,
             monto: tenis.precioMensual,
             fechaEmision: new Date('2026-01-01'),
             fechaVencimiento: new Date('2026-01-10'),

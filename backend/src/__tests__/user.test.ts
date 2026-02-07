@@ -12,9 +12,6 @@ jest.mock('../config/prisma', () => {
       count: jest.fn(),
       update: jest.fn(),
     },
-    auditoriaCambios: {
-      create: jest.fn(),
-    },
   };
   return { __esModule: true, default: mockPrisma, prisma: mockPrisma };
 });
@@ -135,7 +132,6 @@ describe('User Module', () => {
         ...adminUser,
         email: 'newemail@test.com',
       });
-      (mockPrisma.auditoriaCambios.create as jest.Mock).mockResolvedValue({});
 
       const response = await request(app)
         .put('/api/users/profile')
@@ -179,7 +175,6 @@ describe('User Module', () => {
         ...deportistaUser,
         rol: Rol.ADMINISTRATIVO,
       });
-      (mockPrisma.auditoriaCambios.create as jest.Mock).mockResolvedValue({});
 
       const response = await request(app)
         .put('/api/users/2/role')

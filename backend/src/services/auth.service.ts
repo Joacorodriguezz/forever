@@ -24,7 +24,6 @@ export class AuthService {
     });
 
     if (!cuenta) {
-      await this.logAcceso(0, 'LOGIN_FALLIDO', false, 'Usuario no encontrado');
       throw new UnauthorizedError(ErrorMessages.INVALID_CREDENTIALS);
     }
 
@@ -50,8 +49,6 @@ export class AuthService {
       where: { id: cuenta.id },
       data: { intentosFallidos: 0, bloqueadoHasta: null },
     });
-
-    await this.logAcceso(cuenta.id, 'LOGIN', true);
 
     const token = this.generateToken({
       id: cuenta.id,
@@ -117,8 +114,6 @@ export class AuthService {
       return nuevaCuenta;
     });
 
-    await this.logAcceso(cuenta.id, 'REGISTRO', true);
-
     const token = this.generateToken({
       id: cuenta.id,
       email: cuenta.email,
@@ -164,24 +159,6 @@ export class AuthService {
     await prisma.cuentaUsuario.update({
       where: { id: cuentaId },
       data: updateData,
-    });
-
-    await this.logAcceso(cuentaId, 'LOGIN_FALLIDO', false, 'Contrasena incorrecta');
-  }
-
-  private async logAcceso(
-    cuentaId: number,
-    accion: string,
-    exitoso: boolean,
-    mensaje?: string
-  ): Promise<void> {
-    await prisma.auditoriaAcceso.create({
-      data: {
-        cuentaId,
-        accion,
-        exitoso,
-        mensaje,
-      },
     });
   }
 }

@@ -36,6 +36,13 @@ export const cuotasQuerySchema = z.object({
   disciplinaId: z.string().regex(/^\d+$/).transform(Number).optional(),
 });
 
+// Generar cuotas mensuales
+export const generarCuotasSchema = z.object({
+  mes: z.number({ message: 'El mes es requerido' }).int().min(1, 'Mes invalido').max(12, 'Mes invalido'),
+  anio: z.number({ message: 'El año es requerido' }).int().min(2024, 'Año invalido').max(2030, 'Año invalido'),
+});
+
 export type AsignarCuotaInput = z.infer<typeof asignarCuotaSchema>;
 export type UpdateCuotaInput = z.infer<typeof updateCuotaSchema>;
 export type CuotasQuery = z.infer<typeof cuotasQuerySchema>;
+export type GenerarCuotasInput = z.infer<typeof generarCuotasSchema>;

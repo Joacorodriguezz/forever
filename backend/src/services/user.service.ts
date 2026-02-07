@@ -81,13 +81,11 @@ export class UserService {
       });
     }
 
-    await this.logCambio(userId, 'CuentaUsuario', userId, 'ACTUALIZAR_PERFIL');
-
     const { password, ...cuentaSinPassword } = updatedCuenta;
     return cuentaSinPassword;
   }
 
-  async assignRole(userId: number, targetUserId: number, data: AssignRoleDTO) {
+  async assignRole(_userId: number, targetUserId: number, data: AssignRoleDTO) {
     const targetCuenta = await prisma.cuentaUsuario.findUnique({
       where: { id: targetUserId },
     });
@@ -111,15 +109,6 @@ export class UserService {
       where: { id: targetUserId },
       data: { rol: data.rol as Rol },
     });
-
-    await this.logCambio(
-      userId,
-      'CuentaUsuario',
-      targetUserId,
-      'CAMBIAR_ROL',
-      JSON.stringify({ rolAnterior: targetCuenta.rol }),
-      JSON.stringify({ rolNuevo: data.rol })
-    );
 
     const { password, ...cuentaSinPassword } = updatedCuenta;
     return cuentaSinPassword;
@@ -148,26 +137,6 @@ export class UserService {
       limit,
       totalPages: Math.ceil(total / limit),
     };
-  }
-
-  private async logCambio(
-    cuentaId: number,
-    entidad: string,
-    entidadId: number,
-    accion: string,
-    datosAntes?: string,
-    datosDespues?: string
-  ): Promise<void> {
-    await prisma.auditoriaCambios.create({
-      data: {
-        cuentaId,
-        entidad,
-        entidadId,
-        accion,
-        datosAntes,
-        datosDespues,
-      },
-    });
   }
 }
 
