@@ -1,27 +1,73 @@
-#INSTRUCTIVO PARA EJECUTAR
+# React + TypeScript + Vite
 
-se deberá ejecutar en la consola el siguiente comando: 
-      npm install react-bootstrap-icons
-para una correcta ejecución
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-# ACLARACIONES IMPORTANTES
-1)Hay dos roles que usarán la aplicación: el administrador (que tiene legajo) y el socio (no tiene legajo). 
-Para esta primera entrega del front-end haremos una funcion que si al iniciar sesion, el usuario ingrese legajo se redirija al HomeAdministrador y sino al HomeSocio.
+Currently, two official plugins are available:
 
-2) La mayoria de las paginas tienenn Arrays que simulan una base de datos. Estos seran removidos para la entrega de back-end.
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
-3) agregaremos esto en la siguiente entrega con su ruta a su pagina correspondiente en HomePageUser.jsx en la linea 18
-{/*{
-      texto: 'Registrarse en una actividad',
-      ruta: '/',
-      subtitulo: '(ver cronograma, registrarme o darme de baja)',
-    },*/}
-   
-4) Probar la API que envía un mail con los datos de la entrada con un mail GMAIL
-   
-5) en la siguiente entrega, también agregaremos las siguientes funcionalidades:
-      a) cuando se de click en cada actividad se va a mostrar los datos de cada una como horario, cancha, cant inscriptos y profesor a cargo
-   
-      b)cuando se compra la entrada se deberá poder adjuntar comprobante
-   
-      c)las entradas se deberán poder mandar por todos los mails, no solo gmail
+## React Compiler
+
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+
+## Expanding the ESLint configuration
+
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+
+```js
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+
+      // Remove tseslint.configs.recommended and replace with this
+      tseslint.configs.recommendedTypeChecked,
+      // Alternatively, use this for stricter rules
+      tseslint.configs.strictTypeChecked,
+      // Optionally, add this for stylistic rules
+      tseslint.configs.stylisticTypeChecked,
+
+      // Other configs...
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
+```
+
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
+
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+      // Enable lint rules for React
+      reactX.configs['recommended-typescript'],
+      // Enable lint rules for React DOM
+      reactDom.configs.recommended,
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
+```

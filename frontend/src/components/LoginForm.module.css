@@ -1,0 +1,181 @@
+.loginFormContainer {
+    background-color: var(--color-black);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: var(--spacing-xl);
+}
+
+.formWrapper {
+    width: 100%;
+    max-width: 450px;
+}
+
+.formTitle {
+    font-size: 1.75rem;
+    font-weight: 600;
+    margin-bottom: var(--spacing-xs);
+    color: var(--color-white);
+}
+
+.formSubtitle {
+    font-size: 0.95rem;
+    color: var(--color-light-gray);
+    margin-bottom: var(--spacing-xl);
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.inputGroup {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-white);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.inputWrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.inputIcon {
+    position: absolute;
+    left: 1rem;
+    color: var(--color-gray);
+    width: 20px;
+    height: 20px;
+}
+
+.input {
+    width: 100%;
+    padding: 0.875rem 1rem 0.875rem 3rem;
+    background-color: var(--color-dark-gray);
+    border: 1px solid transparent;
+    border-radius: var(--border-radius);
+    color: var(--color-white);
+    font-size: 1rem;
+    transition: var(--transition);
+}
+
+.input::placeholder {
+    color: var(--color-gray);
+}
+
+.input:focus {
+    outline: none;
+    border-color: var(--color-blue);
+    background-color: #1F1F1F;
+}
+
+.input.error {
+    border-color: var(--color-error);
+}
+
+.togglePassword {
+    position: absolute;
+    right: 1rem;
+    background: none;
+    border: none;
+    color: var(--color-gray);
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    transition: var(--transition);
+}
+
+.togglePassword:hover {
+    color: var(--color-white);
+}
+
+.errorMessage {
+    font-size: 0.875rem;
+    color: var(--color-error);
+    margin-top: 0.25rem;
+}
+
+.submitButton {
+    width: 100%;
+    padding: 1rem;
+    background-color: var(--color-white);
+    color: var(--color-black);
+    border: none;
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+    transition: var(--transition);
+    margin-top: var(--spacing-sm);
+}
+
+.submitButton:hover {
+    background-color: #F0F0F0;
+    transform: translateY(-1px);
+}
+
+.submitButton:active {
+    transform: translateY(0);
+}
+
+.footer {
+    margin-top: var(--spacing-xl);
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid var(--color-dark-gray);
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-lg);
+}
+
+.footerLink {
+    font-size: 0.875rem;
+    color: var(--color-light-gray);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: var(--transition);
+}
+
+.footerLink:hover {
+    color: var(--color-white);
+}
+
+.copyright {
+    text-align: center;
+    margin-top: var(--spacing-md);
+    font-size: 0.75rem;
+    color: var(--color-gray);
+}
+
+@media (max-width: 768px) {
+    .loginFormContainer {
+        padding: var(--spacing-lg);
+    }
+
+    .formTitle {
+        font-size: 1.5rem;
+    }
+
+    .footer {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+        align-items: center;
+    }
+}

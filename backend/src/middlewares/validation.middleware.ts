@@ -1,67 +1,51 @@
-import { ZodError, ZodType } from 'zod';
 import { Request, Response, NextFunction } from 'express';
+import { ZodSchema, ZodError } from 'zod';
 
-export const validate = (schema: ZodType<any>) => {
-  return async (req: Request, res: Response, next: NextFunction) => {
-    const input = {
-      body: req.body,
-      params: req.params,
-      query: req.query,
-      file: (req as any).file,
-      files: (req as any).files,
-    };
+interface ValidationSchemas {
+  body?: ZodSchema;
+  params?: ZodSchema;
+  query?: ZodSchema;
+}
 
-    const combined = await (schema as any).safeParseAsync?.(input);
-    if (combined?.success) {
-      const parsed = combined.data;
-      if (parsed.body !== undefined) req.body = parsed.body;
-      (req as any).validated = parsed;
-      return next();
+export const validate = (schemas: ValidationSchemas) => {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      if (schemas.body) {
+        req.body = await schemas.body.parseAsync(req.body);
+      }
+      if (schemas.params) {
+        const parsedParams = await schemas.params.parseAsync(req.params);
+        Object.assign(req.params, parsedParams);
+      }
+      if (schemas.query) {
+        const parsedQuery = await schemas.query.parseAsync(req.query);
+        Object.assign(req.query, parsedQuery);
+      }
+      next();
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const formattedErrors: Record<string, string[]> = {};
+
+        error.issues.forEach((issue) => {
+          const path = issue.path.join('.');
+          if (!formattedErrors[path]) {
+            formattedErrors[path] = [];
+          }
+          formattedErrors[path].push(issue.message);
+        });
+
+        res.status(400).json({
+          success: false,
+          error: 'Error de validacion',
+          errors: formattedErrors,
+        });
+        return;
+      }
+      next(error);
     }
-
-    const asBody = await (schema as any).safeParseAsync?.(req.body);
-    if (asBody?.success) {
-      req.body = asBody.data;
-      (req as any).validated = { body: asBody.data };
-      return next();
-    }
-
-    const issues = combined?.error?.issues ?? asBody?.error?.issues ?? [];
-    console.log('Errores de validación:', issues);
-    return res.status(400).json({
-      success: false,
-      message: 'Datos inválidos',
-      errors: issues.map((err: any) => ({
-        field: Array.isArray(err.path) ? err.path.join('.') : String(err.path ?? ''),
-        message: err.message,
-      })),
-    });
   };
 };
 
-// Variante que valida sin tocar req (no reescribe body/params/query)
-export const validateSafe = (schema: ZodType<any>) => {
-  return async (req: Request, res: Response, next: NextFunction) => {
-    const input = {
-      body: req.body,
-      params: req.params,
-      query: req.query,
-      file: (req as any).file,
-      files: (req as any).files,
-    };
-
-    const result = await (schema as any).safeParseAsync?.(input);
-    if (result?.success) return next();
-
-    const issues = result?.error?.issues ?? [];
-    console.log('Errores de validación (safe):', issues);
-    return res.status(400).json({
-      success: false,
-      message: 'Datos inválidos',
-      errors: issues.map((err: any) => ({
-        field: Array.isArray(err.path) ? err.path.join('.') : String(err.path ?? ''),
-        message: err.message,
-      })),
-    });
-  };
-};
+export const validateBody = (schema: ZodSchema) => validate({ body: schema });
+export const validateParams = (schema: ZodSchema) => validate({ params: schema });
+export const validateQuery = (schema: ZodSchema) => validate({ query: schema });

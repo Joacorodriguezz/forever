@@ -1,53 +1,142 @@
-import { Request,  Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { Role } from '../types/user';
+import { AuthenticatedRequest, JwtPayload } from '../types';
+import { env } from '../config/env';
+import prisma from '../config/prisma';
+import { ErrorMessages } from '../utils/errors';
+import { Rol } from '@prisma/client';
 
-declare global {
-    namespace Express {
-        interface Request {
-            user?:{
-                id: number;
-                email: string;
-                role: 'SOCIO' | 'ADMIN'| 'ADMINISTRATIVO';
-                socioId?: number | null;
-            }
-        }
+export const authenticateToken = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) {
+      res.status(401).json({
+        success: false,
+        error: ErrorMessages.TOKEN_NOT_PROVIDED,
+      });
+      return;
     }
-}
 
-export function authenticate(req: Request, res: Response, next: NextFunction) {
-    try {
-        const authHeader = req.headers.authorization;
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            return res.status(401).json({ success: false, message: 'Token no proporcionado' });
-        }
-        const token = authHeader.split(' ')[1];
-        const secret = process.env.JWT_SECRET || 'mi_secreto';
-        const decoded = jwt.verify(token, secret) as any;
-        req.user = {
-            id: decoded.id,
-            email: decoded.email,
-            role: decoded.role,
-            socioId: decoded.socioId ?? null,
-        };
-        next();
-    }catch (error: any) {
-        console.error('Error en autenticación:', error);
-        if (error.name === 'TokenExpiredError') {
-            return res.status(401).json({ success: false, message: 'Token expirado' });
-        } 
-        res.status(401).json({ success: false, message: 'Token inválido' });
+    const decoded = jwt.verify(token, env.JWT_SECRET) as JwtPayload;
+
+    const cuenta = await prisma.cuentaUsuario.findUnique({
+      where: { id: decoded.id },
+    });
+
+    if (!cuenta) {
+      res.status(401).json({
+        success: false,
+        error: ErrorMessages.USER_NOT_FOUND,
+      });
+      return;
     }
-}
 
-export function authorize(...roles: string[]) {
-    return (req: Request, res: Response, next: NextFunction) => {
-        if (!req.user) {
-            return res.status(401).json({ success: false, message: 'No autenticado' });
-        }
-        if (!roles.includes(req.user.role as Role)) {
-            return res.status(403).json({ success: false, message: 'No tiene permisos para esta accion' });
-        }
-        next();
+    if (!cuenta.activo) {
+      res.status(403).json({
+        success: false,
+        error: ErrorMessages.USER_INACTIVE,
+      });
+      return;
+    }
+
+    if (cuenta.bloqueadoHasta && cuenta.bloqueadoHasta > new Date()) {
+      res.status(403).json({
+        success: false,
+        error: ErrorMessages.USER_BLOCKED,
+      });
+      return;
+    }
+
+    req.user = {
+      id: cuenta.id,
+      email: cuenta.email,
+      rol: cuenta.rol,
     };
-}
+
+    next();
+  } catch (error) {
+    if (error instanceof jwt.TokenExpiredError) {
+      res.status(401).json({
+        success: false,
+        error: ErrorMessages.TOKEN_EXPIRED,
+      });
+      return;
+    }
+    res.status(403).json({
+      success: false,
+      error: ErrorMessages.TOKEN_INVALID,
+    });
+  }
+};
+
+export const requireAdmin = (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): void => {
+  if (req.user?.rol !== Rol.ADMIN) {
+    res.status(403).json({
+      success: false,
+      error: ErrorMessages.ADMIN_REQUIRED,
+    });
+    return;
+  }
+  next();
+};
+
+export const requireAdministrativo = (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): void => {
+  const rol = req.user?.rol;
+  if (rol !== Rol.ADMIN && rol !== Rol.ADMINISTRATIVO) {
+    res.status(403).json({
+      success: false,
+      error: ErrorMessages.ADMINISTRATIVO_REQUIRED,
+    });
+    return;
+  }
+  next();
+};
+
+export const requireDeportista = (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): void => {
+  if (req.user?.rol !== Rol.DEPORTISTA) {
+    res.status(403).json({
+      success: false,
+      error: 'Acceso denegado. Se requiere rol de Deportista',
+    });
+    return;
+  }
+  next();
+};
+
+export const requireSelfOrAdmin = (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): void => {
+  const requestedId = parseInt(req.params.id as string, 10);
+  const userId = req.user?.id;
+  const userRol = req.user?.rol;
+
+  if (userRol === Rol.ADMIN || userId === requestedId) {
+    next();
+    return;
+  }
+
+  res.status(403).json({
+    success: false,
+    error: 'No tiene permisos para acceder a este recurso',
+  });
+};

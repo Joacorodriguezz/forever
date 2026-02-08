@@ -1,6 +1,5 @@
 generator client {
   provider = "prisma-client-js"
-  binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
 datasource db {
@@ -8,263 +7,221 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Evento {
-  id            Int       @id @default(autoincrement())
-  nombre        String
-  fecha         DateTime
-  horaInicio    String
-  horaFin       String
-  capacidad     Int
-  precioEntrada Float
-  actividadId   Int
-  canchaId      Int
-  actividad     Actividad   @relation(fields: [actividadId], references: [id])
-  cancha        Cancha      @relation(fields: [canchaId], references: [id])
-  descripcion   String
-  createdAt     DateTime  @default(now())
-  entradas      Entrada[]
+// =============================================================================
+// ENUMS
+// =============================================================================
+
+enum EstadoDeportista {
+  EN_DEUDA    @map("En deuda")
+  AL_DIA      @map("Al dia")
+  MOROSA      @map("Morosa")
+  INACTIVA    @map("Inactiva")
 }
 
-model Entrada {
-  id             Int         @id @default(autoincrement())
-  eventoId       Int
-  cantidad       Int
-  precioUnitario Float
-  total          Float
-  fechaCompra    DateTime    @default(now())
-  socioId        Int?
-  createdAt      DateTime    @default(now())
-  comprobanteUrl String?
-  formaDePago    FormaDePago @default(EFECTIVO)
-  evento         Evento      @relation(fields: [eventoId], references: [id])
-  socio          Socio?      @relation(fields: [socioId], references: [id])
+enum EstadoCuota {
+  PAGADA      @map("Pagada")
+  PENDIENTE   @map("Pendiente")
+  VENCIDA     @map("Vencida")
 }
 
-model Socio {
-  id              Int          @id @default(autoincrement())
-  nombre          String
-  apellido        String
-  email           String
-  fechaNacimiento DateTime
-  pais            paisesLatam
-  sexo            Sexo
-  fotoCarnet      String?
-  dni             Int          @unique
-  usuarioId       Int          @unique
-  estado          String       @default("ACTIVO")
-  actividades     ActividadSocio[]
-  Cuota           Cuota[]
-  entradas        Entrada[]
-  reservas        Reserva[]
-  usuario         Usuario      @relation(fields: [usuarioId], references: [id])
+enum EstadoPago {
+  APROBADO    @map("Aprobado")
+  RECHAZADO   @map("Rechazado")
+  PENDIENTE   @map("Pendiente")
 }
 
-model Usuario {
-  id       Int      @id @default(autoincrement())
-  email    String   @unique
-  password String
-  rol      String
-  creadoEn DateTime @default(now())
-  socio    Socio?
-  administrativo Administrativo?
+enum Rol {
+  ADMIN           @map("Admin")
+  ADMINISTRATIVO  @map("Administrativo")
+  DEPORTISTA      @map("Deportista")
+}
+
+enum Vinculo {
+  PADRE    @map("Padre")
+  MADRE    @map("Madre")
+  HIJO     @map("Hijo")
+  HERMANO  @map("Hermano")
+  OTRO     @map("Otro")
+}
+
+enum Periodicidad {
+  MENSUAL   @map("Mensual")
+  ANUAL     @map("Anual")
+}
+
+// =============================================================================
+// MODELOS BASE
+// =============================================================================
+
+model Localidad {
+  id           Int         @id @default(autoincrement()) @map("id_localidad")
+  codigoPostal String      @map("codigo_postal")
+  nombre       String
+  domicilios   Domicilio[]
+
+  @@map("localidades")
+}
+
+model Domicilio {
+  id           Int          @id @default(autoincrement()) @map("id_domicilio")
+  calle        String
+  numero       String
+  piso         String?
+  departamento String?
+  localidadId  Int          @map("id_localidad")
+  localidad    Localidad    @relation(fields: [localidadId], references: [id])
+  deportistas  Deportista[]
+
+  @@map("domicilios")
+}
+
+
+
+
+
+model Disciplina {
+  id            Int          @id @default(autoincrement()) @map("id_disciplina")
+  nombre        String       @unique
+  descripcion   String?
+  precioMensual Decimal      @map("precio_mensual") @db.Decimal(10, 2)
+  activa        Boolean      @default(true)
+  deportistas   Deportista[]
+  cuotas        Cuota[]
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  @@map("disciplinas")
+}
+
+// =============================================================================
+// USUARIOS Y AUTENTICACIÓN
+// =============================================================================
+
+model CuentaUsuario {
+  id              Int             @id @default(autoincrement()) @map("id_cuenta")
+  email           String          @unique
+  password        String
+  rol             Rol             @default(DEPORTISTA)
+  activo          Boolean         @default(true)
+  intentosFallidos Int            @default(0) @map("intentos_fallidos")
+  bloqueadoHasta  DateTime?       @map("bloqueado_hasta")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+  deportista      Deportista?
+  administrativo  Administrativo?
+
+  @@map("cuentas_usuario")
 }
 
 model Administrativo {
-  id        Int      @id @default(autoincrement())
-  usuarioId Int      @unique
-  usuario   Usuario  @relation(fields: [usuarioId], references: [id])
+  id        Int           @id @default(autoincrement()) @map("id_administrativo")
   nombre    String
   apellido  String
-  dni       Int      @unique
-  activo    Boolean  @default(true)
+  dni       String        @unique
+  cuentaId  Int           @unique @map("id_cuenta")
+  cuenta    CuentaUsuario @relation(fields: [cuentaId], references: [id], onDelete: Cascade)
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+
+  @@map("administrativos")
 }
 
-model Actividad {
-  id              Int               @id @default(autoincrement())
-  nombre          String
-  monto           Float
-  activo          Boolean           @default(true)
-  createdAt       DateTime          @default(now())
-  clases          Clase[]
-  cuotaXactividad cuotaXactividad[]
-  socios          ActividadSocio[]
-  canchas         Cancha[]
-  eventos         Evento[]
+// =============================================================================
+// DEPORTISTAS
+// =============================================================================
+
+model Deportista {
+  id            Int                       @id @default(autoincrement()) @map("id_deportista")
+  nombre        String
+  apellido      String
+  dni           String                    @unique
+  fechaNac      DateTime                  @map("fecha_nac")
+  categoria     String?
+  obraSocial    String?                   @map("obra_social")
+  estado        EstadoDeportista          @default(AL_DIA)
+  disciplinaId  Int                       @map("id_disciplina")
+  disciplina    Disciplina                @relation(fields: [disciplinaId], references: [id])
+  cuentaId      Int                       @unique @map("id_cuenta")
+  cuenta        CuentaUsuario             @relation(fields: [cuentaId], references: [id], onDelete: Cascade)
+  domicilioId   Int                       @map("id_domicilio")
+  domicilio     Domicilio                 @relation(fields: [domicilioId], references: [id])
+  enfermedades  String?
+  telefonos     String?
+  pagos         Pago[]
+  cuotas        Cuota[]
+  grupoFamiliar GrupoFamiliarIntegrante[]
+  createdAt     DateTime                  @default(now()) @map("created_at")
+  updatedAt     DateTime                  @updatedAt @map("updated_at")
+
+  @@map("deportistas")
 }
 
+// =============================================================================
+// GRUPOS FAMILIARES
+// =============================================================================
 
-model Clase {
-  id          Int          @id @default(autoincrement())
-  diaSemana   DiaSemana
-  horaInicio  String
-  horaFin     String
-  activo      Boolean      @default(true)
-  actividadId Int
-  profesorId  Int?
-  createdAt   DateTime     @default(now())
-  actividad   Actividad    @relation(fields: [actividadId], references: [id])
-  profesor    Profesor?    @relation(fields: [profesorId], references: [id])
+model GrupoFamiliar {
+  id           Int                       @id @default(autoincrement()) @map("id_grupo_familiar")
+  nombre       String
+  integrantes  GrupoFamiliarIntegrante[]
+  createdAt    DateTime                  @default(now()) @map("created_at")
+  updatedAt    DateTime                  @updatedAt @map("updated_at")
+
+  @@map("grupos_familiares")
 }
+
+model GrupoFamiliarIntegrante {
+  grupoId      Int           @map("id_grupo_familiar")
+  deportistaId Int           @map("id_deportista")
+  vinculo      Vinculo
+  esPrincipal  Boolean       @default(false) @map("es_principal")
+  grupo        GrupoFamiliar @relation(fields: [grupoId], references: [id], onDelete: Cascade)
+  deportista   Deportista    @relation(fields: [deportistaId], references: [id], onDelete: Cascade)
+
+  @@id([grupoId, deportistaId])
+  @@map("grupo_familiar_integrantes")
+}
+
+// =============================================================================
+// CUOTAS Y PAGOS
+// =============================================================================
 
 model Cuota {
-  id              Int               @id @default(autoincrement())
-  fecha_pago      DateTime?         @db.Date
-  fecha_vencimiento DateTime        @db.Date
-  metodo_pago     FormaDePago
-  monto           Decimal           @db.Decimal(12, 3)
-  estado          estado_cuota      @default(PENDIENTE)
-  created_at      DateTime          @default(now()) @db.Timestamptz(6)
-  socio_id        Int
-  mes             Mes?
-  comprobantes    Comprobante[]
-  Socio           Socio             @relation(fields: [socio_id], references: [id], onUpdate: NoAction)
-  cuotaXactividad cuotaXactividad[]
+  id               Int          @id @default(autoincrement()) @map("id_cuota")
+  nroCuota         Int          @map("nro_cuota")
+  anio             Int          @map("anio")
+  monto            Decimal      @db.Decimal(10, 2)
+  fechaEmision     DateTime     @map("fecha_emision")
+  fechaVencimiento DateTime     @map("fecha_vencimiento")
+  estadoCuota      EstadoCuota  @default(PENDIENTE) @map("estado_cuota")
+  periodicidad     Periodicidad @default(MENSUAL)
+  disciplinaId     Int          @map("id_disciplina")
+  disciplina       Disciplina   @relation(fields: [disciplinaId], references: [id])
+  deportistaId     Int          @map("id_deportista")
+  deportista       Deportista   @relation(fields: [deportistaId], references: [id], onDelete: Cascade)
+  pagos            Pago[]
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
 
-  @@unique([socio_id, mes])
-  @@index([estado], map: "id_cuota_estado")
+  @@unique([deportistaId, nroCuota, anio, disciplinaId])
+  @@map("cuotas")
 }
 
-model Comprobante {
-  id        Int      @id @default(autoincrement())
-  cuotaId   Int
-  url       String
-  activo    Boolean  @default(true)
-  subido_en DateTime @default(now())
-  Cuota     Cuota    @relation(fields: [cuotaId], references: [id])
+model Pago {
+  id                 Int         @id @default(autoincrement()) @map("id_pago")
+  fechaPago          DateTime    @map("fecha_pago")
+  monto              Decimal     @db.Decimal(10, 2)
+  estadoPago         EstadoPago  @default(PENDIENTE) @map("estado_pago")
+  medioPago          String?     @map("medio_pago")
+  linkComprobante    String?     @map("link_comprobante")
+  mercadoPagoId      String?     @unique @map("mercado_pago_id")
+  mercadoPagoStatus  String?     @map("mercado_pago_status")
+  cuotaId            Int         @map("id_cuota")
+  cuota              Cuota       @relation(fields: [cuotaId], references: [id])
+  deportistaId       Int         @map("id_deportista")
+  deportista         Deportista  @relation(fields: [deportistaId], references: [id], onDelete: Cascade)
+  createdAt          DateTime    @default(now()) @map("created_at")
+  updatedAt          DateTime    @updatedAt @map("updated_at")
 
-  @@unique([cuotaId, activo])
-}
-
-model Profesor {
-  id        Int      @id @default(autoincrement())
-  nombre    String
-  apellido  String
-  email     String   @unique
-  activo    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  clases    Clase[]
-}
-
-model ActividadSocio {
-  id          Int   @id @default(autoincrement())
-  actividadId Int
-  socioId     Int
-  actividad   Actividad @relation(fields: [actividadId], references: [id])
-  Socio       Socio @relation(fields: [socioId], references: [id])
-
-  @@unique([actividadId, socioId])
-}
-
-model cuotaXactividad {
-  id          Int       @id @default(autoincrement())
-  cuotaId     Int
-  actividadId Int
-  monto       Decimal   @db.Decimal(12, 3)
-  Actividad   Actividad @relation(fields: [actividadId], references: [id])
-  Cuota       Cuota     @relation(fields: [cuotaId], references: [id])
-
-  @@unique([cuotaId, actividadId])
-}
-
-model Reserva {
-  id        Int           @id @default(autoincrement())
-  cancha    String
-  deporte   String
-  fecha     DateTime      @db.Date
-  hora      String
-  estado    EstadoReserva @default(ACTIVA)
-  socioId   Int
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-  socio     Socio         @relation(fields: [socioId], references: [id])
-
-  @@unique([cancha, fecha, hora, estado], name: "unique_active_reservation")
-  @@index([socioId])
-  @@index([fecha])
-}
-
-model Cancha {
-  id            Int        @id @default(autoincrement())
-  nombre        String
-  descripcion   String?
-  activa        Boolean    @default(true)
-  actividadId   Int
-  actividad     Actividad  @relation(fields: [actividadId], references: [id])
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
-  eventos       Evento[]
-
-  @@index([actividadId])
-}
-
-enum Sexo {
-  MASCULINO
-  FEMENINO
-  OTRO
-}
-
-enum DiaSemana {
-  LUNES
-  MARTES
-  MIERCOLES
-  JUEVES
-  VIERNES
-  SABADO
-  DOMINGO
-}
-
-enum estado_cuota {
-  PENDIENTE
-  VENCIDA
-  PAGADA
-  EN_REVISION
-}
-
-enum Mes {
-  ENERO
-  FEBRERO
-  MARZO
-  ABRIL
-  MAYO
-  JUNIO
-  JULIO
-  AGOSTO
-  SEPTIEMBRE
-  OCTUBRE
-  NOVIEMBRE
-  DICIEMBRE
-}
-
-enum EstadoReserva {
-  ACTIVA
-  CANCELADA
-  COMPLETADA
-}
-
-enum FormaDePago {
-  CBU
-  EFECTIVO
-}
-
-enum paisesLatam {
-  ARGENTINA
-  BOLIVIA
-  BRASIL
-  CHILE
-  COLOMBIA
-  COSTA_RICA           @map("COSTA RICA")
-  CUBA
-  ECUADOR
-  EL_SALVADOR          @map("EL SALVADOR")
-  GUATEMALA
-  HONDURAS
-  MEXICO
-  NICARAGUA
-  PANAMA
-  PARAGUAY
-  PERU
-  PUERTO_RICO          @map("PUERTO RICO")
-  REPUBLICA_DOMINICANA @map("REPUBLICA DOMINICANA")
-  URUGUAY
-  VENEZUELA
+  @@map("pagos")
 }

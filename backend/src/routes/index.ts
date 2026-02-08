@@ -1,0 +1,20 @@
+import { Router } from 'express';
+import authRoutes from './auth.routes';
+import userRoutes from './user.routes';
+import deportistaRoutes from './deportista.routes';
+import cuotaRoutes from './cuota.routes';
+import pagoRoutes from './pago.routes';
+import disciplinaRoutes from './disciplina.routes';
+import grupoFamiliarRoutes from './grupoFamiliar.routes';
+
+const router = Router();
+
+router.use('/auth', authRoutes);
+router.use('/users', userRoutes);
+router.use('/deportistas', deportistaRoutes);
+router.use('/cuotas', cuotaRoutes);
+router.use('/pagos', pagoRoutes);
+router.use('/disciplinas', disciplinaRoutes);
+router.use('/grupos-familiares', grupoFamiliarRoutes);
+
+export default router;
