@@ -10,6 +10,10 @@ async function main() {
     await prisma.$connect();
     console.log('Conectado a la base de datos');
 
+    // Iniciar cron jobs para generación automática de cuotas
+    const { iniciarTodosCronJobs } = await import('./jobs/cuotas.job');
+    iniciarTodosCronJobs();
+
     // Iniciar servidor
     app.listen(PORT, () => {
       console.log(`Servidor corriendo en http://localhost:${PORT}`);

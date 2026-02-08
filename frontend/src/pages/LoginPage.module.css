@@ -1,0 +1,12 @@
+.loginPage {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    background-color: #003366;
+    min-height: 100vh;
+}
+
+@media (max-width: 768px) {
+    .loginPage {
+        grid-template-columns: 1fr;
+    }
+}

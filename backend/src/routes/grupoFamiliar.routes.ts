@@ -1,6 +1,10 @@
 import { Router } from 'express';
 import { grupoFamiliarController } from '../controllers/grupoFamiliar.controller';
-import { authenticateToken, requireAdministrativo } from '../middlewares/auth.middleware';
+import {
+  authenticateToken,
+  requireAdministrativo,
+  requireDeportista,
+} from '../middlewares/auth.middleware';
 import { validateBody, validateParams } from '../middlewares/validation.middleware';
 import {
   createGrupoFamiliarSchema,
@@ -9,6 +13,14 @@ import {
 import { idParamSchema } from '../validators/user.validator';
 
 const router = Router();
+
+// GET /api/grupos-familiares/mios - Ver mis grupos familiares (solo Deportista)
+router.get(
+  '/mios',
+  authenticateToken,
+  requireDeportista,
+  grupoFamiliarController.getMios.bind(grupoFamiliarController)
+);
 
 // POST /api/grupos-familiares - CU13 Crear grupo familiar (solo Administrativo)
 router.post(

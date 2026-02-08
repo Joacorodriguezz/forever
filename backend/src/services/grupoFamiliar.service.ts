@@ -56,6 +56,30 @@ export class GrupoFamiliarService {
     return grupo;
   }
 
+  async getByDeportistaId(deportistaId: number) {
+    const integrantes = await prisma.grupoFamiliarIntegrante.findMany({
+      where: { deportistaId },
+      include: {
+        grupo: {
+          include: {
+            integrantes: {
+              include: {
+                deportista: {
+                  include: {
+                    disciplina: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const grupos = integrantes.map((i) => i.grupo);
+    return grupos;
+  }
+
   async getById(id: number) {
     const grupo = await prisma.grupoFamiliar.findUnique({
       where: { id },

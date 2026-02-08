@@ -15,10 +15,21 @@ export class DisciplinaService {
     const disciplina = await prisma.disciplina.create({
       data: {
         nombre: data.nombre,
-        descripcion: data.descripcion,
+        descripcion: data.descripcion ?? null,
         precioMensual: data.precioMensual,
+        activa: true,
       },
     });
+
+    // Verificación read-after-write: detecta problemas con pooler (ej. Supabase sin pgbouncer=true)
+    const persisted = await prisma.disciplina.findUnique({
+      where: { id: disciplina.id },
+    });
+    if (!persisted) {
+      throw new Error(
+        'La disciplina no se persistió en la base de datos. Si usás Supabase, agregá ?pgbouncer=true a DATABASE_URL o usá la conexión directa (puerto 5432).'
+      );
+    }
 
     return disciplina;
   }

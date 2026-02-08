@@ -1,5 +1,6 @@
 import { Response, NextFunction } from 'express';
 import { grupoFamiliarService } from '../services/grupoFamiliar.service';
+import { deportistaService } from '../services/deportista.service';
 import { sendSuccess, sendCreated } from '../utils/response';
 import { AuthenticatedRequest } from '../types';
 import {
@@ -8,6 +9,16 @@ import {
 } from '../validators/grupoFamiliar.validator';
 
 export class GrupoFamiliarController {
+  async getMios(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const deportista = await deportistaService.getByUserId(req.user!.id);
+      const result = await grupoFamiliarService.getByDeportistaId(deportista.id);
+      sendSuccess(res, result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async create(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const data = req.body as CreateGrupoFamiliarInput;
