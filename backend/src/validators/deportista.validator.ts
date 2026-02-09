@@ -64,12 +64,17 @@ export const updateDeportistaSchema = z.object({
   adultoResponsable: adultoResponsableSchema.partial().optional(),
 });
 
+const optionalPosIntQuery = z.preprocess(
+  (v) => (v === '' || v === undefined || v === null ? undefined : v),
+  z.string().regex(/^\d+$/).transform(Number).optional()
+);
+
 export const deportistasQuerySchema = z.object({
-  page: z.string().regex(/^\d+$/).transform(Number).optional(),
-  limit: z.string().regex(/^\d+$/).transform(Number).optional(),
+  page: optionalPosIntQuery,
+  limit: optionalPosIntQuery,
   estado: z.enum(['EN_DEUDA', 'AL_DIA', 'MOROSA', 'INACTIVA']).optional(),
-  disciplinaId: z.string().regex(/^\d+$/).transform(Number).optional(),
-  search: z.string().optional(),
+  disciplinaId: optionalPosIntQuery,
+  search: z.preprocess((v) => (v === '' || v === undefined ? undefined : v), z.string().optional()),
 });
 
 export type CreateDeportistaInput = z.infer<typeof createDeportistaSchema>;

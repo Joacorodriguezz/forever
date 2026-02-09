@@ -60,7 +60,8 @@ export const AdminGruposFamiliares = () => {
     useEffect(() => {
         (async () => {
             try {
-                const res = await deportistaService.getAll({ limit: 500 });
+                // Cargar todos los deportistas para filtrar en el modal (límite alto para no cortar la lista)
+                const res = await deportistaService.getAll({ limit: 10000 });
                 if (res.success && res.data?.data) {
                     const raw = res.data.data as any[];
                     setDeportistas(raw.map((d) => ({
