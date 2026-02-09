@@ -1,8 +1,15 @@
 .loginPage {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    background-color: #003366;
     min-height: 100vh;
+}
+
+.formPanel {
+    background-color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-xl);
 }
 
 @media (max-width: 768px) {

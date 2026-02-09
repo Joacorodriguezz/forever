@@ -1,0 +1,237 @@
+/* Mismo estilo LoginPage / ProfileEdit / DebtStatus */
+.page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    background-color: #fff;
+}
+
+.header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(135deg, #002244 0%, #003366 50%, #004080 100%);
+    padding: var(--spacing-md) var(--spacing-xl);
+    flex-shrink: 0;
+}
+
+.headerLeft {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    min-width: 180px;
+}
+
+.headerLogo {
+    height: 72px;
+    width: 72px;
+    object-fit: contain;
+}
+
+.headerClubName {
+    font-size: 1.125rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--color-white);
+}
+
+.title {
+    flex: 1;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--color-white);
+    text-align: center;
+    margin: 0;
+    transform: translateX(-24px);
+}
+
+.headerRight {
+    min-width: 180px;
+}
+
+.mainContent {
+    flex: 1;
+    width: 100%;
+    padding: var(--spacing-xl);
+    background-color: #f8f9fa;
+}
+
+.loadingText {
+    text-align: center;
+    color: var(--color-gray);
+    padding: var(--spacing-xl);
+}
+
+.contentCard {
+    width: 100%;
+    max-width: none;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0, 51, 102, 0.08);
+    padding: var(--spacing-xl);
+}
+
+/* Sin grupo */
+.noGroup {
+    padding: var(--spacing-lg);
+    text-align: center;
+    color: #666;
+    background: #f5f5f5;
+    border-radius: var(--border-radius);
+    margin-bottom: var(--spacing-xl);
+}
+
+.titularBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.6rem;
+    background: rgba(0, 51, 102, 0.12);
+    color: var(--color-blue);
+    font-weight: 600;
+    font-size: 0.875rem;
+    border-radius: 20px;
+}
+
+.miembroBadge {
+    font-size: 0.875rem;
+    color: #666;
+}
+
+/* Intro */
+.intro {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--color-blue);
+    margin-bottom: var(--spacing-lg);
+}
+
+/* Tabla (solo lectura) */
+.tableWrap {
+    width: 100%;
+    overflow-x: auto;
+    margin-bottom: var(--spacing-xl);
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.th {
+    text-align: left;
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-blue);
+    border-bottom: 2px solid var(--color-blue);
+}
+
+.tr {
+    border-bottom: 1px solid #eee;
+}
+
+.tr:hover {
+    background-color: #f8f9fa;
+}
+
+.td {
+    padding: var(--spacing-md);
+    font-size: 0.95rem;
+    color: #1a1a1a;
+}
+
+/* Aviso para adherir personas */
+.notice {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: rgba(0, 51, 102, 0.06);
+    border: 1px solid rgba(0, 51, 102, 0.2);
+    border-radius: var(--border-radius);
+    margin-bottom: var(--spacing-xl);
+}
+
+.notice svg {
+    flex-shrink: 0;
+    color: var(--color-blue);
+    margin-top: 0.15rem;
+}
+
+.notice p {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #333;
+    line-height: 1.5;
+}
+
+/* Acciones */
+.actions {
+    margin-top: 0;
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid #eee;
+}
+
+.backButton {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-lg);
+    background-color: transparent;
+    color: var(--color-blue);
+    border: 2px solid var(--color-blue);
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.backButton:hover {
+    background-color: rgba(0, 51, 102, 0.06);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .mainContent {
+        padding: var(--spacing-md);
+    }
+
+    .contentCard {
+        padding: var(--spacing-lg);
+    }
+
+    .headerClubName {
+        font-size: 0.9rem;
+    }
+
+    .title {
+        font-size: 1.5rem;
+    }
+
+    .intro {
+        font-size: 1rem;
+    }
+
+    .th,
+    .td {
+        padding: var(--spacing-sm);
+        font-size: 0.875rem;
+    }
+
+    .notice {
+        padding: var(--spacing-sm) var(--spacing-md);
+    }
+
+    .notice p {
+        font-size: 0.875rem;
+    }
+}

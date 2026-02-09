@@ -1,0 +1,163 @@
+.page { max-width: 100%; }
+.title { font-size: 1.35rem; font-weight: 700; color: var(--color-blue); margin: 0 0 0.25rem 0; }
+.subtitle { color: #555; margin: 0 0 var(--spacing-lg) 0; }
+.loading { padding: 2rem; color: #666; }
+
+/* Botones del formulario: mismo tamaño y estilo base */
+.btnPrimary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+    width: 100%;
+    min-width: 0;
+    height: 2.75rem;
+    padding: 0 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.25;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: var(--transition);
+    background: var(--color-blue);
+    color: #fff;
+    margin-bottom: var(--spacing-lg);
+}
+.btnPrimary:hover {
+    background: #002244;
+}
+.btnSecondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+    width: 100%;
+    min-width: 0;
+    height: 2.75rem;
+    padding: 0 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.25;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: var(--transition);
+    background: #c62828;
+    color: #fff;
+}
+.btnSecondary:hover {
+    background: #b71c1c;
+}
+
+.form {
+    background: #fff;
+    border: 1px solid #e8e8e8;
+    border-radius: 12px;
+    padding: var(--spacing-xl);
+    margin-bottom: var(--spacing-lg);
+    overflow: visible;
+}
+.formTitle { font-size: 1.25rem; margin: 0 0 var(--spacing-md) 0; color: var(--color-blue); font-weight: 600; }
+.formError { padding: var(--spacing-sm) var(--spacing-md); background: rgba(198, 40, 40, 0.08); color: #c62828; border-radius: 6px; margin-bottom: var(--spacing-md); font-size: 0.875rem; }
+.formGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--spacing-md); margin-bottom: var(--spacing-md); }
+.formGrid:last-child { margin-bottom: 0; }
+.field label { display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.35rem; color: #333; }
+.field input, .field select { width: 100%; padding: 0.6rem 0.75rem; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; }
+.field input:focus, .field select:focus { outline: none; border-color: var(--color-blue); }
+.field input:read-only { background: #f0f0f0; color: #555; }
+.adultoSection {
+    margin-top: var(--spacing-xl);
+    padding: var(--spacing-lg);
+    background: #f0f4f8;
+    border: 1px solid #d0dce8;
+    border-radius: 10px;
+}
+.adultoTitle { font-size: 1.05rem; margin: 0 0 0.35rem 0; color: var(--color-blue); font-weight: 600; }
+.adultoNote { font-size: 0.9rem; color: #555; margin: 0 0 var(--spacing-md) 0; line-height: 1.4; }
+.adultoSection .formGrid { margin-bottom: 0; }
+.passwordSection {
+    margin-top: var(--spacing-xl);
+    padding: var(--spacing-lg);
+    background: #f8faf8;
+    border: 1px solid #d8e6d8;
+    border-radius: 10px;
+}
+.passwordSection .adultoTitle { color: var(--color-blue); }
+.passwordSection .formGrid { margin-bottom: 0; }
+.passwordNotice { display: flex; align-items: flex-start; gap: var(--spacing-sm); margin-top: var(--spacing-xl); padding: var(--spacing-md); background: #f8f9fa; border-radius: 8px; color: #555; font-size: 0.875rem; border: 1px solid #e8e8e8; }
+.passwordNotice p { margin: 0; }
+.formActions {
+    display: flex;
+    gap: 1rem;
+    margin-top: var(--spacing-xl);
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid #eee;
+}
+.formActions .btnPrimary,
+.formActions .btnSecondary {
+    flex: 1;
+    min-width: 0;
+    margin-bottom: 0;
+}
+
+.filters {
+    background: #f8f9fa;
+    border: 1px solid #e8e8e8;
+    border-radius: 10px;
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+.filtersTitle {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-blue);
+    margin: 0 0 var(--spacing-md) 0;
+}
+.filtersGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: var(--spacing-md);
+}
+.filterField label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #555;
+    margin-bottom: 0.25rem;
+}
+.filterField select {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    background: #fff;
+    color: #1a1a1a;
+}
+.filterField select:focus {
+    outline: none;
+    border-color: var(--color-blue);
+}
+.emptyRow {
+    text-align: center;
+    color: #666;
+    padding: var(--spacing-xl);
+    font-size: 0.95rem;
+}
+.tableWrap { overflow-x: auto; background: #fff; border-radius: 12px; border: 1px solid #e8e8e8; color: #1a1a1a; }
+.table { width: 100%; border-collapse: collapse; color: #1a1a1a; }
+.table th, .table td { padding: var(--spacing-sm) var(--spacing-md); text-align: left; border-bottom: 1px solid #eee; color: #1a1a1a; }
+.table th { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--color-blue); }
+.table td { font-size: 0.95rem; color: #1a1a1a; }
+.badgeActivo { color: #2e7d32; font-weight: 600; }
+.badgeBaja { color: #c62828; font-weight: 600; }
+.btnEdit { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.5rem; margin-right: 0.5rem; background: var(--color-blue); color: #fff; border: none; border-radius: 6px; font-size: 0.875rem; cursor: pointer; }
+.btnEdit:hover { background: #002244; }
+.btnBaja { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.5rem; background: transparent; color: #c62828; border: 1px solid #c62828; border-radius: 6px; font-size: 0.875rem; cursor: pointer; }
+.btnBaja:hover { background: rgba(198, 40, 40, 0.08); }
+.btnAlta { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.5rem; background: transparent; color: #2e7d32; border: 1px solid #2e7d32; border-radius: 6px; font-size: 0.875rem; cursor: pointer; transition: var(--transition); }
+.btnAlta:hover { background: rgba(46, 125, 50, 0.08); }

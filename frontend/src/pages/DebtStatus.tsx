@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Calendar, DollarSign, AlertCircle, CheckCircle, CreditCard } from 'lucide-react';
+import { ArrowLeft, Calendar, DollarSign, AlertCircle, CheckCircle, CreditCard, Info } from 'lucide-react';
 import { Footer } from '../components/Footer';
+import { useAuth } from '../context/AuthContext';
+import { MOCK_GRUPOS_FAMILIARES } from '../data/admin';
 import styles from './DebtStatus.module.css';
 
 interface Quota {
@@ -21,8 +23,21 @@ interface DebtStatusData {
 
 export const DebtStatus = () => {
     const navigate = useNavigate();
+    const { user } = useAuth();
     const [loading, setLoading] = useState(true);
     const [debtData, setDebtData] = useState<DebtStatusData | null>(null);
+    const [esTitular, setEsTitular] = useState(true);
+
+    useEffect(() => {
+        // Determinar si el usuario es titular del grupo familiar (solo el titular puede pagar)
+        const dni = user?.role === 'deportista' ? user.loginId : null;
+        if (dni) {
+            const grupo = MOCK_GRUPOS_FAMILIARES.find((g) =>
+                g.miembros.some((m) => m.dni === dni)
+            );
+            setEsTitular(!grupo || grupo.titularDni === dni);
+        }
+    }, [user?.loginId, user?.role]);
 
     useEffect(() => {
         // TODO: Fetch debt status from backend
@@ -90,9 +105,10 @@ export const DebtStatus = () => {
     if (loading) {
         return (
             <div className={styles.debtStatusPage}>
-                <div className={styles.container}>
-                    <p>Cargando...</p>
-                </div>
+                <main className={styles.mainContent}>
+                    <p className={styles.loadingText}>Cargando...</p>
+                </main>
+                <Footer />
             </div>
         );
     }
@@ -101,80 +117,106 @@ export const DebtStatus = () => {
 
     return (
         <div className={styles.debtStatusPage}>
-            <div className={styles.container}>
-                <div className={styles.header}>
-                    <button className={styles.backButton} onClick={() => navigate('/dashboard')}>
-                        <ArrowLeft size={20} />
-                        Volver al Dashboard
-                    </button>
-                    <h1 className={styles.title}>Estado de Deuda</h1>
-                    <p className={styles.subtitle}>Consultá el estado de tus cuotas</p>
+            <header className={styles.header}>
+                <div className={styles.headerLeft}>
+                    <img src="/logo.png" alt="Club For Ever" className={styles.headerLogo} />
+                    <span className={styles.headerClubName}>Club Social y Deportivo For Ever</span>
                 </div>
+                <h1 className={styles.title}>Estado de Deuda</h1>
+                <div className={styles.headerRight} aria-hidden />
+            </header>
 
-                {/* Status Banner */}
-                <div className={`${styles.statusBanner} ${hasDebt ? styles.statusBannerDebt : styles.statusBannerPaid}`}>
-                    <div className={`${styles.statusIcon} ${hasDebt ? styles.statusIconDebt : styles.statusIconPaid}`}>
-                        {hasDebt ? <AlertCircle size={64} /> : <CheckCircle size={64} />}
+            <main className={styles.mainContent}>
+                <div className={styles.contentCard}>
+                    {/* Status Banner */}
+                    <div className={`${styles.statusBanner} ${hasDebt ? styles.statusBannerDebt : styles.statusBannerPaid}`}>
+                        <div className={`${styles.statusIcon} ${hasDebt ? styles.statusIconDebt : styles.statusIconPaid}`}>
+                            {hasDebt ? <AlertCircle size={56} /> : <CheckCircle size={56} />}
+                        </div>
+                        <div className={`${styles.statusText} ${hasDebt ? styles.statusTextDebt : styles.statusTextPaid}`}>
+                            {hasDebt ? 'DEUDA' : 'AL DÍA'}
+                        </div>
+                        <p className={styles.statusMessage}>
+                            {hasDebt
+                                ? `Tenés ${debtData.cuotasPendientes.length} cuota${debtData.cuotasPendientes.length > 1 ? 's' : ''} pendiente${debtData.cuotasPendientes.length > 1 ? 's' : ''} de pago`
+                                : '¡Felicitaciones! No tenés cuotas pendientes'}
+                        </p>
                     </div>
-                    <div className={`${styles.statusText} ${hasDebt ? styles.statusTextDebt : styles.statusTextPaid}`}>
-                        {hasDebt ? 'DEUDA' : 'AL DÍA'}
-                    </div>
-                    <p className={styles.statusMessage}>
-                        {hasDebt
-                            ? `Tenés ${debtData.cuotasPendientes.length} cuota${debtData.cuotasPendientes.length > 1 ? 's' : ''} pendiente${debtData.cuotasPendientes.length > 1 ? 's' : ''} de pago`
-                            : '¡Felicitaciones! No tenés cuotas pendientes'}
-                    </p>
-                </div>
 
-                {/* Pending Quotas List */}
-                {hasDebt && (
-                    <div className={styles.quotasSection}>
-                        <h2 className={styles.sectionTitle}>Cuotas Pendientes</h2>
-                        <div className={styles.quotasList}>
-                            {debtData.cuotasPendientes.map((quota) => (
-                                <div key={quota.id} className={styles.quotaCard}>
-                                    <div className={styles.quotaInfo}>
-                                        <div className={styles.quotaHeader}>
-                                            <span className={styles.quotaNumber}>
-                                                {getMonthName(quota.nroCuota)} {quota.anio}
-                                            </span>
-                                            <span className={`${styles.quotaStatus} ${quota.estadoCuota === 'VENCIDA' ? styles.quotaStatusOverdue : styles.quotaStatusPending}`}>
-                                                {quota.estadoCuota === 'VENCIDA' ? 'Vencida' : 'Pendiente'}
-                                            </span>
+                    {/* Pending Quotas List */}
+                    {hasDebt && (
+                        <div className={styles.quotasSection}>
+                            <h2 className={styles.sectionTitle}>Cuotas Pendientes</h2>
+                            <div className={styles.quotasList}>
+                                {debtData.cuotasPendientes.map((quota) => (
+                                    <div key={quota.id} className={styles.quotaCard}>
+                                        <div className={styles.quotaInfo}>
+                                            <div className={styles.quotaHeader}>
+                                                <span className={styles.quotaNumber}>
+                                                    {getMonthName(quota.nroCuota)} {quota.anio}
+                                                </span>
+                                                <span className={`${styles.quotaStatus} ${quota.estadoCuota === 'VENCIDA' ? styles.quotaStatusOverdue : styles.quotaStatusPending}`}>
+                                                    {quota.estadoCuota === 'VENCIDA' ? 'Vencida' : 'Pendiente'}
+                                                </span>
+                                            </div>
+                                            <div className={styles.quotaDetails}>
+                                                <div className={styles.quotaDetail}>
+                                                    <Calendar size={16} />
+                                                    Vence: {formatDate(quota.fechaVencimiento)}
+                                                </div>
+                                                <div className={styles.quotaDetail}>
+                                                    <DollarSign size={16} />
+                                                    Disciplina: {quota.disciplina}
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className={styles.quotaDetails}>
-                                            <div className={styles.quotaDetail}>
-                                                <Calendar size={16} />
-                                                Vence: {formatDate(quota.fechaVencimiento)}
-                                            </div>
-                                            <div className={styles.quotaDetail}>
-                                                <DollarSign size={16} />
-                                                Disciplina: {quota.disciplina}
-                                            </div>
+                                        <div className={styles.quotaActions}>
+                                            <span className={styles.quotaAmount}>{formatCurrency(quota.monto)}</span>
+                                            {esTitular ? (
+                                                <button
+                                                    type="button"
+                                                    className={styles.payButton}
+                                                    onClick={() => handlePayQuota(quota.id)}
+                                                >
+                                                    <CreditCard size={20} />
+                                                    Pagar Cuota
+                                                </button>
+                                            ) : (
+                                                <span className={styles.payDisabled}>Solo el titular puede pagar</span>
+                                            )}
                                         </div>
                                     </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                        <span className={styles.quotaAmount}>{formatCurrency(quota.monto)}</span>
-                                        <button
-                                            className={styles.payButton}
-                                            onClick={() => handlePayQuota(quota.id)}
-                                        >
-                                            <CreditCard size={20} />
-                                            Pagar Cuota
-                                        </button>
-                                    </div>
+                                ))}
+                            </div>
+
+                            <div className={styles.totalDebt}>
+                                <span className={styles.totalLabel}>Total Adeudado:</span>
+                                <span className={styles.totalAmount}>{formatCurrency(debtData.totalAdeudado)}</span>
+                            </div>
+
+                            {!esTitular && (
+                                <div className={styles.titularNotice}>
+                                    <Info size={22} />
+                                    <p>
+                                        Solo el titular del grupo familiar puede realizar el pago de cuotas. Contactate con el titular o con el club para regularizar.
+                                    </p>
                                 </div>
-                            ))}
+                            )}
                         </div>
+                    )}
 
-                        {/* Total Debt */}
-                        <div className={styles.totalDebt}>
-                            <span className={styles.totalLabel}>Total Adeudado:</span>
-                            <span className={styles.totalAmount}>{formatCurrency(debtData.totalAdeudado)}</span>
-                        </div>
+                    <div className={styles.actions}>
+                        <button
+                            type="button"
+                            className={styles.backButton}
+                            onClick={() => navigate(-1)}
+                        >
+                            <ArrowLeft size={20} />
+                            Volver
+                        </button>
                     </div>
-                )}
-            </div>
+                </div>
+            </main>
 
             <Footer />
         </div>
