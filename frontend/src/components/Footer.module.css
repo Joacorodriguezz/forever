@@ -1,11 +1,14 @@
+/* Mismo estilo LoginPage / ProfileEdit: azul y limpio */
 .footer {
-    background-color: var(--color-black);
+    width: 100%;
+    background: linear-gradient(135deg, #002244 0%, #003366 50%, #004080 100%);
     color: var(--color-white);
-    padding: var(--spacing-xl) var(--spacing-lg);
+    padding: var(--spacing-lg) var(--spacing-xl);
+    margin-top: auto;
 }
 
 .footerContent {
-    max-width: 1200px;
+    max-width: 1000px;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
@@ -13,20 +16,26 @@
     gap: var(--spacing-lg);
 }
 
-.footerLogo {
-    width: 60px;
-    height: 60px;
-    margin-bottom: var(--spacing-sm);
-}
-
 .footerBrand {
-    font-size: 0.875rem;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    margin-bottom: var(--spacing-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
 }
 
-.footerColumns {
+.logo {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+}
+
+.clubName {
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--color-white);
+}
+
+.footerGrid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: var(--spacing-xl);
@@ -34,38 +43,124 @@
     text-align: center;
 }
 
-.footerColumn h3 {
-    font-size: 0.875rem;
+.footerBlock {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.blockTitle {
+    font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
-    margin-bottom: var(--spacing-sm);
+    letter-spacing: 0.08em;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0 0 0.25rem 0;
+}
+
+.socialLinks {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.socialLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.9);
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.socialLink:hover {
     color: var(--color-white);
 }
 
-.footerColumn p {
-    font-size: 0.75rem;
-    color: var(--color-light-gray);
-    line-height: 1.6;
-    margin: 0.25rem 0;
+.addressList {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.addressItem {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.15rem;
+}
+
+.addressLabel {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.contactLinks {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.footerLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.9);
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.footerLink:hover {
+    color: var(--color-white);
 }
 
 .copyright {
-    font-size: 0.75rem;
-    color: var(--color-gray);
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.7);
     text-align: center;
-    margin-top: var(--spacing-lg);
-    padding-top: var(--spacing-lg);
-    border-top: 1px solid var(--color-dark-gray);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
     width: 100%;
 }
 
 @media (max-width: 768px) {
-    .footerColumns {
+    .footer {
+        padding: var(--spacing-md) var(--spacing-lg);
+    }
+
+    .footerContent {
+        gap: var(--spacing-md);
+    }
+
+    .footerBrand {
+        flex-direction: column;
+        gap: var(--spacing-xs);
+    }
+
+    .clubName {
+        font-size: 0.9rem;
+        text-align: center;
+    }
+
+    .footerGrid {
         grid-template-columns: 1fr;
         gap: var(--spacing-lg);
     }
 
-    .footer {
-        padding: var(--spacing-lg) var(--spacing-md);
+    .footerBlock {
+        align-items: center;
+    }
+
+    .copyright {
+        font-size: 0.65rem;
     }
 }

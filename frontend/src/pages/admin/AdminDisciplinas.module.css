@@ -1,0 +1,45 @@
+.page { max-width: 100%; }
+.title { font-size: 1.35rem; font-weight: 700; color: var(--color-blue); margin: 0 0 0.25rem 0; }
+.subtitle { color: #555; margin: 0 0 var(--spacing-lg) 0; }
+.loading { padding: 2rem; color: #666; }
+
+.btnPrimary { display: inline-flex; align-items: center; gap: var(--spacing-xs); padding: var(--spacing-sm) var(--spacing-lg); background: var(--color-blue); color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; margin-bottom: var(--spacing-lg); }
+.btnPrimary:hover { background: #002244; }
+
+.form { background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; padding: var(--spacing-lg); margin-bottom: var(--spacing-lg); max-width: 400px; color: #1a1a1a; }
+.formTitle { font-size: 1.1rem; font-weight: 700; margin: 0 0 var(--spacing-md) 0; color: #1a1a1a; }
+.field { margin-bottom: var(--spacing-md); }
+.field label { display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.25rem; color: #1a1a1a; }
+.input { width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; color: #1a1a1a; background: #fff; }
+.formActions { display: flex; gap: var(--spacing-md); flex-wrap: wrap; }
+.btnGuardar { padding: 0.6rem 1.25rem; background: var(--color-blue); color: #fff; border: none; border-radius: 8px; font-weight: 600; font-size: 0.9375rem; cursor: pointer; min-width: 100px; }
+.btnGuardar:hover { background: #002244; }
+.btnCancelar { padding: 0.6rem 1.25rem; background: #c62828; color: #fff; border: none; border-radius: 8px; font-weight: 600; font-size: 0.9375rem; cursor: pointer; min-width: 100px; }
+.btnCancelar:hover { background: #b71c1c; }
+
+.tableWrap { overflow-x: auto; background: #fff; border-radius: 12px; border: 1px solid #e8e8e8; color: #1a1a1a; }
+.table { width: 100%; border-collapse: collapse; color: #1a1a1a; }
+.table th, .table td { padding: var(--spacing-sm) var(--spacing-md); text-align: left; border-bottom: 1px solid #eee; color: #1a1a1a; }
+.table th { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--color-blue); }
+.badgeActivo { color: #2e7d32; font-weight: 600; }
+.badgeBaja { color: #c62828; font-weight: 600; }
+.btnEdit { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.5rem; margin-right: 0.5rem; background: var(--color-blue); color: #fff; border: none; border-radius: 6px; font-size: 0.875rem; cursor: pointer; }
+.btnEdit:hover { background: #002244; }
+.btnBaja { padding: 0.25rem 0.5rem; font-size: 0.875rem; background: #c62828; color: #fff; border: none; border-radius: 6px; cursor: pointer; margin-right: 0.5rem; }
+.btnBaja:hover { background: #b71c1c; }
+.btnAlta { padding: 0.25rem 0.5rem; font-size: 0.875rem; background: #2e7d32; color: #fff; border: none; border-radius: 6px; cursor: pointer; }
+.btnAlta:hover { background: #1b5e20; }
+
+.section { background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; padding: var(--spacing-lg); margin-bottom: 1.75rem; color: #1a1a1a; }
+.sectionTitle { font-size: 1.05rem; font-weight: 700; color: var(--color-blue); margin: 0 0 var(--spacing-sm) 0; }
+.sectionHint { font-size: 0.875rem; color: #555; margin: 0 0 var(--spacing-md) 0; }
+.listInline { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; margin-bottom: var(--spacing-sm); }
+.tag { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.35rem 0.65rem; background: #f0f0f0; border-radius: 6px; font-size: 0.875rem; color: #1a1a1a; }
+.tag button { padding: 0 0.25rem; background: none; border: none; color: #c62828; cursor: pointer; font-size: 1rem; line-height: 1; }
+.addRow { display: flex; gap: var(--spacing-sm); align-items: flex-end; flex-wrap: wrap; margin-top: var(--spacing-sm); }
+.addRow .field { margin-bottom: 0; }
+.addRow input { min-width: 120px; }
+.addRow select { min-width: 120px; padding: 0.5rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; color: #1a1a1a; background: #fff; }
+
+.tableWrap + .form { margin-top: 1.5rem; }
+.table td { padding: 0.65rem var(--spacing-md); }

@@ -1,0 +1,23 @@
+.page { max-width: 100%; }
+.title { font-size: 1.35rem; font-weight: 700; color: var(--color-blue); margin: 0 0 0.25rem 0; }
+.subtitle { color: #555; margin: 0 0 var(--spacing-lg) 0; }
+.loading { padding: 2rem; color: #666; }
+
+.filtersRow { display: flex; flex-wrap: wrap; gap: var(--spacing-lg); margin-bottom: var(--spacing-md); align-items: flex-end; }
+.filters { display: flex; flex-wrap: wrap; gap: var(--spacing-md); align-items: center; }
+.filters label { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: #1a1a1a; }
+.filterLabel { font-size: 0.875rem; font-weight: 500; margin-right: 0.25rem; }
+.filters select { padding: 0.35rem 0.5rem; border-radius: 6px; border: 1px solid #ccc; font-size: 0.875rem; color: #1a1a1a; background: #fff; }
+
+.tableWrap { overflow-x: auto; background: #fff; border-radius: 12px; border: 1px solid #e8e8e8; color: #1a1a1a; }
+.table { width: 100%; border-collapse: collapse; color: #1a1a1a; }
+.table th, .table td { padding: var(--spacing-sm) var(--spacing-md); text-align: left; border-bottom: 1px solid #eee; color: #1a1a1a; }
+.table th { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--color-blue); }
+.badgePagada { color: #2e7d32; font-weight: 600; }
+.badgePendiente { color: #c62828; font-weight: 600; }
+
+.cellActions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.btnPagar { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.35rem 0.75rem; background: var(--color-blue); color: #fff; border: none; border-radius: 6px; font-size: 0.875rem; font-weight: 600; cursor: pointer; }
+.btnPagar:hover { background: #002244; }
+.fechaPago { font-size: 0.875rem; color: #555; }
+.empty { color: #666; padding: var(--spacing-md) 0; }

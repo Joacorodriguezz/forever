@@ -1,16 +1,17 @@
 import { useNavigate } from 'react-router-dom';
 import { LogOut } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import { MenuCard } from '../components/MenuCard';
 import { Footer } from '../components/Footer';
 import styles from './Dashboard.module.css';
 
 export const Dashboard = () => {
     const navigate = useNavigate();
+    const { logout } = useAuth();
 
     const handleLogout = () => {
-        // Clear session data if needed
-        localStorage.removeItem('token'); // Placeholder for future auth
-        navigate('/');
+        logout();
+        navigate('/', { replace: true });
     };
 
     return (

@@ -1,0 +1,20 @@
+.page { max-width: 100%; }
+.title { font-size: 1.35rem; font-weight: 700; color: var(--color-blue); margin: 0 0 0.25rem 0; }
+.subtitle { color: #555; margin: 0 0 var(--spacing-lg) 0; max-width: 560px; }
+
+.form { background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; padding: var(--spacing-lg); margin-bottom: var(--spacing-lg); max-width: 420px; color: #1a1a1a; }
+.formTitle { font-size: 1.1rem; font-weight: 700; margin: 0 0 var(--spacing-md) 0; color: #1a1a1a; }
+.field { margin-bottom: var(--spacing-md); }
+.field label { display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.25rem; color: #1a1a1a; }
+.input { width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; color: #1a1a1a; background: #fff; }
+
+.radioGroup { display: flex; flex-direction: column; gap: var(--spacing-sm); }
+.radioLabel { display: inline-flex; align-items: center; gap: var(--spacing-xs); cursor: pointer; font-weight: 500; }
+.radioLabel input { margin: 0; }
+
+.formActions { display: flex; gap: var(--spacing-md); flex-wrap: wrap; }
+.btnGuardar { display: inline-flex; align-items: center; gap: var(--spacing-xs); padding: 0.6rem 1.25rem; background: var(--color-blue); color: #fff; border: none; border-radius: 8px; font-weight: 600; font-size: 0.9375rem; cursor: pointer; min-width: 140px; }
+.btnGuardar:hover { background: #002244; }
+
+.mensajeOk { padding: var(--spacing-sm) var(--spacing-md); margin-bottom: var(--spacing-md); background: #e8f5e9; color: #2e7d32; border-radius: 8px; font-size: 0.9375rem; }
+.mensajeError { padding: var(--spacing-sm) var(--spacing-md); margin-bottom: var(--spacing-md); background: #ffebee; color: #c62828; border-radius: 8px; font-size: 0.9375rem; }

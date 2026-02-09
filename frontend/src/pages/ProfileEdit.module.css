@@ -1,119 +1,332 @@
+/* Página a ancho completo, sin contenedor centrado */
 .profilePage {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    background-color: white;
-}
-
-.container {
-    flex: 1;
-    max-width: 900px;
-    margin: 0 auto;
-    padding: var(--spacing-xl) var(--spacing-lg);
     width: 100%;
-    background-color: #F5F5F5;
+    background-color: #fff;
 }
 
+/* Barra superior con gradiente azul: logo izquierda, título centrado */
 .header {
-    margin-bottom: var(--spacing-xl);
-}
-
-.backButton {
-    display: inline-flex;
+    width: 100%;
+    display: flex;
     align-items: center;
-    gap: var(--spacing-xs);
-    background: none;
-    border: none;
-    color: var(--color-gray);
-    font-size: 0.9rem;
-    cursor: pointer;
-    padding: var(--spacing-xs) 0;
-    margin-bottom: var(--spacing-md);
-    transition: var(--transition);
+    justify-content: space-between;
+    background: linear-gradient(135deg, #002244 0%, #003366 50%, #004080 100%);
+    padding: var(--spacing-md) var(--spacing-xl);
+    flex-shrink: 0;
 }
 
-.backButton:hover {
-    color: var(--color-blue);
+.headerLeft {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    min-width: 180px;
+}
+
+.headerLogo {
+    height: 72px;
+    width: 72px;
+    object-fit: contain;
+}
+
+.headerClubName {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--color-white);
+    letter-spacing: 0.02em;
 }
 
 .title {
-    font-size: 2rem;
+    flex: 1;
+    font-size: 1.75rem;
     font-weight: 700;
-    color: var(--color-black);
-    margin-bottom: var(--spacing-xs);
+    color: var(--color-white);
+    text-align: center;
+    margin: 0;
+    transform: translateX(-24px);
 }
 
-.subtitle {
-    color: var(--color-gray);
-    font-size: 1rem;
+.headerRight {
+    min-width: 180px;
 }
 
-.formCard {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+/* Contenido principal: ancho completo, sin max-width */
+.mainContent {
+    flex: 1;
+    width: 100%;
     padding: var(--spacing-xl);
+    background-color: #f8f9fa;
 }
 
+/* Formulario en grid a lo ancho: secciones visibles en columnas en desktop */
+.formCard {
+    width: 100%;
+    max-width: none;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0, 51, 102, 0.08);
+    padding: var(--spacing-xl);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-xl);
+    align-items: start;
+}
+
+/* En móvil el formCard es una sola columna */
+@media (max-width: 1024px) {
+    .formCard {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Cada sección del formulario */
 .section {
-    margin-bottom: var(--spacing-xl);
-    padding-bottom: var(--spacing-xl);
-    border-bottom: 1px solid #E5E5E5;
-}
-
-.section:last-child {
-    margin-bottom: 0;
-    padding-bottom: 0;
+    min-width: 0;
+    padding: 0;
+    margin: 0;
+    border: none;
     border-bottom: none;
 }
 
-.sectionTitle {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: var(--color-black);
-    margin-bottom: var(--spacing-md);
+/* Secciones que ocupan toda la fila del grid (contacto / adulto responsable) */
+.sectionFull {
+    grid-column: 1 / -1;
 }
 
+.sectionTitle {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--color-blue);
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-xs);
+    border-bottom: 2px solid var(--color-blue);
+}
+
+.readOnlyBadge {
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: #666;
+    text-transform: none;
+    margin-left: 0.5rem;
+}
+
+.adminNotice {
+    font-size: 0.9rem;
+    color: #555;
+    margin: 0 0 var(--spacing-lg) 0;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: rgba(0, 51, 102, 0.06);
+    border: 1px solid rgba(0, 51, 102, 0.15);
+    border-radius: var(--border-radius);
+    line-height: 1.5;
+}
+
+/* Lista de adultos responsables */
+.adultosList {
+    list-style: none;
+    margin: 0 0 var(--spacing-md) 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.adultoListItem {
+    padding: var(--spacing-md);
+    border: 1px solid #e8e8e8;
+    border-radius: var(--border-radius);
+    background-color: #fafafa;
+}
+
+/* Adulto responsable: datos congelados (modo ver) */
+.adultoFrozen {
+    margin-bottom: 0;
+}
+
+.frozenLabel {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #666;
+    margin-bottom: 0.25rem;
+}
+
+.frozenValue {
+    font-size: 1rem;
+    color: #1a1a1a;
+}
+
+.adultoActions {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid #eee;
+}
+
+.editarAdultoButton {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-blue);
+    color: var(--color-white);
+    border: none;
+    border-radius: var(--border-radius);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.editarAdultoButton:hover {
+    background-color: #002244;
+}
+
+.eliminarAdultoButton {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: transparent;
+    color: #c62828;
+    border: 2px solid #c62828;
+    border-radius: var(--border-radius);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.eliminarAdultoButton:hover {
+    background-color: rgba(198, 40, 40, 0.08);
+}
+
+/* Botón Agregar adulto responsable abajo */
+.addAdultoRow {
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid #eee;
+}
+
+.addAdultoButton {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-lg);
+    background-color: var(--color-blue);
+    color: var(--color-white);
+    border: none;
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.addAdultoButton:hover {
+    background-color: #002244;
+}
+
+.addAdultoButton:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.adultoIntro {
+    font-size: 0.875rem;
+    color: #555;
+    margin: 0 0 var(--spacing-md) 0;
+    line-height: 1.5;
+}
+
+.adultoNotice {
+    font-size: 0.875rem;
+    color: #555;
+    margin: 0 0 var(--spacing-md) 0;
+    line-height: 1.5;
+}
+
+.loadingText {
+    text-align: center;
+    color: var(--color-gray);
+    padding: var(--spacing-xl);
+    margin: 0;
+}
+
+/* Grid de campos: más columnas a lo ancho (3 en desktop, 2 en tablet, 1 en móvil) */
 .formGrid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: var(--spacing-md);
 }
 
 .formGroup {
     display: flex;
     flex-direction: column;
+    min-width: 0;
 }
 
 .formGroupFull {
     grid-column: 1 / -1;
 }
 
+/* Labels e inputs con paleta LoginPage */
 .label {
     font-size: 0.875rem;
     font-weight: 500;
-    color: var(--color-dark-gray);
+    color: #333;
     margin-bottom: var(--spacing-xs);
 }
 
 .input {
-    padding: var(--spacing-sm);
-    border: 1px solid #D0D0D0;
+    padding: 0.75rem 1rem;
+    border: 1px solid #e0e0e0;
     border-radius: var(--border-radius);
     font-size: 1rem;
     transition: var(--transition);
-    background-color: white;
+    background-color: #f8f8f8;
+    width: 100%;
 }
 
 .input:focus {
     outline: none;
     border-color: var(--color-blue);
-    box-shadow: 0 0 0 3px rgba(0, 51, 102, 0.1);
+    background-color: #fff;
+    box-shadow: 0 0 0 3px rgba(0, 51, 102, 0.12);
+}
+
+.input::placeholder {
+    color: #999;
+}
+
+.select {
+    appearance: none;
+    background-color: #f8f8f8;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    padding-right: 2.25rem;
+}
+
+/* Selects congelados (solo lectura): sin flecha */
+.select:disabled {
+    background-image: none;
+    padding-right: 1rem;
+}
+
+.select:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
 }
 
 .input:disabled {
-    background-color: #F5F5F5;
-    color: var(--color-gray);
+    background-color: #eee;
+    color: #666;
     cursor: not-allowed;
 }
 
@@ -133,21 +346,15 @@
     margin-top: var(--spacing-xs);
 }
 
-.readOnlyBadge {
-    display: inline-block;
-    background-color: #E5E5E5;
-    color: var(--color-gray);
-    font-size: 0.75rem;
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
-    margin-left: var(--spacing-xs);
-}
-
+/* Acciones: Volver a la izquierda, Guardar a la derecha */
 .actions {
+    grid-column: 1 / -1;
     display: flex;
     gap: var(--spacing-md);
-    justify-content: flex-end;
-    margin-top: var(--spacing-xl);
+    justify-content: space-between;
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid #eee;
 }
 
 .button {
@@ -165,7 +372,7 @@
 
 .buttonPrimary {
     background-color: var(--color-blue);
-    color: white;
+    color: var(--color-white);
 }
 
 .buttonPrimary:hover {
@@ -173,20 +380,88 @@
 }
 
 .buttonPrimary:disabled {
-    background-color: var(--color-gray);
+    background-color: #6699cc;
     cursor: not-allowed;
 }
 
 .buttonSecondary {
     background-color: transparent;
-    color: var(--color-gray);
-    border: 1px solid #D0D0D0;
+    color: var(--color-blue);
+    border: 2px solid var(--color-blue);
 }
 
 .buttonSecondary:hover {
-    background-color: #F5F5F5;
+    background-color: rgba(0, 51, 102, 0.06);
 }
 
+/* Modal cambiar contraseña */
+.modalOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+}
+
+.modalContraseña {
+    background: #fff;
+    border-radius: 12px;
+    padding: var(--spacing-xl);
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    color: #1a1a1a;
+}
+
+.modalTitle {
+    margin: 0 0 var(--spacing-lg) 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-blue);
+}
+
+.modalContraseña .formGroup {
+    margin-bottom: var(--spacing-md);
+}
+
+.modalContraseña .formGroup:last-of-type {
+    margin-bottom: var(--spacing-sm);
+}
+
+.modalActions {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-lg);
+    flex-wrap: wrap;
+}
+
+.buttonCancelar {
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    background: #c62828;
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.buttonCancelar:hover {
+    background: #b71c1c;
+}
+
+.contraseñaError {
+    font-size: 0.875rem;
+    color: #c62828;
+    margin: 0 0 var(--spacing-sm) 0;
+}
+
+/* Notificación */
 .notification {
     position: fixed;
     top: var(--spacing-lg);
@@ -216,16 +491,26 @@
         transform: translateX(100%);
         opacity: 0;
     }
-
     to {
         transform: translateX(0);
         opacity: 1;
     }
 }
 
+/* Responsive */
+@media (max-width: 900px) {
+    .formGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
 @media (max-width: 768px) {
-    .profilePage {
-        padding: var(--spacing-lg) var(--spacing-md);
+    .mainContent {
+        padding: var(--spacing-md);
+    }
+
+    .formCard {
+        padding: var(--spacing-lg);
     }
 
     .formGrid {
@@ -241,7 +526,7 @@
     }
 
     .actions {
-        flex-direction: column-reverse;
+        flex-direction: column;
     }
 
     .button {

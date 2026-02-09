@@ -1,0 +1,55 @@
+.dashboard {
+    max-width: 1000px;
+}
+
+.pageTitle {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-blue);
+    margin: 0 0 var(--spacing-sm) 0;
+}
+
+.intro {
+    color: #555;
+    margin: 0 0 var(--spacing-xl) 0;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: var(--spacing-lg);
+}
+
+.card {
+    background: #fff;
+    border: 1px solid #e8e8e8;
+    border-radius: 12px;
+    padding: var(--spacing-lg);
+    text-align: left;
+    cursor: pointer;
+    transition: var(--transition);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.card:hover {
+    border-color: var(--color-blue);
+    box-shadow: 0 4px 16px rgba(0, 51, 102, 0.12);
+}
+
+.cardIcon {
+    color: var(--color-blue);
+    margin-bottom: var(--spacing-md);
+}
+
+.cardTitle {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin: 0 0 var(--spacing-xs) 0;
+}
+
+.cardDesc {
+    font-size: 0.875rem;
+    color: #666;
+    margin: 0;
+}

@@ -10,9 +10,9 @@ interface MenuItem {
 const menuItems: MenuItem[] = [
     { label: 'Mi Perfil', path: '/perfil' },
     { label: 'Estado Deuda', path: '/estado-deuda' },
-    { label: 'Cuotas', path: '/cuotas' },
     { label: 'Historial de Pagos', path: '/historial-pagos' },
     { label: 'Grupo Familiar', path: '/grupo-familiar' },
+    { label: 'Noticias', path: '/noticias' },
 ];
 
 export const MenuCard = () => {
@@ -25,7 +25,7 @@ export const MenuCard = () => {
     return (
         <div className={styles.menuCard}>
             <div className={styles.menuHeader}>
-                <h2 className={styles.menuTitle}>SOCIOS</h2>
+                <h2 className={styles.menuTitle}>DEPORTISTAS</h2>
                 <p className={styles.menuSubtitle}>Sistema de Gestión</p>
             </div>
 
