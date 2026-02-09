@@ -15,17 +15,14 @@ export async function cleanDatabase() {
   await prismaTest.deportista.deleteMany();
   await prismaTest.administrativo.deleteMany();
   await prismaTest.cuentaUsuario.deleteMany();
-  await prismaTest.domicilio.deleteMany();
+  await prismaTest.subcategoria.deleteMany();
   await prismaTest.disciplina.deleteMany();
-  await prismaTest.localidad.deleteMany();
+  await prismaTest.categoria.deleteMany();
+  await prismaTest.genero.deleteMany();
 }
 
 // Datos de prueba base
 export const testData = {
-  localidad: {
-    codigoPostal: '1900',
-    nombre: 'La Plata Test',
-  },
   disciplina: {
     nombre: 'Futbol Test',
     descripcion: 'Futbol para tests',
@@ -50,17 +47,16 @@ export const testData = {
 
 // Crear datos base necesarios para los tests
 export async function seedTestData() {
-  // Crear localidad
-  const localidad = await prismaTest.localidad.create({
-    data: testData.localidad,
+  const genero = await prismaTest.genero.create({
+    data: { nombre: 'Masculino' },
   });
-
-  // Crear disciplina
+  const categoria = await prismaTest.categoria.create({
+    data: { nombre: 'Mayores' },
+  });
   const disciplina = await prismaTest.disciplina.create({
     data: testData.disciplina,
   });
-
-  return { localidad, disciplina };
+  return { genero, categoria, disciplina };
 }
 
 // Conectar antes de todos los tests

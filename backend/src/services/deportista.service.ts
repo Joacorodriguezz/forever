@@ -32,17 +32,6 @@ export class DeportistaService {
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
     const deportista = await prisma.$transaction(async (tx) => {
-      // Crear domicilio
-      const domicilio = await tx.domicilio.create({
-        data: {
-          calle: data.domicilio.calle,
-          numero: data.domicilio.numero,
-          piso: data.domicilio.piso,
-          departamento: data.domicilio.departamento,
-          localidadId: data.domicilio.localidadId,
-        },
-      });
-
       // Crear cuenta
       const cuenta = await tx.cuentaUsuario.create({
         data: {
@@ -52,22 +41,43 @@ export class DeportistaService {
         },
       });
 
-      // Crear deportista
-      const nuevoDeportista = await tx.deportista.create({
-        data: {
-          nombre: data.nombre,
-          apellido: data.apellido,
-          dni: data.dni,
-          fechaNac: new Date(data.fechaNac),
-          categoria: data.categoria,
-          obraSocial: data.obraSocial,
-          disciplinaId: data.disciplinaId,
-          cuentaId: cuenta.id,
-          domicilioId: domicilio.id,
-          telefonos: data.telefonos,
-          enfermedades: data.enfermedades,
-        },
-      });
+      const fechaNacDate = new Date(data.fechaNac);
+      if (Number.isNaN(fechaNacDate.getTime())) {
+        throw new Error(`Fecha de nacimiento invalida: ${data.fechaNac}`);
+      }
+
+      const createData: Parameters<typeof tx.deportista.create>[0]['data'] = {
+        nombre: data.nombre,
+        apellido: data.apellido,
+        dni: data.dni,
+        fechaNac: fechaNacDate,
+        genero: { connect: { id: Number(data.generoId) } },
+        categoria: { connect: { id: Number(data.categoriaId) } },
+        disciplina: { connect: { id: Number(data.disciplinaId) } },
+        cuenta: { connect: { id: cuenta.id } },
+      };
+      if (data.subcategoriaId != null && Number(data.subcategoriaId) > 0) {
+        createData.subcategoria = { connect: { id: Number(data.subcategoriaId) } };
+      }
+      if (data.obraSocial != null && data.obraSocial !== '') createData.obraSocial = data.obraSocial;
+      if (data.telefonos != null && data.telefonos !== '') createData.telefonos = data.telefonos;
+      if (data.enfermedades != null && data.enfermedades !== '') createData.enfermedades = data.enfermedades;
+
+      const nuevoDeportista = await tx.deportista.create({ data: createData });
+
+      // Si es menor (Juveniles/Infantiles), crear adulto responsable
+      if (data.adultoResponsable) {
+        await tx.adultoResponsable.create({
+          data: {
+            deportistaId: nuevoDeportista.id,
+            nombre: data.adultoResponsable.nombre,
+            apellido: data.adultoResponsable.apellido,
+            dni: data.adultoResponsable.dni,
+            email: data.adultoResponsable.email,
+            telefono: data.adultoResponsable.telefono,
+          },
+        });
+      }
 
       return nuevoDeportista;
     });
@@ -80,6 +90,10 @@ export class DeportistaService {
       where: { id },
       include: {
         disciplina: true,
+        genero: true,
+        categoria: true,
+        subcategoria: true,
+        adultoResponsable: true,
         cuenta: {
           select: {
             id: true,
@@ -88,9 +102,6 @@ export class DeportistaService {
             activo: true,
             createdAt: true,
           },
-        },
-        domicilio: {
-          include: { localidad: true },
         },
       },
     });
@@ -132,6 +143,10 @@ export class DeportistaService {
         take: limit,
         include: {
           disciplina: true,
+          genero: true,
+          categoria: true,
+          subcategoria: true,
+          adultoResponsable: true,
           cuenta: {
             select: { email: true, activo: true },
           },
@@ -153,6 +168,7 @@ export class DeportistaService {
   async update(id: number, data: UpdateDeportistaDTO) {
     const deportista = await prisma.deportista.findUnique({
       where: { id },
+      include: { adultoResponsable: true },
     });
 
     if (!deportista) {
@@ -167,7 +183,9 @@ export class DeportistaService {
           nombre: data.nombre,
           apellido: data.apellido,
           fechaNac: data.fechaNac ? new Date(data.fechaNac) : undefined,
-          categoria: data.categoria,
+          generoId: data.generoId,
+          categoriaId: data.categoriaId,
+          subcategoriaId: data.subcategoriaId,
           obraSocial: data.obraSocial,
           disciplinaId: data.disciplinaId,
           telefonos: data.telefonos,
@@ -175,12 +193,25 @@ export class DeportistaService {
         },
       });
 
-      // Actualizar domicilio si se proporciona
-      if (data.domicilio) {
-        await tx.domicilio.update({
-          where: { id: deportista.domicilioId },
-          data: data.domicilio,
-        });
+      // Actualizar o crear adulto responsable si se proporciona
+      if (data.adultoResponsable) {
+        if (deportista.adultoResponsable) {
+          await tx.adultoResponsable.update({
+            where: { deportistaId: id },
+            data: data.adultoResponsable,
+          });
+        } else {
+          await tx.adultoResponsable.create({
+            data: {
+              deportistaId: id,
+              nombre: data.adultoResponsable.nombre!,
+              apellido: data.adultoResponsable.apellido!,
+              dni: data.adultoResponsable.dni!,
+              email: data.adultoResponsable.email!,
+              telefono: data.adultoResponsable.telefono!,
+            },
+          });
+        }
       }
     });
 
@@ -268,6 +299,7 @@ export class DeportistaService {
         estado: p.estadoPago,
         cuota: {
           nroCuota: p.cuota.nroCuota,
+          anio: p.cuota.anio,
           disciplina: p.cuota.disciplina.nombre,
         },
       })),
@@ -279,9 +311,10 @@ export class DeportistaService {
       where: { cuentaId: userId },
       include: {
         disciplina: true,
-        domicilio: {
-          include: { localidad: true },
-        },
+        genero: true,
+        categoria: true,
+        subcategoria: true,
+        adultoResponsable: true,
       },
     });
 
@@ -290,6 +323,45 @@ export class DeportistaService {
     }
 
     return deportista;
+  }
+
+  async resetPassword(id: number, newPassword: string) {
+    const deportista = await prisma.deportista.findUnique({
+      where: { id },
+      include: { cuenta: true },
+    });
+
+    if (!deportista) {
+      throw new NotFoundError(ErrorMessages.DEPORTISTA_NOT_FOUND);
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await prisma.cuentaUsuario.update({
+      where: { id: deportista.cuentaId },
+      data: { password: hashedPassword },
+    });
+
+    return { message: 'Contraseña restablecida correctamente' };
+  }
+
+  async resetPasswordByDni(dni: string, newPassword: string) {
+    const deportista = await prisma.deportista.findUnique({
+      where: { dni },
+    });
+
+    if (!deportista) {
+      throw new NotFoundError(ErrorMessages.DEPORTISTA_NOT_FOUND);
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await prisma.cuentaUsuario.update({
+      where: { id: deportista.cuentaId },
+      data: { password: hashedPassword },
+    });
+
+    return { message: 'Contraseña restablecida correctamente' };
   }
 }
 

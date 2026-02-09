@@ -30,4 +30,13 @@ router.put(
   userController.assignRole.bind(userController)
 );
 
+// PUT /api/users/admin/:id/reset-password - Restablecer contraseña de admin (solo Admin)
+router.put(
+  '/admin/:id/reset-password',
+  authenticateToken,
+  requireAdmin,
+  validateParams(idParamSchema),
+  userController.resetAdminPassword.bind(userController)
+);
+
 export default router;

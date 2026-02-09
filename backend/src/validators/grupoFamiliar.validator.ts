@@ -13,6 +13,10 @@ const integranteSchema = z.object({
 export const createGrupoFamiliarSchema = z
   .object({
     nombre: z.string({ message: 'El nombre es requerido' }).min(1, 'El nombre es requerido'),
+    titularDni: z
+      .string({ message: 'El DNI del titular es requerido' })
+      .regex(/^\d{7,8}$/, 'El DNI debe tener 7 u 8 digitos'),
+    cuotaHermano: z.number().nonnegative().optional(),
     integrantes: z
       .array(integranteSchema)
       .min(2, 'El grupo familiar debe tener al menos 2 integrantes'),
@@ -23,6 +27,11 @@ export const createGrupoFamiliarSchema = z
 
 export const updateGrupoFamiliarSchema = z.object({
   nombre: z.string().min(1).optional(),
+  titularDni: z
+    .string()
+    .regex(/^\d{7,8}$/, 'El DNI debe tener 7 u 8 digitos')
+    .optional(),
+  cuotaHermano: z.number().nonnegative().optional(),
   integrantes: z.array(integranteSchema).min(2).optional(),
 });
 

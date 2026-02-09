@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { UserPlus, Pencil, Trash2, DollarSign } from 'lucide-react';
-import { MOCK_GRUPOS_FAMILIARES, MOCK_DEPORTISTAS } from '../../data/admin';
 import type { GrupoFamiliarAdmin } from '../../types/admin';
 import type { Deportista } from '../../types/admin';
 import { useOpcionesAdmin } from '../../context/OpcionesAdminContext';
+import { grupoFamiliarService } from '../../services/grupoFamiliar.service';
+import { deportistaService } from '../../services/deportista.service';
 import styles from './AdminGruposFamiliares.module.css';
 
 type MiembroForm = { deportistaId: number; nombre: string; apellido: string; dni: string };
@@ -23,13 +24,63 @@ export const AdminGruposFamiliares = () => {
 
     const [modalCuotaHermano, setModalCuotaHermano] = useState<{ grupoId: number; valor: number } | null>(null);
     const [inputCuotaHermano, setInputCuotaHermano] = useState('');
-    const { disciplinasNombres, generos, getCategoriasOptions, getSubcategoriaOptions } = useOpcionesAdmin();
+    const [deportistas, setDeportistas] = useState<Deportista[]>([]);
+    const { disciplinasNombres, generosNombres, getCategoriasOptions, getSubcategoriaOptions } = useOpcionesAdmin();
+
+    const fetchGrupos = async () => {
+        setLoading(true);
+        try {
+            const res = await grupoFamiliarService.getAll(1, 100);
+            if (res.success && res.data?.data) {
+                const raw = res.data.data as any[];
+                const list: GrupoFamiliarAdmin[] = raw.map((g) => ({
+                    id: g.id,
+                    titularDni: g.titularDni ?? '',
+                    miembros: (g.integrantes || []).map((i: any) => ({
+                        id: i.deportista?.id ?? i.deportistaId,
+                        nombre: i.deportista?.nombre ?? '',
+                        apellido: i.deportista?.apellido ?? '',
+                        dni: i.deportista?.dni ?? '',
+                    })),
+                    cuotaHermano: g.cuotaHermano != null ? Number(g.cuotaHermano) : undefined,
+                }));
+                setGrupos(list);
+            }
+        } catch {
+            setGrupos([]);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        setTimeout(() => {
-            setGrupos([...MOCK_GRUPOS_FAMILIARES]);
-            setLoading(false);
-        }, 300);
+        fetchGrupos();
+    }, []);
+
+    useEffect(() => {
+        (async () => {
+            try {
+                // Cargar todos los deportistas para filtrar en el modal (límite alto para no cortar la lista)
+                const res = await deportistaService.getAll({ limit: 10000 });
+                if (res.success && res.data?.data) {
+                    const raw = res.data.data as any[];
+                    setDeportistas(raw.map((d) => ({
+                        id: d.id,
+                        nombre: d.nombre,
+                        apellido: d.apellido,
+                        dni: d.dni,
+                        disciplina: d.disciplina?.nombre ?? '',
+                        genero: d.genero?.nombre ?? '',
+                        categoria: d.categoria?.nombre ?? '',
+                        subcategoria: d.subcategoria?.nombre ?? '',
+                        adultoResponsable: d.adultoResponsable ? { nombre: d.adultoResponsable.nombre, apellido: d.adultoResponsable.apellido, dni: d.adultoResponsable.dni, email: d.adultoResponsable.email, telefono: d.adultoResponsable.telefono } : null,
+                        activo: d.cuenta?.activo ?? true,
+                    })));
+                }
+            } catch {
+                setDeportistas([]);
+            }
+        })();
     }, []);
 
     const openCrear = () => {
@@ -61,7 +112,7 @@ export const AdminGruposFamiliares = () => {
     const opcionesSubcategoria = useMemo(() => getSubcategoriaOptions(filtroDisciplina, filtroGenero, filtroCategoria), [filtroDisciplina, filtroGenero, filtroCategoria, getSubcategoriaOptions]);
 
     const deportistasFiltrados = useMemo(() => {
-        let list = MOCK_DEPORTISTAS.filter((d) => d.activo);
+        let list = deportistas.filter((d) => d.activo);
         if (filtroDisciplina) list = list.filter((d) => d.disciplina === filtroDisciplina);
         if (filtroGenero) list = list.filter((d) => d.genero === filtroGenero);
         if (filtroCategoria) list = list.filter((d) => d.categoria === filtroCategoria);
@@ -76,7 +127,7 @@ export const AdminGruposFamiliares = () => {
             );
         }
         return list;
-    }, [filtroDisciplina, filtroGenero, filtroCategoria, filtroSubcategoria, busqueda]);
+    }, [deportistas, filtroDisciplina, filtroGenero, filtroCategoria, filtroSubcategoria, busqueda]);
 
     const agregarMiembro = (d: Deportista) => {
         if (form.miembros.some((m) => m.dni === d.dni)) return;
@@ -95,32 +146,36 @@ export const AdminGruposFamiliares = () => {
         });
     };
 
-    const guardar = (e: React.FormEvent) => {
+    const guardar = async (e: React.FormEvent) => {
         e.preventDefault();
-        const miembrosFinal = form.miembros.map((m, idx) => ({ id: idx + 1, nombre: m.nombre, apellido: m.apellido, dni: m.dni }));
-        const titularDni = form.titularDni && miembrosFinal.some((m) => m.dni === form.titularDni)
-            ? form.titularDni
-            : (miembrosFinal[0]?.dni ?? '');
-        if (editingId !== null) {
-            setGrupos((prev) =>
-                prev.map((g) =>
-                    g.id === editingId ? { ...g, miembros: miembrosFinal, titularDni } : g
-                )
-            );
-        } else {
-            const nuevo: GrupoFamiliarAdmin = {
-                id: Math.max(0, ...grupos.map((g) => g.id)) + 1,
-                titularDni,
-                miembros: miembrosFinal,
-            };
-            setGrupos((prev) => [...prev, nuevo]);
+        const titularDni = form.titularDni?.trim() || form.miembros[0]?.dni || '';
+        const integrantes = form.miembros.map((m, idx) => ({
+            deportistaId: m.deportistaId,
+            vinculo: idx === 0 ? 'PADRE' : 'HIJO',
+            esPrincipal: idx === 0,
+        }));
+        try {
+            if (editingId !== null) {
+                await grupoFamiliarService.update(editingId, { nombre: `Grupo ${titularDni}`, titularDni, cuotaHermano: undefined, integrantes });
+            } else {
+                await grupoFamiliarService.create({ nombre: `Grupo ${titularDni}`, titularDni, integrantes });
+            }
+            setModal(null);
+            await fetchGrupos();
+        } catch (err) {
+            console.error(err);
+            alert('Error al guardar el grupo familiar');
         }
-        setModal(null);
     };
 
-    const borrar = (id: number) => {
-        if (window.confirm('¿Borrar este grupo familiar?')) {
-            setGrupos((prev) => prev.filter((g) => g.id !== id));
+    const borrar = async (id: number) => {
+        if (!window.confirm('¿Borrar este grupo familiar?')) return;
+        try {
+            await grupoFamiliarService.delete(id);
+            await fetchGrupos();
+        } catch (err) {
+            console.error(err);
+            alert('Error al borrar el grupo familiar');
         }
     };
 
@@ -129,16 +184,19 @@ export const AdminGruposFamiliares = () => {
         setInputCuotaHermano(String(g.cuotaHermano ?? ''));
     };
 
-    const guardarCuotaHermano = (e: React.FormEvent) => {
+    const guardarCuotaHermano = async (e: React.FormEvent) => {
         e.preventDefault();
         if (modalCuotaHermano === null) return;
         const valor = Number(inputCuotaHermano.replace(/\D/g, ''));
-        if (!Number.isNaN(valor) && valor >= 0) {
-            setGrupos((prev) =>
-                prev.map((g) =>
-                    g.id === modalCuotaHermano.grupoId ? { ...g, cuotaHermano: valor } : g
-                )
-            );
+        if (Number.isNaN(valor) || valor < 0) {
+            setModalCuotaHermano(null);
+            return;
+        }
+        try {
+            await grupoFamiliarService.update(modalCuotaHermano.grupoId, { cuotaHermano: valor });
+            await fetchGrupos();
+        } catch (err) {
+            console.error(err);
         }
         setModalCuotaHermano(null);
     };
@@ -175,7 +233,7 @@ export const AdminGruposFamiliares = () => {
                                 </td>
                                 <td>
                                     {g.miembros.map((m) => {
-                                        const d = MOCK_DEPORTISTAS.find((x) => x.dni === m.dni);
+                                        const d = deportistas.find((x) => x.dni === m.dni);
                                         return (
                                             <div key={m.dni} className={styles.miembroLine}>
                                                 {m.nombre} {m.apellido} (DNI {m.dni})
@@ -227,7 +285,7 @@ export const AdminGruposFamiliares = () => {
                                 <span className={styles.filterLabel}>Género</span>
                                 <select value={filtroGenero} onChange={(e) => { setFiltroGenero(e.target.value); setFiltroCategoria(''); setFiltroSubcategoria(''); }} className={styles.select}>
                                     <option value="">Todos</option>
-                                    {generos.map((g) => <option key={g} value={g}>{g}</option>)}
+                                    {generosNombres.map((g) => <option key={g} value={g}>{g}</option>)}
                                 </select>
                             </label>
                             <label className={styles.filterItem}>
@@ -287,7 +345,7 @@ export const AdminGruposFamiliares = () => {
                                 ) : (
                                     <ul className={styles.lista}>
                                         {form.miembros.map((m) => {
-                                            const d = MOCK_DEPORTISTAS.find((x) => x.dni === m.dni);
+                                            const d = deportistas.find((x) => x.dni === m.dni);
                                             return (
                                                 <li key={m.dni} className={styles.listaItem}>
                                                     <span>{m.nombre} {m.apellido} (DNI {m.dni}){d ? ` — ${d.disciplina}, ${d.subcategoria}, ${d.genero}` : ''}</span>

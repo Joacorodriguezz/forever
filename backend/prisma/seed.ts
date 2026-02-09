@@ -14,28 +14,20 @@ async function main() {
     await prisma.deportista.deleteMany();
     await prisma.administrativo.deleteMany();
     await prisma.cuentaUsuario.deleteMany();
-    await prisma.domicilio.deleteMany();
-    await prisma.localidad.deleteMany();
+    await prisma.subcategoria.deleteMany();
     await prisma.disciplina.deleteMany();
+    await prisma.categoria.deleteMany();
+    await prisma.genero.deleteMany();
 
     console.log('✅ Datos antiguos eliminados');
 
-    // 1. Crear Localidades
-    const localidad1 = await prisma.localidad.create({
-        data: {
-            codigoPostal: '5000',
-            nombre: 'Córdoba Capital',
-        },
-    });
-
-    const localidad2 = await prisma.localidad.create({
-        data: {
-            codigoPostal: '5001',
-            nombre: 'Villa Carlos Paz',
-        },
-    });
-
-    console.log('✅ Localidades creadas');
+    // 1. Crear Géneros y Categorías
+    const masculino = await prisma.genero.create({ data: { nombre: 'Masculino' } });
+    const femenino = await prisma.genero.create({ data: { nombre: 'Femenino' } });
+    const mayores = await prisma.categoria.create({ data: { nombre: 'Mayores' } });
+    const juveniles = await prisma.categoria.create({ data: { nombre: 'Juveniles' } });
+    const infantiles = await prisma.categoria.create({ data: { nombre: 'Infantiles' } });
+    console.log('✅ Géneros y categorías creados');
 
     // 2. Crear Disciplinas
     const futbol = await prisma.disciplina.create({
@@ -108,17 +100,7 @@ async function main() {
 
     console.log('✅ Administrativos creados');
 
-    // 4. Crear Deportistas
-    const domicilio1 = await prisma.domicilio.create({
-        data: {
-            calle: 'Av. Colón',
-            numero: '1234',
-            piso: '5',
-            departamento: 'A',
-            localidadId: localidad1.id,
-        },
-    });
-
+    // 4. Crear Deportistas (sin domicilio/localidad)
     const deportista1Cuenta = await prisma.cuentaUsuario.create({
         data: {
             email: 'juan.perez@mail.com',
@@ -134,22 +116,14 @@ async function main() {
             apellido: 'Pérez',
             dni: '40123456',
             fechaNac: new Date('2005-03-15'),
-            categoria: 'Juvenil',
+            generoId: masculino.id,
+            categoriaId: juveniles.id,
             obraSocial: 'OSDE',
             estado: EstadoDeportista.AL_DIA,
             disciplinaId: futbol.id,
             cuentaId: deportista1Cuenta.id,
-            domicilioId: domicilio1.id,
             telefonos: '351-1234567, 351-7654321',
             enfermedades: 'Asma leve',
-        },
-    });
-
-    const domicilio2 = await prisma.domicilio.create({
-        data: {
-            calle: 'San Martín',
-            numero: '567',
-            localidadId: localidad1.id,
         },
     });
 
@@ -168,24 +142,14 @@ async function main() {
             apellido: 'López',
             dni: '41234567',
             fechaNac: new Date('2008-07-20'),
-            categoria: 'Infantil',
+            generoId: femenino.id,
+            categoriaId: infantiles.id,
             obraSocial: 'Swiss Medical',
             estado: EstadoDeportista.AL_DIA,
             disciplinaId: natacion.id,
             cuentaId: deportista2Cuenta.id,
-            domicilioId: domicilio2.id,
             telefonos: '351-9876543',
             enfermedades: null,
-        },
-    });
-
-    const domicilio3 = await prisma.domicilio.create({
-        data: {
-            calle: 'Belgrano',
-            numero: '890',
-            piso: '2',
-            departamento: 'B',
-            localidadId: localidad2.id,
         },
     });
 
@@ -204,22 +168,14 @@ async function main() {
             apellido: 'González',
             dni: '39876543',
             fechaNac: new Date('2003-11-10'),
-            categoria: 'Mayor',
+            generoId: masculino.id,
+            categoriaId: mayores.id,
             obraSocial: null,
             estado: EstadoDeportista.EN_DEUDA,
             disciplinaId: tenis.id,
             cuentaId: deportista3Cuenta.id,
-            domicilioId: domicilio3.id,
             telefonos: '351-5555555, 351-4444444',
             enfermedades: 'Diabetes tipo 1, Alergia al sol',
-        },
-    });
-
-    const domicilio4 = await prisma.domicilio.create({
-        data: {
-            calle: 'Rivadavia',
-            numero: '2100',
-            localidadId: localidad1.id,
         },
     });
 
@@ -238,12 +194,12 @@ async function main() {
             apellido: 'Martínez',
             dni: '42345678',
             fechaNac: new Date('2010-05-25'),
-            categoria: 'Infantil',
+            generoId: femenino.id,
+            categoriaId: infantiles.id,
             obraSocial: 'Medife',
             estado: EstadoDeportista.INACTIVA,
             disciplinaId: futbol.id,
             cuentaId: deportista4Cuenta.id,
-            domicilioId: domicilio4.id,
             telefonos: '351-3333333',
             enfermedades: null,
         },

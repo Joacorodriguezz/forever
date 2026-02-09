@@ -13,6 +13,7 @@ export interface Deportista {
     nombre: string;
     apellido: string;
     dni: string;
+    fechaNac?: string;
     disciplina: string;
     genero: string;
     categoria: string;

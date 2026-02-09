@@ -17,9 +17,6 @@ export class UserService {
         deportista: {
           include: {
             disciplina: true,
-            domicilio: {
-              include: { localidad: true },
-            },
           },
         },
         administrativo: true,
@@ -61,6 +58,13 @@ export class UserService {
     }
 
     if (data.password) {
+      if (!data.currentPassword) {
+        throw new BadRequestError('La contraseña actual es requerida para cambiar la contraseña');
+      }
+      const passwordValid = await bcrypt.compare(data.currentPassword, cuenta.password);
+      if (!passwordValid) {
+        throw new BadRequestError('La contraseña actual es incorrecta');
+      }
       updateData.password = await bcrypt.hash(data.password, 10);
     }
 
@@ -137,6 +141,26 @@ export class UserService {
       limit,
       totalPages: Math.ceil(total / limit),
     };
+  }
+
+  async resetAdminPassword(adminId: number, newPassword: string) {
+    const admin = await prisma.administrativo.findUnique({
+      where: { id: adminId },
+      include: { cuenta: true },
+    });
+
+    if (!admin) {
+      throw new NotFoundError('Administrativo no encontrado');
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await prisma.cuentaUsuario.update({
+      where: { id: admin.cuentaId },
+      data: { password: hashedPassword },
+    });
+
+    return { message: 'Contraseña restablecida correctamente' };
   }
 }
 

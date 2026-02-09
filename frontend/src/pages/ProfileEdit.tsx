@@ -5,6 +5,8 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { ArrowLeft, Save, CheckCircle, XCircle, Pencil, Trash2, Lock } from 'lucide-react';
 import { Footer } from '../components/Footer';
+import { deportistaService } from '../services/deportista.service';
+import { authService } from '../services/auth.service';
 import styles from './ProfileEdit.module.css';
 
 // Opciones fijas
@@ -69,11 +71,7 @@ const profileSchema = yup.object({
         then: (schema) => schema.required('Seleccioná una subcategoría'),
         otherwise: (schema) => schema.optional(),
     }),
-    email: yup.string().when('categoriaGeneral', {
-        is: 'Mayores',
-        then: (schema) => schema.required('El email es requerido').email('Ingresá un email válido'),
-        otherwise: (schema) => schema.optional().email('Ingresá un email válido'),
-    }),
+    email: yup.string().optional().email('Ingresá un email válido'),
     adultoNombre: yup.string().when('categoriaGeneral', {
         is: (val: string) => val === 'Juveniles' || val === 'Infantiles',
         then: (schema) => schema.required('El nombre del adulto es requerido'),
@@ -128,25 +126,6 @@ const defaultValues: Partial<ProfileFormValues> = {
     adultoTelefono: '',
 };
 
-// Datos del perfil cargados por el administrador (luego vendrán del backend)
-// En Juveniles/Infantiles el adulto responsable también viene cargado por el admin y se puede editar
-const MOCK_PROFILE_LOADED: Partial<ProfileFormValues> = {
-    nombre: 'Juan',
-    apellido: 'Pérez',
-    dni: '12345678',
-    fechaNac: '2010-05-15',
-    disciplina: 'Futbol',
-    genero: 'Masculino',
-    categoriaGeneral: 'Juveniles',
-    subcategoria: 'Octava',
-    email: '',
-    adultoNombre: 'María',
-    adultoApellido: 'Pérez',
-    adultoDni: '23456789',
-    adultoEmail: 'maria.perez@email.com',
-    adultoTelefono: '221-456-7890',
-};
-
 type AdultoModo = 'ver' | 'agregar' | 'editar';
 
 export type AdultoResponsable = {
@@ -171,6 +150,7 @@ export const ProfileEdit = () => {
         confirmarContraseña: '',
     });
     const [contraseñaError, setContraseñaError] = useState<string | null>(null);
+    const [contraseñaLoading, setContraseñaLoading] = useState(false);
 
     const {
         register,
@@ -184,27 +164,53 @@ export const ProfileEdit = () => {
         resolver: yupResolver(profileSchema) as any,
     });
 
-    // Carga del perfil (luego GET /api/perfil)
+    // Carga del perfil desde el backend
     useEffect(() => {
-        // TODO: reemplazar por fetch del backend
         const loadProfile = async () => {
-            await new Promise((r) => setTimeout(r, 300));
-            reset({ ...defaultValues, ...MOCK_PROFILE_LOADED });
-            const tieneAdulto = Boolean(MOCK_PROFILE_LOADED.adultoNombre?.trim());
-            if (tieneAdulto && MOCK_PROFILE_LOADED.adultoNombre && MOCK_PROFILE_LOADED.adultoApellido && MOCK_PROFILE_LOADED.adultoDni && MOCK_PROFILE_LOADED.adultoEmail && MOCK_PROFILE_LOADED.adultoTelefono) {
-                setAdultosList([{
-                    nombre: MOCK_PROFILE_LOADED.adultoNombre,
-                    apellido: MOCK_PROFILE_LOADED.adultoApellido,
-                    dni: MOCK_PROFILE_LOADED.adultoDni,
-                    email: MOCK_PROFILE_LOADED.adultoEmail,
-                    telefono: MOCK_PROFILE_LOADED.adultoTelefono,
-                }]);
-                setAdultoModo('ver');
-            } else {
-                setAdultosList([]);
-                setAdultoModo('agregar');
+            try {
+                const response = await deportistaService.getMiPerfil();
+                if (response.success && response.data) {
+                    const data = response.data;
+                    reset({
+                        nombre: data.nombre,
+                        apellido: data.apellido,
+                        dni: data.dni,
+                        fechaNac: data.fechaNac?.split('T')[0] || '',
+                        disciplina: data.disciplina?.nombre || '',
+                        genero: data.genero?.nombre || '',
+                        categoriaGeneral: data.categoria?.nombre || '',
+                        subcategoria: data.subcategoria?.nombre || '',
+                        email: data.cuenta?.email || '',
+                        adultoNombre: data.adultoResponsable?.nombre || '',
+                        adultoApellido: data.adultoResponsable?.apellido || '',
+                        adultoDni: data.adultoResponsable?.dni || '',
+                        adultoEmail: data.adultoResponsable?.email || '',
+                        adultoTelefono: data.adultoResponsable?.telefono || '',
+                    });
+                    
+                    // Configurar adulto responsable solo si NO es Mayores y existe
+                    const categoria = data.categoria?.nombre || '';
+                    const esMayores = categoria === 'Mayores';
+                    
+                    if (!esMayores && data.adultoResponsable) {
+                        setAdultosList([{
+                            nombre: data.adultoResponsable.nombre,
+                            apellido: data.adultoResponsable.apellido,
+                            dni: data.adultoResponsable.dni,
+                            email: data.adultoResponsable.email,
+                            telefono: data.adultoResponsable.telefono,
+                        }]);
+                        setAdultoModo('ver');
+                    } else {
+                        setAdultosList([]);
+                        setAdultoModo('agregar');
+                    }
+                }
+                setProfileLoaded(true);
+            } catch (error) {
+                console.error('Error cargando perfil:', error);
+                setProfileLoaded(true);
             }
-            setProfileLoaded(true);
         };
         loadProfile();
     }, [reset]);
@@ -271,9 +277,13 @@ export const ProfileEdit = () => {
         setAdultoModo('editar');
     };
 
-    const handleCambiarContraseña = (e: React.FormEvent) => {
+    const handleCambiarContraseña = async (e: React.FormEvent) => {
         e.preventDefault();
         setContraseñaError(null);
+        if (!contraseñaForm.contraseñaActual.trim()) {
+            setContraseñaError('Ingresá tu contraseña actual.');
+            return;
+        }
         if (contraseñaForm.nuevaContraseña.length < 6) {
             setContraseñaError('La nueva contraseña debe tener al menos 6 caracteres.');
             return;
@@ -282,10 +292,26 @@ export const ProfileEdit = () => {
             setContraseñaError('La nueva contraseña y la confirmación no coinciden.');
             return;
         }
-        setShowModalContraseña(false);
-        setContraseñaForm({ contraseñaActual: '', nuevaContraseña: '', confirmarContraseña: '' });
-        setNotification({ type: 'success', message: 'Contraseña actualizada correctamente.' });
-        setTimeout(() => setNotification(null), 3000);
+        setContraseñaLoading(true);
+        try {
+            const res = await authService.updateProfile({
+                currentPassword: contraseñaForm.contraseñaActual,
+                password: contraseñaForm.nuevaContraseña,
+            });
+            if (res.success) {
+                setShowModalContraseña(false);
+                setContraseñaForm({ contraseñaActual: '', nuevaContraseña: '', confirmarContraseña: '' });
+                setNotification({ type: 'success', message: 'Contraseña actualizada correctamente.' });
+                setTimeout(() => setNotification(null), 3000);
+            } else {
+                setContraseñaError((res as { error?: string }).error || res.message || 'Error al actualizar la contraseña.');
+            }
+        } catch (err: any) {
+            const msg = err.response?.data?.error || err.message || 'Error al actualizar la contraseña.';
+            setContraseñaError(msg);
+        } finally {
+            setContraseñaLoading(false);
+        }
     };
 
     const handleEliminarAdulto = (index: number) => {
@@ -438,27 +464,7 @@ export const ProfileEdit = () => {
                             </div>
                         </div>
 
-                        {/* 3. Contacto Mayores (solo lectura) */}
-                        {isMayores && (
-                            <div className={`${styles.section} ${styles.sectionFull}`}>
-                                <h2 className={styles.sectionTitle}>Contacto</h2>
-                                <div className={styles.formGrid}>
-                                    <div className={styles.formGroup}>
-                                        <label htmlFor="email" className={styles.label}>Email</label>
-                                        <input
-                                            id="email"
-                                            type="email"
-                                            className={styles.input}
-                                            {...register('email')}
-                                            disabled
-                                            readOnly
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* 4. Datos del adulto responsable (Juveniles/Infantiles) */}
+                        {/* 3. Datos del adulto responsable (Juveniles/Infantiles) */}
                         {isMenor && (
                             <div className={`${styles.section} ${styles.sectionFull}`} id="adulto-responsable">
                                 <h2 className={styles.sectionTitle}>Datos del adulto responsable</h2>
@@ -656,15 +662,16 @@ export const ProfileEdit = () => {
                         <h3 className={styles.modalTitle}>Cambiar contraseña</h3>
                         <form onSubmit={handleCambiarContraseña}>
                             <div className={styles.formGroup}>
-                                <label htmlFor="contraseñaActual" className={styles.label}>Contraseña actual</label>
+                                <label htmlFor="contraseñaActual" className={styles.label}>Contraseña actual *</label>
                                 <input
                                     id="contraseñaActual"
                                     type="password"
                                     className={styles.input}
                                     value={contraseñaForm.contraseñaActual}
                                     onChange={(e) => setContraseñaForm((f) => ({ ...f, contraseñaActual: e.target.value }))}
-                                    placeholder="Opcional en esta versión"
+                                    placeholder="Ingresá tu contraseña actual para confirmar"
                                     autoComplete="current-password"
+                                    required
                                 />
                             </div>
                             <div className={styles.formGroup}>
@@ -698,13 +705,14 @@ export const ProfileEdit = () => {
                                 <p className={styles.contraseñaError}>{contraseñaError}</p>
                             )}
                             <div className={styles.modalActions}>
-                                <button type="submit" className={`${styles.button} ${styles.buttonPrimary}`}>
-                                    Guardar
+                                <button type="submit" className={`${styles.button} ${styles.buttonPrimary}`} disabled={contraseñaLoading}>
+                                    {contraseñaLoading ? 'Guardando...' : 'Guardar'}
                                 </button>
                                 <button
                                     type="button"
                                     className={styles.buttonCancelar}
                                     onClick={() => setShowModalContraseña(false)}
+                                    disabled={contraseñaLoading}
                                 >
                                     Cancelar
                                 </button>

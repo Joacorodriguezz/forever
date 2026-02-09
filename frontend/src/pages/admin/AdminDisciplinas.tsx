@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Plus, Pencil } from 'lucide-react';
 import type { Disciplina } from '../../types/admin';
 import { useOpcionesAdmin } from '../../context/OpcionesAdminContext';
+import { clasificacionService } from '../../services/clasificacion.service';
 import styles from './AdminDisciplinas.module.css';
 
 export const AdminDisciplinas = () => {
@@ -9,12 +10,15 @@ export const AdminDisciplinas = () => {
         disciplinas,
         setDisciplinas,
         generos,
+        generosNombres,
         setGeneros,
         categorias,
+        categoriasNombres,
         setCategorias,
         subcategoriasPorKey,
         setSubcategoriasPorKey,
         disciplinasNombres,
+        refetch,
     } = useOpcionesAdmin();
 
     const [showForm, setShowForm] = useState(false);
@@ -93,19 +97,28 @@ export const AdminDisciplinas = () => {
         setCategorias((prev) => prev.filter((x) => x !== c));
     };
 
-    const agregarSubcategoria = (e: React.FormEvent) => {
+    const agregarSubcategoria = async (e: React.FormEvent) => {
         e.preventDefault();
         const { disciplina, categoria, genero, nombre } = nuevaSubcat;
         const n = nombre.trim();
         if (!n || !disciplina || !categoria || !genero) return;
-        const key = `${disciplina}|${categoria}|${genero}`;
-        const keyDoble = `${disciplina}|${categoria}`;
-        setSubcategoriasPorKey((prev) => {
-            const list = prev[key] ?? prev[keyDoble] ?? [];
-            if (list.includes(n)) return prev;
-            return { ...prev, [key]: [...list, n] };
-        });
-        setNuevaSubcat({ disciplina: '', categoria: '', genero: '', nombre: '' });
+        
+        try {
+            await clasificacionService.createSubcategoria({
+                nombre: n,
+                disciplinaNombre: disciplina,
+                categoriaNombre: categoria,
+                generoNombre: genero,
+            });
+            
+            // Refrescar opciones desde el backend
+            await refetch();
+            
+            setNuevaSubcat({ disciplina: '', categoria: '', genero: '', nombre: '' });
+        } catch (error) {
+            console.error('Error al crear subcategoría:', error);
+            alert('Error al crear la subcategoría');
+        }
     };
 
     const quitarSubcategoria = (key: string, valor: string) => {
@@ -211,7 +224,7 @@ export const AdminDisciplinas = () => {
                 <h3 className={styles.sectionTitle}>Géneros</h3>
                 <p className={styles.sectionHint}>Lista de géneros para deportistas. Agregar otros si es necesario.</p>
                 <div className={styles.listInline}>
-                    {generos.map((g) => (
+                    {generosNombres.map((g) => (
                         <span key={g} className={styles.tag}>
                             {g}
                             <button type="button" onClick={() => quitarGenero(g)} aria-label={`Quitar ${g}`}>×</button>
@@ -237,7 +250,7 @@ export const AdminDisciplinas = () => {
                 <h3 className={styles.sectionTitle}>Categorías</h3>
                 <p className={styles.sectionHint}>Categorías generales (Mayores, Juveniles, Infantiles, etc.). Agregar otras si es necesario.</p>
                 <div className={styles.listInline}>
-                    {categorias.map((c) => (
+                    {categoriasNombres.map((c) => (
                         <span key={c} className={styles.tag}>
                             {c}
                             <button type="button" onClick={() => quitarCategoria(c)} aria-label={`Quitar ${c}`}>×</button>
@@ -313,7 +326,7 @@ export const AdminDisciplinas = () => {
                                     onChange={(e) => setNuevaSubcat((s) => ({ ...s, categoria: e.target.value }))}
                                 >
                                     <option value="">Seleccionar</option>
-                                    {categorias.map((c) => (
+                                    {categoriasNombres.map((c) => (
                                         <option key={c} value={c}>{c}</option>
                                     ))}
                                 </select>
@@ -326,7 +339,7 @@ export const AdminDisciplinas = () => {
                                     onChange={(e) => setNuevaSubcat((s) => ({ ...s, genero: e.target.value }))}
                                 >
                                     <option value="">Seleccionar</option>
-                                    {generos.map((g) => (
+                                    {generosNombres.map((g) => (
                                         <option key={g} value={g}>{g}</option>
                                     ))}
                                 </select>

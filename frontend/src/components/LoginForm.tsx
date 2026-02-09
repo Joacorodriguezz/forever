@@ -27,6 +27,7 @@ const loginSchema = yup.object({
 export const LoginForm = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [loginError, setLoginError] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
     const { login } = useAuth();
 
@@ -38,14 +39,36 @@ export const LoginForm = () => {
         resolver: yupResolver(loginSchema),
     });
 
-    const onSubmit = (data: LoginFormData) => {
+    const onSubmit = async (data: LoginFormData) => {
         setLoginError(null);
-        const ok = login(data.dni, data.password);
-        if (ok) {
-            const isAdmin = data.dni.trim() === 'admin';
-            navigate(isAdmin ? '/admin' : '/dashboard');
-        } else {
-            setLoginError('Credenciales incorrectas. Revisá el DNI y la contraseña.');
+        setIsLoading(true);
+        
+        console.log('=== INICIO DE LOGIN ===');
+        console.log('Datos del formulario:', data);
+        
+        try {
+            const result = await login(data.dni, data.password);
+            
+            console.log('Resultado del login:', result);
+            
+            if (result.success) {
+                console.log('✅ Login exitoso, redirigiendo...');
+                // Determinar ruta según el email ingresado
+                // Si contiene @, probablemente es admin, sino es deportista
+                const isAdminLogin = data.dni.includes('@') && data.dni.includes('admin');
+                const redirectPath = isAdminLogin ? '/admin' : '/dashboard';
+                console.log('Redirigiendo a:', redirectPath);
+                navigate(redirectPath);
+            } else {
+                const errorMsg = result.error || 'Credenciales incorrectas. Revisá el DNI y la contraseña.';
+                console.error('❌ Login falló:', errorMsg);
+                setLoginError(errorMsg);
+                setIsLoading(false);
+            }
+        } catch (error) {
+            console.error('❌ Error en submit:', error);
+            setLoginError('Error de conexión. Por favor, intenta nuevamente.');
+            setIsLoading(false);
         }
     };
 
@@ -120,8 +143,8 @@ export const LoginForm = () => {
                             </a>
                         </div>
                     </div> 
-                    <button type="submit" className={styles.submitButton}>
-                        Ingresar
+                    <button type="submit" className={styles.submitButton} disabled={isLoading}>
+                        {isLoading ? 'Iniciando sesión...' : 'Ingresar'}
                     </button>
                 </form>
 

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Users, Info, UserCheck } from 'lucide-react';
 import { Footer } from '../components/Footer';
 import { useAuth } from '../context/AuthContext';
-import { MOCK_GRUPOS_FAMILIARES } from '../data/admin';
+import { grupoFamiliarService } from '../services/grupoFamiliar.service';
 import styles from './GrupoFamiliar.module.css';
 
 interface MiembroGrupo {
@@ -25,22 +25,36 @@ export const GrupoFamiliar = () => {
     const [grupo, setGrupo] = useState<GrupoFamiliarData | null>(null);
 
     useEffect(() => {
-        // Simular carga: buscar el grupo donde el usuario actual es miembro
-        const dni = user?.role === 'deportista' ? user.loginId : null;
-        setTimeout(() => {
-            if (dni) {
-                const encontrado = MOCK_GRUPOS_FAMILIARES.find((g) =>
-                    g.miembros.some((m) => m.dni === dni)
-                );
-                if (encontrado) {
+        let cancelled = false;
+        (async () => {
+            if (user?.role !== 'deportista') {
+                setLoading(false);
+                return;
+            }
+            try {
+                const res = await grupoFamiliarService.getMios();
+                if (cancelled) return;
+                if (res.success && Array.isArray(res.data) && res.data.length > 0) {
+                    const g = res.data[0] as any;
+                    const integrantes = g.integrantes || [];
+                    const miembros: MiembroGrupo[] = integrantes.map((i: any) => ({
+                        id: i.deportista?.id ?? i.deportistaId,
+                        nombre: i.deportista?.nombre ?? '',
+                        apellido: i.deportista?.apellido ?? '',
+                        dni: i.deportista?.dni ?? '',
+                    }));
                     setGrupo({
-                        miembros: encontrado.miembros,
-                        titularDni: encontrado.titularDni,
+                        miembros,
+                        titularDni: g.titularDni ?? miembros[0]?.dni ?? '',
                     });
                 }
+            } catch {
+                if (!cancelled) setGrupo(null);
+            } finally {
+                if (!cancelled) setLoading(false);
             }
-            setLoading(false);
-        }, 400);
+        })();
+        return () => { cancelled = true; };
     }, [user?.loginId, user?.role]);
 
     if (loading) {

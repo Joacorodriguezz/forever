@@ -26,6 +26,7 @@ export interface RegisterDTO {
 export interface UpdateProfileDTO {
   email?: string;
   telefono?: string;
+  currentPassword?: string;
   password?: string;
 }
 
@@ -37,12 +38,12 @@ export interface AssignRoleDTO {
 // DEPORTISTA DTOs
 // =============================================================================
 
-export interface CreateDomicilioDTO {
-  calle: string;
-  numero: string;
-  piso?: string;
-  departamento?: string;
-  localidadId: number;
+export interface CreateAdultoResponsableDTO {
+  nombre: string;
+  apellido: string;
+  dni: string;
+  email: string;
+  telefono: string;
 }
 
 export interface CreateDeportistaDTO {
@@ -50,26 +51,30 @@ export interface CreateDeportistaDTO {
   apellido: string;
   dni: string;
   fechaNac: string;
-  categoria?: string;
+  generoId: number;
+  categoriaId: number;
+  subcategoriaId?: number;
   obraSocial?: string;
   disciplinaId: number;
   email: string;
   password: string;
-  domicilio: CreateDomicilioDTO;
   telefonos?: string;
   enfermedades?: string;
+  adultoResponsable?: CreateAdultoResponsableDTO;
 }
 
 export interface UpdateDeportistaDTO {
   nombre?: string;
   apellido?: string;
   fechaNac?: string;
-  categoria?: string;
+  generoId?: number;
+  categoriaId?: number;
+  subcategoriaId?: number | null;
   obraSocial?: string;
   disciplinaId?: number;
-  domicilio?: Partial<CreateDomicilioDTO>;
   telefonos?: string;
   enfermedades?: string;
+  adultoResponsable?: Partial<CreateAdultoResponsableDTO>;
 }
 
 // =============================================================================
@@ -84,11 +89,15 @@ export interface GrupoFamiliarIntegranteDTO {
 
 export interface CreateGrupoFamiliarDTO {
   nombre: string;
+  titularDni: string;
+  cuotaHermano?: number;
   integrantes: GrupoFamiliarIntegranteDTO[];
 }
 
 export interface UpdateGrupoFamiliarDTO {
   nombre?: string;
+  titularDni?: string;
+  cuotaHermano?: number;
   integrantes?: GrupoFamiliarIntegranteDTO[];
 }
 
@@ -153,12 +162,30 @@ export interface UpdateDisciplinaDTO {
 }
 
 // =============================================================================
-// LOCALIDAD DTOs
+// NOTICIA DTOs
 // =============================================================================
 
-export interface CreateLocalidadDTO {
-  codigoPostal: string;
-  nombre: string;
+export interface CreateNoticiaDTO {
+  titulo: string;
+  fecha: string;
+  resumen: string;
+  contenido: string;
+  autorId?: number;
+  imagenes: string[];
 }
 
+export interface UpdateNoticiaDTO {
+  titulo?: string;
+  fecha?: string;
+  resumen?: string;
+  contenido?: string;
+  imagenes?: string[];
+}
 
+// =============================================================================
+// PASSWORD RESET DTOs
+// =============================================================================
+
+export interface ResetPasswordDTO {
+  newPassword: string;
+}

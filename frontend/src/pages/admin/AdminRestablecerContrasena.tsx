@@ -1,24 +1,24 @@
 import { useState } from 'react';
 import { KeyRound, User, Shield } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { deportistaService } from '../../services/deportista.service';
 import styles from './AdminRestablecerContrasena.module.css';
 
 type TipoCuenta = 'deportista' | 'admin';
 
 export const AdminRestablecerContrasena = () => {
-    const { resetDeportistaPassword, resetAdminPassword } = useAuth();
     const [tipoCuenta, setTipoCuenta] = useState<TipoCuenta>('deportista');
     const [identificador, setIdentificador] = useState('');
     const [nuevaContrasena, setNuevaContrasena] = useState('');
     const [confirmarContrasena, setConfirmarContrasena] = useState('');
+    const [loading, setLoading] = useState(false);
     const [mensaje, setMensaje] = useState<{ tipo: 'ok' | 'error'; texto: string } | null>(null);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setMensaje(null);
-        const id = identificador.trim();
-        if (!id) {
-            setMensaje({ tipo: 'error', texto: 'Ingrese DNI o documento.' });
+        const dni = identificador.trim();
+        if (!dni) {
+            setMensaje({ tipo: 'error', texto: 'Ingrese el DNI del usuario.' });
             return;
         }
         if (!nuevaContrasena || nuevaContrasena.length < 6) {
@@ -30,38 +30,40 @@ export const AdminRestablecerContrasena = () => {
             return;
         }
 
-        if (tipoCuenta === 'deportista') {
-            const ok = resetDeportistaPassword(id, nuevaContrasena);
-            if (ok) {
-                setMensaje({
-                    tipo: 'ok',
-                    texto: 'Contraseña del deportista actualizada. Comuníquela al usuario (por teléfono o en persona).',
-                });
-                setIdentificador('');
-                setNuevaContrasena('');
-                setConfirmarContrasena('');
+        setLoading(true);
+
+        try {
+            if (tipoCuenta === 'deportista') {
+                const response = await deportistaService.resetPasswordByDni(dni, nuevaContrasena);
+                if (response.success) {
+                    setMensaje({
+                        tipo: 'ok',
+                        texto: 'Contraseña del deportista actualizada. Comuníquela al usuario (por teléfono o en persona).',
+                    });
+                    setIdentificador('');
+                    setNuevaContrasena('');
+                    setConfirmarContrasena('');
+                } else {
+                    setMensaje({
+                        tipo: 'error',
+                        texto: 'Error al restablecer contraseña. Verifique el DNI.',
+                    });
+                }
             } else {
+                // TODO: Implementar reset password para admin cuando el endpoint esté disponible
                 setMensaje({
                     tipo: 'error',
-                    texto: 'No existe una cuenta de deportista con ese DNI. Verifique el DNI o cree la cuenta desde Gestión deportistas.',
+                    texto: 'Funcionalidad de reset para admin en desarrollo. Por favor, usa la gestión de administradores.',
                 });
             }
-        } else {
-            const ok = resetAdminPassword(id, nuevaContrasena);
-            if (ok) {
-                setMensaje({
-                    tipo: 'ok',
-                    texto: 'Contraseña del administrador actualizada. Comuníquela al usuario (por teléfono o en persona).',
-                });
-                setIdentificador('');
-                setNuevaContrasena('');
-                setConfirmarContrasena('');
-            } else {
-                setMensaje({
-                    tipo: 'error',
-                    texto: 'No existe una cuenta de admin con ese documento. Verifique el documento en Gestión admin.',
-                });
-            }
+        } catch (error: any) {
+            console.error('Error al restablecer contraseña:', error);
+            setMensaje({
+                tipo: 'error',
+                texto: error.response?.data?.message || 'Error al restablecer contraseña.',
+            });
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -70,7 +72,7 @@ export const AdminRestablecerContrasena = () => {
             <h2 className={styles.title}>Restablecer contraseña</h2>
             <p className={styles.subtitle}>
                 El usuario se identifica en el club o por teléfono con DNI (deportista) o documento (admin).
-                Usted define la nueva contraseña y se la comunica al usuario.
+                Usted ingresa el DNI del usuario y define la nueva contraseña.
             </p>
 
             <form onSubmit={handleSubmit} className={styles.form}>
@@ -90,7 +92,7 @@ export const AdminRestablecerContrasena = () => {
                                 }}
                             />
                             <User size={18} />
-                            Deportista (DNI)
+                            Deportista
                         </label>
                         <label className={styles.radioLabel}>
                             <input
@@ -105,16 +107,16 @@ export const AdminRestablecerContrasena = () => {
                                 }}
                             />
                             <Shield size={18} />
-                            Administrador (documento)
+                            Administrador
                         </label>
                     </div>
                 </div>
 
                 <div className={styles.field}>
-                    <label>{tipoCuenta === 'deportista' ? 'DNI del deportista' : 'Documento del administrador'} *</label>
+                    <label>DNI del {tipoCuenta === 'deportista' ? 'deportista' : 'administrador'} *</label>
                     <input
                         type="text"
-                        placeholder={tipoCuenta === 'deportista' ? 'Ej: 12345678' : 'Ej: admin, caja'}
+                        placeholder={tipoCuenta === 'deportista' ? 'DNI del deportista' : 'DNI del administrador'}
                         value={identificador}
                         onChange={(e) => setIdentificador(e.target.value)}
                         required

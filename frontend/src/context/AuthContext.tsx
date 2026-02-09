@@ -1,194 +1,180 @@
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
+import { authService } from '../services/auth.service';
+import { deportistaService } from '../services/deportista.service';
 
-export type UserRole = 'deportista' | 'admin';
+export type UserRole = 'deportista' | 'admin' | 'administrativo';
 
 export interface AuthUser {
-    /** DNI para deportista, 'admin' para administrador */
-    loginId: string;
-    role: UserRole;
-    deportistaId?: number;
+  id: number;
+  email: string;
+  rol: string;
+  activo: boolean;
+  /** DNI para deportista, email para admin */
+  loginId: string;
+  role: UserRole;
+  deportistaId?: number;
 }
 
 const AUTH_KEY = 'forever_auth';
-const DEPORTISTA_ACCOUNTS_KEY = 'forever_deportista_accounts';
-const ADMIN_ACCOUNTS_KEY = 'forever_admin_accounts';
-
-export interface DeportistaAccount {
-    dni: string;
-    password: string;
-    deportistaId: number;
-}
-
-/** Credenciales por defecto del primer admin (documento + contraseña) */
-export const ADMIN_CREDENTIALS = {
-    dni: 'admin',
-    password: 'admin123',
-};
-
-export interface AdminAccount {
-    documento: string;
-    password: string;
-}
-
-function getAdminAccounts(): AdminAccount[] {
-    try {
-        const raw = localStorage.getItem(ADMIN_ACCOUNTS_KEY);
-        if (!raw) return [];
-        return JSON.parse(raw) as AdminAccount[];
-    } catch {
-        return [];
-    }
-}
-
-function getOrSeedAdminAccounts(): AdminAccount[] {
-    let accounts = getAdminAccounts();
-    if (accounts.length === 0) {
-        const seed: AdminAccount[] = [
-            { documento: ADMIN_CREDENTIALS.dni, password: ADMIN_CREDENTIALS.password },
-        ];
-        localStorage.setItem(ADMIN_ACCOUNTS_KEY, JSON.stringify(seed));
-        return seed;
-    }
-    return accounts;
-}
+const TOKEN_KEY = 'token';
 
 function getStoredAuth(): AuthUser | null {
-    try {
-        const raw = localStorage.getItem(AUTH_KEY);
-        if (!raw) return null;
-        return JSON.parse(raw) as AuthUser;
-    } catch {
-        return null;
-    }
-}
-
-function getDeportistaAccounts(): DeportistaAccount[] {
-    try {
-        const raw = localStorage.getItem(DEPORTISTA_ACCOUNTS_KEY);
-        if (!raw) return [];
-        return JSON.parse(raw) as DeportistaAccount[];
-    } catch {
-        return [];
-    }
-}
-
-/** Cuentas iniciales para deportistas mock (simulación): DNI + contraseña por defecto */
-const SEED_ACCOUNTS: DeportistaAccount[] = [
-    { dni: '12345678', password: 'deportista123', deportistaId: 1 },
-    { dni: '23456789', password: 'deportista123', deportistaId: 2 },
-    { dni: '34567890', password: 'deportista123', deportistaId: 3 },
-];
-
-function getOrSeedDeportistaAccounts(): DeportistaAccount[] {
-    let accounts = getDeportistaAccounts();
-    if (accounts.length === 0) {
-        localStorage.setItem(DEPORTISTA_ACCOUNTS_KEY, JSON.stringify(SEED_ACCOUNTS));
-        accounts = SEED_ACCOUNTS;
-    }
-    return accounts;
+  try {
+    const raw = localStorage.getItem(AUTH_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as AuthUser;
+  } catch {
+    return null;
+  }
 }
 
 interface AuthContextValue {
-    user: AuthUser | null;
-    login: (dni: string, password: string) => boolean;
-    logout: () => void;
-    isAdmin: boolean;
-    registerDeportistaAccount: (dni: string, password: string, deportistaId: number) => void;
-    /** Restablecer contraseña de un deportista (por DNI). Solo admin. */
-    resetDeportistaPassword: (dni: string, newPassword: string) => boolean;
-    /** Restablecer contraseña de un admin (por documento). Solo admin. */
-    resetAdminPassword: (documento: string, newPassword: string) => boolean;
-    /** Guardar/actualizar contraseña de un admin (al crear o editar en Gestión admin). */
-    setAdminPassword: (documento: string, password: string) => void;
+  user: AuthUser | null;
+  login: (dni: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  logout: () => void;
+  isAdmin: boolean;
+  loading: boolean;
+  resetDeportistaPassword: (deportistaId: number, newPassword: string) => Promise<boolean>;
+  resetAdminPassword: (adminId: number, newPassword: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-    const [user, setUser] = useState<AuthUser | null>(getStoredAuth);
+  const [user, setUser] = useState<AuthUser | null>(getStoredAuth);
+  const [loading, setLoading] = useState(false);
 
-    const login = useCallback((dni: string, password: string): boolean => {
-        const normalizedDni = dni.trim();
-        const adminAccounts = getOrSeedAdminAccounts();
-        const adminAccount = adminAccounts.find((a) => a.documento === normalizedDni);
-        if (adminAccount && adminAccount.password === password) {
-            const authUser: AuthUser = { loginId: normalizedDni, role: 'admin' };
-            setUser(authUser);
-            localStorage.setItem(AUTH_KEY, JSON.stringify(authUser));
-            return true;
+  // Verificar si hay token al cargar
+  useEffect(() => {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (token && !user) {
+      // Intentar obtener el perfil del usuario
+      authService.getProfile().then(response => {
+        if (response.success) {
+          const userData = response.data;
+          const authUser: AuthUser = {
+            id: userData.id,
+            email: userData.email,
+            rol: userData.rol,
+            activo: userData.activo,
+            loginId: userData.email,
+            role: mapRoleToUserRole(userData.rol),
+            deportistaId: userData.deportista?.id,
+          };
+          setUser(authUser);
+          localStorage.setItem(AUTH_KEY, JSON.stringify(authUser));
         }
-        const accounts = getOrSeedDeportistaAccounts();
-        const account = accounts.find((a) => a.dni === normalizedDni);
-        if (account && account.password === password) {
-            const authUser: AuthUser = { loginId: normalizedDni, role: 'deportista', deportistaId: account.deportistaId };
-            setUser(authUser);
-            localStorage.setItem(AUTH_KEY, JSON.stringify(authUser));
-            return true;
-        }
-        return false;
-    }, []);
-
-    const logout = useCallback(() => {
-        setUser(null);
+      }).catch(() => {
+        // Token inválido, limpiar
+        localStorage.removeItem(TOKEN_KEY);
         localStorage.removeItem(AUTH_KEY);
-    }, []);
+      });
+    }
+  }, [user]);
 
-    const registerDeportistaAccount = useCallback((dni: string, password: string, deportistaId: number) => {
-        const accounts = getOrSeedDeportistaAccounts();
-        const normalizedDni = dni.trim();
-        const updated = accounts.filter((a) => a.dni !== normalizedDni);
-        updated.push({ dni: normalizedDni, password, deportistaId });
-        localStorage.setItem(DEPORTISTA_ACCOUNTS_KEY, JSON.stringify(updated));
-    }, []);
+  const mapRoleToUserRole = (rol: string): UserRole => {
+    if (rol === 'Admin' || rol === 'ADMIN') return 'admin';
+    if (rol === 'Administrativo' || rol === 'ADMINISTRATIVO') return 'admin';
+    return 'deportista';
+  };
 
-    const resetDeportistaPassword = useCallback((dni: string, newPassword: string): boolean => {
-        const accounts = getOrSeedDeportistaAccounts();
-        const normalizedDni = dni.trim();
-        const account = accounts.find((a) => a.dni === normalizedDni);
-        if (!account) return false;
-        const updated = accounts.map((a) =>
-            a.dni === normalizedDni ? { ...a, password: newPassword } : a
-        );
-        localStorage.setItem(DEPORTISTA_ACCOUNTS_KEY, JSON.stringify(updated));
-        return true;
-    }, []);
+  const login = useCallback(async (dni: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    setLoading(true);
+    try {
+      console.log('Intentando login con:', { email: dni, passwordLength: password.length });
+      const response = await authService.login({ email: dni, password });
+      
+      console.log('Respuesta del backend:', response);
+      
+      if (response.success && response.data) {
+        const { user: userData, token } = response.data;
+        
+        // Guardar token
+        localStorage.setItem(TOKEN_KEY, token);
+        
+        // Crear objeto de usuario
+        const authUser: AuthUser = {
+          id: userData.id,
+          email: userData.email,
+          rol: userData.rol,
+          activo: userData.activo,
+          loginId: dni,
+          role: mapRoleToUserRole(userData.rol),
+        };
 
-    const resetAdminPassword = useCallback((documento: string, newPassword: string): boolean => {
-        const accounts = getOrSeedAdminAccounts();
-        const doc = documento.trim();
-        const account = accounts.find((a) => a.documento === doc);
-        if (!account) return false;
-        const updated = accounts.map((a) =>
-            a.documento === doc ? { ...a, password: newPassword } : a
-        );
-        localStorage.setItem(ADMIN_ACCOUNTS_KEY, JSON.stringify(updated));
-        return true;
-    }, []);
+        // Si es deportista, obtener su ID
+        if (authUser.role === 'deportista') {
+          try {
+            const deportistaResponse = await deportistaService.getMiPerfil();
+            if (deportistaResponse.success) {
+              authUser.deportistaId = deportistaResponse.data.id;
+            }
+          } catch (err) {
+            console.error('Error obteniendo perfil de deportista:', err);
+          }
+        }
+        
+        setUser(authUser);
+        localStorage.setItem(AUTH_KEY, JSON.stringify(authUser));
+        setLoading(false);
+        return { success: true };
+      }
+      
+      setLoading(false);
+      return { success: false, error: 'Credenciales incorrectas' };
+    } catch (error: any) {
+      setLoading(false);
+      console.error('Error completo en login:', error);
+      console.error('Respuesta del servidor:', error.response?.data);
+      const errorMsg = error.response?.data?.message || error.response?.data?.error || 'Error al iniciar sesión';
+      return { success: false, error: errorMsg };
+    }
+  }, []);
 
-    const setAdminPassword = useCallback((documento: string, password: string) => {
-        const accounts = getOrSeedAdminAccounts();
-        const doc = documento.trim();
-        const updated = accounts.filter((a) => a.documento !== doc);
-        updated.push({ documento: doc, password });
-        localStorage.setItem(ADMIN_ACCOUNTS_KEY, JSON.stringify(updated));
-    }, []);
+  const logout = useCallback(() => {
+    setUser(null);
+    localStorage.removeItem(AUTH_KEY);
+    localStorage.removeItem(TOKEN_KEY);
+  }, []);
 
-    const value: AuthContextValue = {
-        user,
-        login,
-        logout,
-        isAdmin: user?.role === 'admin',
-        registerDeportistaAccount,
-        resetDeportistaPassword,
-        resetAdminPassword,
-        setAdminPassword,
-    };
+  const resetDeportistaPassword = useCallback(async (deportistaId: number, newPassword: string): Promise<boolean> => {
+    try {
+      const response = await deportistaService.resetPassword(deportistaId, newPassword);
+      return response.success;
+    } catch (error) {
+      console.error('Error al restablecer contraseña de deportista:', error);
+      return false;
+    }
+  }, []);
 
-    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  const resetAdminPassword = useCallback(async (adminId: number, newPassword: string): Promise<boolean> => {
+    try {
+      // TODO: Implementar endpoint de reset password para admin
+      // const response = await adminService.resetPassword(adminId, newPassword);
+      // return response.success;
+      console.warn('Endpoint de reset password para admin no implementado aún');
+      return false;
+    } catch (error) {
+      console.error('Error al restablecer contraseña de admin:', error);
+      return false;
+    }
+  }, []);
+
+  const value: AuthContextValue = {
+    user,
+    login,
+    logout,
+    isAdmin: user?.role === 'admin',
+    loading,
+    resetDeportistaPassword,
+    resetAdminPassword,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
-    const ctx = useContext(AuthContext);
-    if (!ctx) throw new Error('useAuth must be used within AuthProvider');
-    return ctx;
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
+  return ctx;
 }

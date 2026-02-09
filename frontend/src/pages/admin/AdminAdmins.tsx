@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { UserPlus, Pencil } from 'lucide-react';
-import { MOCK_ADMINS } from '../../data/admin';
 import type { AdminUser } from '../../types/admin';
 import { useAuth } from '../../context/AuthContext';
+import { authService } from '../../services/auth.service';
 import styles from './AdminAdmins.module.css';
 
 export const AdminAdmins = () => {
@@ -13,11 +13,31 @@ export const AdminAdmins = () => {
     const [editingId, setEditingId] = useState<number | null>(null);
     const [form, setForm] = useState({ documento: '', contraseña: '', nombre: '' });
 
-    useEffect(() => {
-        setTimeout(() => {
-            setAdmins([...MOCK_ADMINS]);
+    const fetchAdmins = async () => {
+        setLoading(true);
+        try {
+            const res = await authService.getUsers(1, 100);
+            if (res.success && res.data?.data) {
+                const users = res.data.data as any[];
+                const list: AdminUser[] = users
+                    .filter((u) => u.administrativo != null)
+                    .map((u) => ({
+                        id: u.administrativo.id,
+                        documento: u.administrativo.dni ?? '',
+                        nombre: [u.administrativo.nombre, u.administrativo.apellido].filter(Boolean).join(' ') || u.email,
+                        activo: u.activo ?? true,
+                    }));
+                setAdmins(list);
+            }
+        } catch {
+            setAdmins([]);
+        } finally {
             setLoading(false);
-        }, 300);
+        }
+    };
+
+    useEffect(() => {
+        fetchAdmins();
     }, []);
 
     const openCrear = () => {
@@ -32,29 +52,12 @@ export const AdminAdmins = () => {
         setShowForm(true);
     };
 
-    const guardar = (e: React.FormEvent) => {
+    const guardar = async (e: React.FormEvent) => {
         e.preventDefault();
         const doc = form.documento.trim();
-        if (editingId !== null) {
-            setAdmins((prev) =>
-                prev.map((a) =>
-                    a.id === editingId
-                        ? { ...a, documento: doc, nombre: form.nombre.trim() }
-                        : a
-                )
-            );
-            if (form.contraseña) setAdminPassword(doc, form.contraseña);
-        } else {
-            const nuevo: AdminUser = {
-                id: Math.max(0, ...admins.map((a) => a.id)) + 1,
-                documento: doc,
-                nombre: form.nombre.trim() || doc,
-                activo: true,
-            };
-            setAdmins((prev) => [...prev, nuevo]);
-            if (form.contraseña) setAdminPassword(doc, form.contraseña);
-        }
+        if (form.contraseña) setAdminPassword(doc, form.contraseña);
         setShowForm(false);
+        await fetchAdmins();
     };
 
     const toggleActivo = (id: number) => {

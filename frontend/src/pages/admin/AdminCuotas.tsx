@@ -1,6 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { CheckCircle } from 'lucide-react';
-import { MOCK_CUOTAS_ADMIN } from '../../data/admin';
 import type { CuotaAdmin } from '../../types/admin';
 import { useOpcionesAdmin } from '../../context/OpcionesAdminContext';
 import styles from './AdminCuotas.module.css';
@@ -8,21 +7,13 @@ import styles from './AdminCuotas.module.css';
 const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
 export const AdminCuotas = () => {
-    const { disciplinasNombres, generos, getCategoriasOptions, getSubcategoriaOptions } = useOpcionesAdmin();
+    const { disciplinasNombres, generosNombres, getCategoriasOptions, getSubcategoriaOptions } = useOpcionesAdmin();
     const [cuotas, setCuotas] = useState<CuotaAdmin[]>([]);
-    const [loading, setLoading] = useState(true);
     const [filtroEfectivo, setFiltroEfectivo] = useState<boolean | 'todos'>('todos');
     const [filtroDisciplina, setFiltroDisciplina] = useState('');
     const [filtroGenero, setFiltroGenero] = useState('');
     const [filtroCategoria, setFiltroCategoria] = useState('');
     const [filtroSubcategoria, setFiltroSubcategoria] = useState('');
-
-    useEffect(() => {
-        setTimeout(() => {
-            setCuotas([...MOCK_CUOTAS_ADMIN]);
-            setLoading(false);
-        }, 300);
-    }, []);
 
     const marcarComoPagada = (id: number) => {
         setCuotas((prev) =>
@@ -54,8 +45,6 @@ export const AdminCuotas = () => {
 
     const pendientesEfectivo = listado.filter((c) => c.formaPago === 'efectivo' && c.estadoCuota === 'PENDIENTE');
 
-    if (loading) return <p className={styles.loading}>Cargando...</p>;
-
     return (
         <div className={styles.page}>
             <h2 className={styles.title}>Gestión cuotas</h2>
@@ -74,7 +63,7 @@ export const AdminCuotas = () => {
                         <span className={styles.filterLabel}>Género</span>
                         <select value={filtroGenero} onChange={(e) => { setFiltroGenero(e.target.value); setFiltroCategoria(''); setFiltroSubcategoria(''); }}>
                             <option value="">Todos</option>
-                            {generos.map((g) => <option key={g} value={g}>{g}</option>)}
+                            {generosNombres.map((g) => <option key={g} value={g}>{g}</option>)}
                         </select>
                     </label>
                     <label>
