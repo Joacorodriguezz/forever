@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Calendar, DollarSign, CheckCircle, XCircle } from 'lucide-react';
 import { Footer } from '../components/Footer';
+import { deportistaService } from '../services/deportista.service';
 import styles from './HistorialPagos.module.css';
 
 export type EstadoOperacion = 'APROBADA' | 'RECHAZADA';
@@ -10,23 +11,13 @@ const MESES_CUOTA: string[] = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Ju
 
 interface Operacion {
     id: number;
-    fecha: string;       // fecha en que se realizó el pago
-    mesCuota: number;    // 1-12 (mes de la cuota: Enero a Diciembre)
+    fecha: string;
+    mesCuota: number;
     anioCuota: number;
     monto: number;
     estado: EstadoOperacion;
     concepto?: string;
 }
-
-// Una cuota por mes (Enero–Diciembre): un solo registro por mes/año.
-const MOCK_OPERACIONES: Operacion[] = [
-    { id: 1, fecha: '2026-02-05', mesCuota: 2, anioCuota: 2026, monto: 10000, estado: 'APROBADA', concepto: 'Cuota Febrero 2026' },
-    { id: 2, fecha: '2026-01-12', mesCuota: 1, anioCuota: 2026, monto: 10000, estado: 'APROBADA', concepto: 'Cuota Enero 2026' },
-    { id: 3, fecha: '2025-12-08', mesCuota: 12, anioCuota: 2025, monto: 9500, estado: 'APROBADA', concepto: 'Cuota Diciembre 2025' },
-    { id: 4, fecha: '2025-11-15', mesCuota: 11, anioCuota: 2025, monto: 9500, estado: 'APROBADA', concepto: 'Cuota Noviembre 2025' },
-    { id: 5, fecha: '2025-10-03', mesCuota: 10, anioCuota: 2025, monto: 9500, estado: 'APROBADA', concepto: 'Cuota Octubre 2025' },
-    { id: 6, fecha: '2025-09-20', mesCuota: 9, anioCuota: 2025, monto: 9000, estado: 'APROBADA', concepto: 'Cuota Septiembre 2025' },
-];
 
 const ESTADOS_OPTIONS: { value: '' | EstadoOperacion; label: string }[] = [
     { value: '', label: 'Todos' },
@@ -42,10 +33,37 @@ export const HistorialPagos = () => {
     const [filtroEstado, setFiltroEstado] = useState<'' | EstadoOperacion>('');
 
     useEffect(() => {
-        setTimeout(() => {
-            setOperaciones(MOCK_OPERACIONES);
-            setLoading(false);
-        }, 400);
+        let cancelled = false;
+        (async () => {
+            try {
+                const res = await deportistaService.getMiHistorial();
+                if (cancelled) return;
+                if (res.success && res.data?.pagos) {
+                    const ops: Operacion[] = res.data.pagos.map((p) => {
+                        const fechaStr = typeof p.fecha === 'string' ? p.fecha : new Date(p.fecha).toISOString().slice(0, 10);
+                        const d = new Date(p.fecha);
+                        const mesCuota = p.cuota?.nroCuota ?? d.getMonth() + 1;
+                        const anioCuota = p.cuota?.anio ?? d.getFullYear();
+                        const estadoOperacion: EstadoOperacion = p.estado === 'APROBADO' ? 'APROBADA' : p.estado === 'RECHAZADO' ? 'RECHAZADA' : 'APROBADA';
+                        return {
+                            id: p.id,
+                            fecha: fechaStr,
+                            mesCuota,
+                            anioCuota,
+                            monto: Number(p.monto),
+                            estado: estadoOperacion,
+                            concepto: p.cuota ? `Cuota ${MESES_CUOTA[mesCuota - 1] || ''} ${anioCuota}` : undefined,
+                        };
+                    });
+                    setOperaciones(ops);
+                }
+            } catch {
+                if (!cancelled) setOperaciones([]);
+            } finally {
+                if (!cancelled) setLoading(false);
+            }
+        })();
+        return () => { cancelled = true; };
     }, []);
 
     const anioDeCuota = (op: Operacion) => op.anioCuota ?? new Date(op.fecha).getFullYear();

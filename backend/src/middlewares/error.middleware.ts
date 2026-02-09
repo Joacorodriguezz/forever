@@ -69,9 +69,11 @@ export const errorHandler = (
   }
 
   if (err instanceof Prisma.PrismaClientValidationError) {
+    console.error('PrismaClientValidationError:', err.message);
+    const detail = env.NODE_ENV === 'development' ? err.message : 'Error de validacion en los datos';
     res.status(400).json({
       success: false,
-      error: 'Error de validacion en los datos',
+      error: detail,
     });
     return;
   }

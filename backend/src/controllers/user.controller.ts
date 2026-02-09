@@ -48,6 +48,17 @@ export class UserController {
       next(error);
     }
   }
+
+  async resetAdminPassword(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const adminId = parseInt(req.params.id as string, 10);
+      const { newPassword } = req.body;
+      const result = await userService.resetAdminPassword(adminId, newPassword);
+      sendSuccess(res, result);
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export const userController = new UserController();

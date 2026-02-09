@@ -15,13 +15,46 @@ import { Rol } from '@prisma/client';
 
 export class AuthService {
   async login(data: LoginDTO): Promise<AuthResponse> {
-    const cuenta = await prisma.cuentaUsuario.findUnique({
+    // Intentar login por email O por DNI (deportista/admin)
+    let cuenta = await prisma.cuentaUsuario.findUnique({
       where: { email: data.email },
       include: {
         deportista: true,
         administrativo: true,
       },
     });
+
+    // Si no se encuentra por email, buscar por DNI de deportista
+    if (!cuenta) {
+      const deportista = await prisma.deportista.findUnique({
+        where: { dni: data.email }, // El frontend envía DNI en el campo 'email'
+        include: {
+          cuenta: {
+            include: {
+              deportista: true,
+              administrativo: true,
+            },
+          },
+        },
+      });
+      if (deportista) cuenta = deportista.cuenta;
+    }
+
+    // Si tampoco, buscar por DNI de administrativo
+    if (!cuenta) {
+      const admin = await prisma.administrativo.findUnique({
+        where: { dni: data.email }, // El frontend envía documento en el campo 'email'
+        include: {
+          cuenta: {
+            include: {
+              deportista: true,
+              administrativo: true,
+            },
+          },
+        },
+      });
+      if (admin) cuenta = admin.cuenta;
+    }
 
     if (!cuenta) {
       throw new UnauthorizedError(ErrorMessages.INVALID_CREDENTIALS);

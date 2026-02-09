@@ -9,12 +9,15 @@ export const assignRoleSchema = z.object({
 export const updateProfileSchema = z.object({
   email: z.string().email('Formato de email incorrecto').optional(),
   telefono: z.string().optional(),
+  currentPassword: z.string().optional(),
   password: z
     .string()
-    .min(8, 'La contrasena debe tener al menos 8 caracteres')
-    .regex(/[A-Z]/, 'La contrasena debe tener al menos una mayuscula')
+    .min(6, 'La contrasena debe tener al menos 6 caracteres')
     .optional(),
-});
+}).refine((data) => {
+  if (data.password && !data.currentPassword) return false;
+  return true;
+}, { message: 'La contrasena actual es requerida para cambiar la contrasena', path: ['currentPassword'] });
 
 export const idParamSchema = z.object({
   id: z.string().regex(/^\d+$/, 'ID invalido').transform(Number),

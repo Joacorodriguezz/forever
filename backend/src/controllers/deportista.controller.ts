@@ -96,6 +96,27 @@ export class DeportistaController {
       next(error);
     }
   }
+
+  async resetPassword(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const id = parseInt(req.params.id as string, 10);
+      const { newPassword } = req.body;
+      const result = await deportistaService.resetPassword(id, newPassword);
+      sendSuccess(res, result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async resetPasswordByDni(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { dni, newPassword } = req.body;
+      const result = await deportistaService.resetPasswordByDni(dni, newPassword);
+      sendSuccess(res, result);
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export const deportistaController = new DeportistaController();

@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Calendar, DollarSign, AlertCircle, CheckCircle, CreditCard, Info } from 'lucide-react';
 import { Footer } from '../components/Footer';
 import { useAuth } from '../context/AuthContext';
-import { MOCK_GRUPOS_FAMILIARES } from '../data/admin';
+import { cuotaService } from '../services/cuota.service';
+import { grupoFamiliarService } from '../services/grupoFamiliar.service';
 import styles from './DebtStatus.module.css';
 
 interface Quota {
@@ -29,48 +30,57 @@ export const DebtStatus = () => {
     const [esTitular, setEsTitular] = useState(true);
 
     useEffect(() => {
-        // Determinar si el usuario es titular del grupo familiar (solo el titular puede pagar)
-        const dni = user?.role === 'deportista' ? user.loginId : null;
-        if (dni) {
-            const grupo = MOCK_GRUPOS_FAMILIARES.find((g) =>
-                g.miembros.some((m) => m.dni === dni)
-            );
-            setEsTitular(!grupo || grupo.titularDni === dni);
-        }
+        let cancelled = false;
+        (async () => {
+            const dni = user?.role === 'deportista' ? user.loginId : null;
+            if (dni) {
+                try {
+                    const resGrupos = await grupoFamiliarService.getMios();
+                    if (!cancelled && resGrupos.success && Array.isArray(resGrupos.data)) {
+                        const grupos = resGrupos.data as any[];
+                        const grupo = grupos.find((g) =>
+                            g.integrantes?.some((m: any) => m.deportista?.dni === dni)
+                        );
+                        const titularDni = grupo?.titularDni ?? (grupo?.integrantes?.[0]?.deportista?.dni);
+                        setEsTitular(!grupo || titularDni === dni);
+                    }
+                } catch {
+                    setEsTitular(true);
+                }
+            }
+        })();
+        return () => { cancelled = true; };
     }, [user?.loginId, user?.role]);
 
     useEffect(() => {
-        // TODO: Fetch debt status from backend
-        // For now, using mock data
-        const mockData: DebtStatusData = {
-            cuotasPendientes: [
-                {
-                    id: 1,
-                    nroCuota: 1,
-                    anio: 2026,
-                    monto: 10000,
-                    fechaVencimiento: '2026-01-15',
-                    estadoCuota: 'VENCIDA',
-                    disciplina: 'Fútbol',
-                },
-                {
-                    id: 2,
-                    nroCuota: 2,
-                    anio: 2026,
-                    monto: 10000,
-                    fechaVencimiento: '2026-02-15',
-                    estadoCuota: 'PENDIENTE',
-                    disciplina: 'Fútbol',
-                },
-            ],
-            totalAdeudado: 20000,
-        };
-
-        // Simular carga
-        setTimeout(() => {
-            setDebtData(mockData);
-            setLoading(false);
-        }, 500);
+        let cancelled = false;
+        (async () => {
+            try {
+                const res = await cuotaService.getMiEstado();
+                if (cancelled) return;
+                if (res.success && res.data) {
+                    const d = res.data as any;
+                    const pendientes = (d.cuotasPendientes || []).map((c: any) => ({
+                        id: c.id,
+                        nroCuota: c.nroCuota,
+                        anio: new Date(c.fechaVencimiento).getFullYear(),
+                        monto: Number(c.monto),
+                        fechaVencimiento: typeof c.fechaVencimiento === 'string' ? c.fechaVencimiento : new Date(c.fechaVencimiento).toISOString().slice(0, 10),
+                        estadoCuota: c.estadoCuota === 'VENCIDA' ? 'VENCIDA' : 'PENDIENTE',
+                        disciplina: c.disciplina || 'Cuota',
+                    }));
+                    setDebtData({
+                        cuotasPendientes: pendientes,
+                        totalAdeudado: Number(d.totalAdeudado) || 0,
+                    });
+                }
+            } catch {
+                if (!cancelled) setDebtData({ cuotasPendientes: [], totalAdeudado: 0 });
+            } finally {
+                if (!cancelled) setLoading(false);
+            }
+        })();
+        return () => { cancelled = true; };
     }, []);
 
     const handlePayQuota = (quotaId: number) => {

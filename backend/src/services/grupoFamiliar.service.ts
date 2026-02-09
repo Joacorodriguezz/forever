@@ -36,6 +36,8 @@ export class GrupoFamiliarService {
     const grupo = await prisma.grupoFamiliar.create({
       data: {
         nombre: data.nombre,
+        titularDni: data.titularDni,
+        cuotaHermano: data.cuotaHermano,
         integrantes: {
           create: data.integrantes.map((i) => ({
             deportistaId: i.deportistaId,
@@ -141,12 +143,15 @@ export class GrupoFamiliarService {
     }
 
     await prisma.$transaction(async (tx) => {
-      if (data.nombre) {
-        await tx.grupoFamiliar.update({
-          where: { id },
-          data: { nombre: data.nombre },
-        });
-      }
+      // Actualizar grupo familiar
+      await tx.grupoFamiliar.update({
+        where: { id },
+        data: {
+          nombre: data.nombre,
+          titularDni: data.titularDni,
+          cuotaHermano: data.cuotaHermano,
+        },
+      });
 
       if (data.integrantes) {
         // Eliminar integrantes actuales

@@ -2,8 +2,8 @@ import { z } from 'zod';
 
 // CU01 - Login
 export const loginSchema = z.object({
-  email: z.string({ message: 'El email es requerido' }).email('Formato de email incorrecto'),
-  password: z.string({ message: 'La contrasena es requerida' }).min(8, 'La contrasena debe tener al menos 8 caracteres'),
+  email: z.string({ message: 'Email o DNI es requerido' }).min(1, 'Email o DNI es requerido'),
+  password: z.string({ message: 'La contrasena es requerida' }).min(6, 'La contrasena debe tener al menos 6 caracteres'),
 });
 
 // CU02 - Registrar Usuario

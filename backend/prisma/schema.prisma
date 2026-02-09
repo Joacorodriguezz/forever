@@ -50,47 +50,61 @@ enum Periodicidad {
 }
 
 // =============================================================================
-// MODELOS BASE
+// MODELOS BASE (Localidad y Domicilio eliminados)
 // =============================================================================
-
-model Localidad {
-  id           Int         @id @default(autoincrement()) @map("id_localidad")
-  codigoPostal String      @map("codigo_postal")
-  nombre       String
-  domicilios   Domicilio[]
-
-  @@map("localidades")
-}
-
-model Domicilio {
-  id           Int          @id @default(autoincrement()) @map("id_domicilio")
-  calle        String
-  numero       String
-  piso         String?
-  departamento String?
-  localidadId  Int          @map("id_localidad")
-  localidad    Localidad    @relation(fields: [localidadId], references: [id])
-  deportistas  Deportista[]
-
-  @@map("domicilios")
-}
-
-
 
 
 
 model Disciplina {
-  id            Int          @id @default(autoincrement()) @map("id_disciplina")
-  nombre        String       @unique
-  descripcion   String?
-  precioMensual Decimal      @map("precio_mensual") @db.Decimal(10, 2)
-  activa        Boolean      @default(true)
-  deportistas   Deportista[]
-  cuotas        Cuota[]
-  createdAt     DateTime     @default(now()) @map("created_at")
-  updatedAt     DateTime     @updatedAt @map("updated_at")
+  id             Int            @id @default(autoincrement()) @map("id_disciplina")
+  nombre         String         @unique
+  descripcion    String?
+  precioMensual  Decimal        @map("precio_mensual") @db.Decimal(10, 2)
+  activa         Boolean        @default(true)
+  deportistas    Deportista[]
+  cuotas         Cuota[]
+  subcategorias  Subcategoria[]
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
 
   @@map("disciplinas")
+}
+
+// =============================================================================
+// CLASIFICACIÓN DEPORTIVA
+// =============================================================================
+
+model Genero {
+  id            Int            @id @default(autoincrement()) @map("id_genero")
+  nombre        String         @unique
+  deportistas   Deportista[]
+  subcategorias Subcategoria[]
+
+  @@map("generos")
+}
+
+model Categoria {
+  id            Int            @id @default(autoincrement()) @map("id_categoria")
+  nombre        String         @unique
+  deportistas   Deportista[]
+  subcategorias Subcategoria[]
+
+  @@map("categorias")
+}
+
+model Subcategoria {
+  id           Int          @id @default(autoincrement()) @map("id_subcategoria")
+  nombre       String
+  disciplinaId Int          @map("id_disciplina")
+  disciplina   Disciplina   @relation(fields: [disciplinaId], references: [id])
+  categoriaId  Int          @map("id_categoria")
+  categoria    Categoria    @relation(fields: [categoriaId], references: [id])
+  generoId     Int?         @map("id_genero")
+  genero       Genero?      @relation(fields: [generoId], references: [id])
+  deportistas  Deportista[]
+
+  @@unique([disciplinaId, categoriaId, generoId, nombre])
+  @@map("subcategorias")
 }
 
 // =============================================================================
@@ -120,6 +134,7 @@ model Administrativo {
   dni       String        @unique
   cuentaId  Int           @unique @map("id_cuenta")
   cuenta    CuentaUsuario @relation(fields: [cuentaId], references: [id], onDelete: Cascade)
+  noticias  Noticia[]
   createdAt DateTime      @default(now()) @map("created_at")
   updatedAt DateTime      @updatedAt @map("updated_at")
 
@@ -131,29 +146,46 @@ model Administrativo {
 // =============================================================================
 
 model Deportista {
-  id            Int                       @id @default(autoincrement()) @map("id_deportista")
-  nombre        String
-  apellido      String
-  dni           String                    @unique
-  fechaNac      DateTime                  @map("fecha_nac")
-  categoria     String?
-  obraSocial    String?                   @map("obra_social")
-  estado        EstadoDeportista          @default(AL_DIA)
-  disciplinaId  Int                       @map("id_disciplina")
-  disciplina    Disciplina                @relation(fields: [disciplinaId], references: [id])
-  cuentaId      Int                       @unique @map("id_cuenta")
-  cuenta        CuentaUsuario             @relation(fields: [cuentaId], references: [id], onDelete: Cascade)
-  domicilioId   Int                       @map("id_domicilio")
-  domicilio     Domicilio                 @relation(fields: [domicilioId], references: [id])
-  enfermedades  String?
-  telefonos     String?
-  pagos         Pago[]
-  cuotas        Cuota[]
-  grupoFamiliar GrupoFamiliarIntegrante[]
-  createdAt     DateTime                  @default(now()) @map("created_at")
-  updatedAt     DateTime                  @updatedAt @map("updated_at")
+  id                 Int                       @id @default(autoincrement()) @map("id_deportista")
+  nombre             String
+  apellido           String
+  dni                String                    @unique
+  fechaNac           DateTime                  @map("fecha_nac")
+  generoId           Int                       @map("id_genero")
+  genero             Genero                    @relation(fields: [generoId], references: [id])
+  categoriaId        Int                       @map("id_categoria")
+  categoria          Categoria                 @relation(fields: [categoriaId], references: [id])
+  subcategoriaId     Int?                      @map("id_subcategoria")
+  subcategoria       Subcategoria?             @relation(fields: [subcategoriaId], references: [id])
+  obraSocial         String?                   @map("obra_social")
+  estado             EstadoDeportista          @default(AL_DIA)
+  disciplinaId       Int                       @map("id_disciplina")
+  disciplina         Disciplina                @relation(fields: [disciplinaId], references: [id])
+  cuentaId           Int                       @unique @map("id_cuenta")
+  cuenta             CuentaUsuario             @relation(fields: [cuentaId], references: [id], onDelete: Cascade)
+  enfermedades       String?
+  telefonos          String?
+  adultoResponsable  AdultoResponsable?
+  pagos              Pago[]
+  cuotas             Cuota[]
+  grupoFamiliar      GrupoFamiliarIntegrante[]
+  createdAt          DateTime                  @default(now()) @map("created_at")
+  updatedAt          DateTime                  @updatedAt @map("updated_at")
 
   @@map("deportistas")
+}
+
+model AdultoResponsable {
+  id           Int        @id @default(autoincrement()) @map("id_adulto")
+  deportistaId Int        @unique @map("id_deportista")
+  deportista   Deportista @relation(fields: [deportistaId], references: [id], onDelete: Cascade)
+  nombre       String
+  apellido     String
+  dni          String
+  email        String
+  telefono     String
+
+  @@map("adultos_responsables")
 }
 
 // =============================================================================
@@ -161,11 +193,13 @@ model Deportista {
 // =============================================================================
 
 model GrupoFamiliar {
-  id           Int                       @id @default(autoincrement()) @map("id_grupo_familiar")
-  nombre       String
-  integrantes  GrupoFamiliarIntegrante[]
-  createdAt    DateTime                  @default(now()) @map("created_at")
-  updatedAt    DateTime                  @updatedAt @map("updated_at")
+  id              Int                       @id @default(autoincrement()) @map("id_grupo_familiar")
+  nombre          String
+  titularDni      String?                   @map("titular_dni")
+  cuotaHermano    Decimal?                  @map("cuota_hermano") @db.Decimal(10, 2)
+  integrantes     GrupoFamiliarIntegrante[]
+  createdAt       DateTime                  @default(now()) @map("created_at")
+  updatedAt       DateTime                  @updatedAt @map("updated_at")
 
   @@map("grupos_familiares")
 }
@@ -224,4 +258,33 @@ model Pago {
   updatedAt          DateTime    @updatedAt @map("updated_at")
 
   @@map("pagos")
+}
+
+// =============================================================================
+// NOTICIAS
+// =============================================================================
+
+model Noticia {
+  id           Int              @id @default(autoincrement()) @map("id_noticia")
+  titulo       String
+  fecha        DateTime         @db.Date
+  resumen      String           @db.Text
+  contenido    String           @db.Text
+  autorId      Int?             @map("id_autor")
+  autor        Administrativo?  @relation(fields: [autorId], references: [id], onDelete: SetNull)
+  imagenes     NoticiaImagen[]
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
+
+  @@map("noticias")
+}
+
+model NoticiaImagen {
+  id         Int      @id @default(autoincrement()) @map("id_imagen")
+  noticiaId  Int      @map("id_noticia")
+  noticia    Noticia  @relation(fields: [noticiaId], references: [id], onDelete: Cascade)
+  url        String   @db.Text
+  orden      Int      @default(0)
+
+  @@map("noticia_imagenes")
 }

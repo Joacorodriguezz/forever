@@ -85,6 +85,23 @@ router.delete(
   deportistaController.delete.bind(deportistaController)
 );
 
+// PUT /api/deportistas/:id/reset-password - Restablecer contraseña (solo Administrativo)
+router.put(
+  '/:id/reset-password',
+  authenticateToken,
+  requireAdministrativo,
+  validateParams(idParamSchema),
+  deportistaController.resetPassword.bind(deportistaController)
+);
+
+// POST /api/deportistas/reset-password-dni - Restablecer contraseña por DNI (solo Administrativo)
+router.post(
+  '/reset-password-dni',
+  authenticateToken,
+  requireAdministrativo,
+  deportistaController.resetPasswordByDni.bind(deportistaController)
+);
+
 // GET /api/deportistas/:id/historial - CU06 Historial de pagos
 router.get(
   '/:id/historial',

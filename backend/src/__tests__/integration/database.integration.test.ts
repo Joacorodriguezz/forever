@@ -22,8 +22,9 @@ import { Rol, EstadoCuota } from '@prisma/client';
  */
 
 describe('Tests de Integración - Base de Datos Real', () => {
-  let localidadId: number;
   let disciplinaId: number;
+  let generoId: number;
+  let categoriaId: number;
   let deportistaToken: string;
   let deportistaId: number;
 
@@ -32,8 +33,9 @@ describe('Tests de Integración - Base de Datos Real', () => {
     await connectDatabase();
     await cleanDatabase();
     const seedData = await seedTestData();
-    localidadId = seedData.localidad.id;
     disciplinaId = seedData.disciplina.id;
+    generoId = seedData.genero.id;
+    categoriaId = seedData.categoria.id;
   });
 
   // Limpiar y desconectar después de todos los tests
@@ -200,11 +202,8 @@ describe('Tests de Integración - Base de Datos Real', () => {
           email: testData.deportista.email,
           password: testData.deportista.password,
           disciplinaId: disciplinaId,
-          domicilio: {
-            calle: 'Calle Test',
-            numero: '123',
-            localidadId: localidadId,
-          },
+          generoId,
+          categoriaId,
         });
 
       expect(response.status).toBe(201);
@@ -216,7 +215,7 @@ describe('Tests de Integración - Base de Datos Real', () => {
       // Verificar en la BD
       const deportistaEnBD = await prismaTest.deportista.findUnique({
         where: { id: deportistaId },
-        include: { cuenta: true, disciplina: true, domicilio: true },
+        include: { cuenta: true, disciplina: true },
       });
 
       expect(deportistaEnBD).not.toBeNull();
@@ -363,11 +362,8 @@ describe('Tests de Integración - Base de Datos Real', () => {
           email: 'maria.test@forever.com',
           password: 'Maria123!',
           disciplinaId: disciplinaId,
-          domicilio: {
-            calle: 'Calle Test',
-            numero: '123',
-            localidadId: localidadId,
-          },
+          generoId,
+          categoriaId,
         });
 
       const deportista2Id = depRes.body.data.id;
@@ -412,7 +408,6 @@ describe('Tests de Integración - Base de Datos Real', () => {
         include: {
           cuenta: true,
           disciplina: true,
-          domicilio: { include: { localidad: true } },
           cuotas: true,
           grupoFamiliar: { include: { grupo: true } },
         },
@@ -423,14 +418,12 @@ describe('Tests de Integración - Base de Datos Real', () => {
       // Verificar relaciones
       expect(deportistaCompleto?.cuenta.email).toBe(testData.deportista.email);
       expect(deportistaCompleto?.disciplina.nombre).toBe('Futbol Test');
-      expect(deportistaCompleto?.domicilio.localidad.nombre).toBe('La Plata Test');
       expect(deportistaCompleto?.cuotas.length).toBeGreaterThan(0);
       expect(deportistaCompleto?.grupoFamiliar.length).toBeGreaterThan(0);
 
       console.log('✅ Integridad de datos verificada');
       console.log('   - Email:', deportistaCompleto?.cuenta.email);
       console.log('   - Disciplina:', deportistaCompleto?.disciplina.nombre);
-      console.log('   - Localidad:', deportistaCompleto?.domicilio.localidad.nombre);
       console.log('   - Cuotas:', deportistaCompleto?.cuotas.length);
       console.log('   - Grupos Familiares:', deportistaCompleto?.grupoFamiliar.length);
     });

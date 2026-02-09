@@ -18,11 +18,6 @@ jest.mock('../config/prisma', () => {
       update: jest.fn(),
       delete: jest.fn(),
     },
-    domicilio: {
-      create: jest.fn(),
-      update: jest.fn(),
-    },
-
     pago: {
       findMany: jest.fn(),
     },
@@ -76,14 +71,11 @@ describe('Deportista Module', () => {
       apellido: 'Perez',
       dni: '12345678',
       fechaNac: '2000-01-15',
+      generoId: 1,
+      categoriaId: 1,
       disciplinaId: 1,
       email: 'juan@test.com',
       password: 'Password123',
-      domicilio: {
-        calle: 'Calle 123',
-        numero: '456',
-        localidadId: 1,
-      },
     };
 
     it('deberia retornar 401 sin token', async () => {
@@ -155,7 +147,6 @@ describe('Deportista Module', () => {
         ...deportistaData,
         fechaNac: new Date(deportistaData.fechaNac),
         cuentaId: 3,
-        domicilioId: 1,
         estado: EstadoDeportista.AL_DIA,
         telefonos: '12345678,87654321',
         enfermedades: 'Gripe,Alergia',
@@ -163,10 +154,8 @@ describe('Deportista Module', () => {
         updatedAt: new Date(),
         disciplina: { nombre: 'Futbol' },
         cuenta: { email: deportistaData.email, rol: Rol.DEPORTISTA, activo: true, createdAt: new Date() },
-        domicilio: { ...deportistaData.domicilio, localidad: { nombre: 'Ciudad' } },
       };
 
-      (mockPrisma.domicilio.create as jest.Mock).mockResolvedValue({ id: 1, ...deportistaData.domicilio });
       (mockPrisma.cuentaUsuario.create as jest.Mock).mockResolvedValue({ id: 3, email: deportistaData.email, rol: Rol.DEPORTISTA });
       (mockPrisma.deportista.create as jest.Mock).mockResolvedValue(createdDeportista);
       (mockPrisma.deportista.findUnique as jest.Mock)
@@ -202,7 +191,6 @@ describe('Deportista Module', () => {
 
       const existingDeportista = {
         id: 1,
-        domicilioId: 1,
         nombre: 'Juan',
         telefonos: '111111',
         enfermedades: 'Asma',
@@ -210,7 +198,7 @@ describe('Deportista Module', () => {
 
       (mockPrisma.deportista.findUnique as jest.Mock)
         .mockResolvedValueOnce(existingDeportista) // Check existence
-        .mockResolvedValueOnce({ ...existingDeportista, ...updateData, disciplina: {}, cuenta: {}, domicilio: {} }); // Return updated
+        .mockResolvedValueOnce({ ...existingDeportista, ...updateData, disciplina: {}, cuenta: {} }); // Return updated
 
       (mockPrisma.$transaction as jest.Mock).mockImplementation(async (cb) => cb(mockPrisma));
       (mockPrisma.deportista.update as jest.Mock).mockResolvedValue({ ...existingDeportista, ...updateData });
@@ -277,7 +265,6 @@ describe('Deportista Module', () => {
         dni: '12345678',
         disciplina: { nombre: 'Futbol' },
         cuenta: { email: 'juan@test.com' },
-        domicilio: { calle: 'Calle 123', localidad: { nombre: 'Ciudad' } },
         telefonos: null,
         enfermedades: null,
       });
@@ -352,7 +339,6 @@ describe('Deportista Module', () => {
         apellido: 'Perez',
         cuentaId: 2,
         disciplina: { nombre: 'Futbol' },
-        domicilio: { calle: 'Calle 123' },
       });
 
       const response = await request(app)
