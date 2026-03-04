@@ -1,0 +1,209 @@
+.loginFormContainer {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.formWrapper {
+    width: 100%;
+    max-width: 420px;
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+    padding: var(--spacing-xl);
+}
+
+.formTitle {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: var(--spacing-lg);
+    color: #1a1a1a;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.loginError {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: rgba(198, 40, 40, 0.08);
+    color: #c62828;
+    border: 1px solid rgba(198, 40, 40, 0.3);
+    border-radius: var(--border-radius);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.inputGroup {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #333;
+}
+
+.inputWrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.inputIcon {
+    position: absolute;
+    left: 1rem;
+    color: #666;
+    width: 20px;
+    height: 20px;
+}
+
+.input {
+    width: 100%;
+    padding: 0.875rem 4rem 0.875rem 3rem;
+    background-color: #f8f8f8;
+    border: 1px solid #e0e0e0;
+    border-radius: var(--border-radius);
+    color: #1a1a1a;
+    font-size: 1rem;
+    transition: var(--transition);
+}
+
+.input::placeholder {
+    color: #999;
+}
+
+.input:focus {
+    outline: none;
+    border-color: var(--color-blue);
+    background-color: #fff;
+}
+
+.input.error {
+    border-color: var(--color-error);
+}
+
+.togglePassword {
+    position: absolute;
+    right: 0.75rem;
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.875rem;
+    transition: var(--transition);
+}
+
+.togglePassword:hover {
+    color: var(--color-blue);
+}
+
+.toggleLabel {
+    color: inherit;
+}
+
+.forgotWrap {
+    margin-top: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    text-align: center;
+}
+
+.forgotText {
+    font-size: 0.875rem;
+    color: #666;
+}
+
+.forgotLink {
+    font-size: 0.875rem;
+    color: var(--color-blue);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.forgotLink:hover {
+    color: #002952;
+    text-decoration: underline;
+}
+
+.errorMessage {
+    font-size: 0.875rem;
+    color: var(--color-error);
+    margin-top: 0.25rem;
+}
+
+.submitButton {
+    width: 100%;
+    padding: 1rem;
+    background-color: var(--color-blue);
+    color: var(--color-white);
+    border: none;
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    margin-top: var(--spacing-xs);
+}
+
+.submitButton:hover {
+    background-color: #002952;
+    transform: translateY(-1px);
+}
+
+.submitButton:active {
+    transform: translateY(0);
+}
+
+.footer {
+    margin-top: var(--spacing-xl);
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid #eee;
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-lg);
+}
+
+.footerLink {
+    font-size: 0.875rem;
+    color: #666;
+    transition: var(--transition);
+}
+
+.footerLink:hover {
+    color: var(--color-blue);
+}
+
+.copyright {
+    text-align: center;
+    margin-top: var(--spacing-md);
+    font-size: 0.75rem;
+    color: #999;
+}
+
+@media (max-width: 768px) {
+    .loginFormContainer {
+        padding: var(--spacing-lg);
+    }
+
+    .formTitle {
+        font-size: 1.5rem;
+    }
+
+    .footer {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+        align-items: center;
+    }
+}

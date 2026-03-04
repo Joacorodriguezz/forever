@@ -1,0 +1,648 @@
+import { useState, useEffect, useMemo } from 'react';
+import { UserPlus, UserMinus, Pencil, Plus, Filter } from 'lucide-react';
+import type { Deportista, AdultoResponsable } from '../../types/admin';
+import { useOpcionesAdmin } from '../../context/OpcionesAdminContext';
+import { deportistaService } from '../../services/deportista.service';
+import { clasificacionService } from '../../services/clasificacion.service';
+import styles from './AdminDeportistas.module.css';
+
+const initialAdulto = (): AdultoResponsable => ({
+    nombre: '',
+    apellido: '',
+    dni: '',
+    email: '',
+    telefono: '',
+});
+
+export const AdminDeportistas = () => {
+    const { disciplinas, disciplinasNombres, generos, generosNombres, categorias, categoriasNombres, getCategoriasOptions, getSubcategoriaOptions } = useOpcionesAdmin();
+    const [deportistas, setDeportistas] = useState<Deportista[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [mode, setMode] = useState<'list' | 'create' | 'edit'>('list');
+    const [editingId, setEditingId] = useState<number | null>(null);
+    
+    const primeraDisciplina = disciplinasNombres[0] ?? 'Futbol';
+    const primerGenero = generos[0] ?? 'Masculino';
+    
+    const [form, setForm] = useState({
+        nombre: '',
+        apellido: '',
+        dni: '',
+        fechaNac: '',
+        disciplina: primeraDisciplina,
+        genero: primerGenero,
+        categoria: '',
+        subcategoria: '',
+        adultoResponsable: initialAdulto(),
+        password: '',
+        passwordConfirm: '',
+    });
+    
+    const [formError, setFormError] = useState<string | null>(null);
+    const [filtroDisciplina, setFiltroDisciplina] = useState<string>('');
+    const [filtroGenero, setFiltroGenero] = useState<string>('');
+    const [filtroCategoria, setFiltroCategoria] = useState<string>('');
+    const [filtroSubcategoria, setFiltroSubcategoria] = useState<string>('');
+
+    const fetchDeportistas = async () => {
+        setLoading(true);
+        try {
+            const response = await deportistaService.getAll();
+            if (response.success && response.data) {
+                // Mapear datos del backend al formato del frontend
+                const deportistasMap = response.data.data.map((d: any) => {
+                    const fechaNac = d.fechaNac
+                        ? (typeof d.fechaNac === 'string' ? d.fechaNac.split('T')[0] : new Date(d.fechaNac).toISOString().split('T')[0])
+                        : '';
+                    return {
+                    id: d.id,
+                    nombre: d.nombre,
+                    apellido: d.apellido,
+                    dni: d.dni,
+                    fechaNac,
+                    disciplina: d.disciplina?.nombre || '',
+                    genero: d.genero?.nombre || '',
+                    categoria: d.categoria?.nombre || '',
+                    subcategoria: d.subcategoria?.nombre || '',
+                    adultoResponsable: d.adultoResponsable ? {
+                        nombre: d.adultoResponsable.nombre,
+                        apellido: d.adultoResponsable.apellido,
+                        dni: d.adultoResponsable.dni,
+                        email: d.adultoResponsable.email,
+                        telefono: d.adultoResponsable.telefono,
+                    } : null,
+                    activo: d.cuenta?.activo ?? true,
+                };
+                });
+                setDeportistas(deportistasMap);
+            }
+        } catch (error) {
+            console.error('Error cargando deportistas:', error);
+            setFormError('Error al cargar deportistas');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchDeportistas();
+    }, []);
+
+    const categoriasFiltroOptions = getCategoriasOptions(filtroDisciplina || primeraDisciplina, filtroGenero || primerGenero);
+    const subcategoriasFiltroOptions = getSubcategoriaOptions(filtroDisciplina || '', filtroGenero || '', filtroCategoria);
+
+    const deportistasFiltrados = useMemo(() => {
+        return deportistas.filter((d) => {
+            const cumpleDisciplina = !filtroDisciplina || d.disciplina === filtroDisciplina;
+            const cumpleGenero = !filtroGenero || d.genero === filtroGenero;
+            const cumpleCategoria = !filtroCategoria || d.categoria === filtroCategoria;
+            const cumpleSubcategoria = !filtroSubcategoria || d.subcategoria === filtroSubcategoria;
+            return cumpleDisciplina && cumpleGenero && cumpleCategoria && cumpleSubcategoria;
+        });
+    }, [deportistas, filtroDisciplina, filtroGenero, filtroCategoria, filtroSubcategoria]);
+
+    const categoriasOptions = getCategoriasOptions(form.disciplina, form.genero);
+    const subcategoriaOptions = getSubcategoriaOptions(form.disciplina, form.genero, form.categoria);
+    const isMenor = form.categoria === 'Juveniles' || form.categoria === 'Infantiles';
+
+    const resetForm = () => {
+        setForm({
+            nombre: '',
+            apellido: '',
+            dni: '',
+            fechaNac: '',
+            disciplina: primeraDisciplina,
+            genero: primerGenero,
+            categoria: '',
+            subcategoria: '',
+            adultoResponsable: initialAdulto(),
+            password: '',
+            passwordConfirm: '',
+        });
+        setFormError(null);
+        setEditingId(null);
+        setMode('list');
+    };
+
+    const openCreate = () => {
+        resetForm();
+        setMode('create');
+    };
+
+    const openEdit = (d: Deportista) => {
+        setForm({
+            nombre: d.nombre,
+            apellido: d.apellido,
+            dni: d.dni,
+            fechaNac: d.fechaNac || '',
+            disciplina: d.disciplina,
+            genero: d.genero,
+            categoria: d.categoria,
+            subcategoria: d.subcategoria,
+            adultoResponsable: d.adultoResponsable ?? initialAdulto(),
+            password: '',
+            passwordConfirm: '',
+        });
+        setEditingId(d.id);
+        setMode('edit');
+    };
+
+    const handleDarDeBaja = async (id: number) => {
+        if (window.confirm('¿Dar de baja a este deportista?')) {
+            try {
+                await deportistaService.delete(id);
+                await fetchDeportistas();
+            } catch (error) {
+                console.error('Error al dar de baja:', error);
+                alert('Error al dar de baja al deportista');
+            }
+        }
+    };
+
+    const handleAlta = async (id: number) => {
+        // TODO: Implementar activación en el backend
+        alert('Funcionalidad de reactivar en desarrollo');
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setFormError(null);
+
+        // Validaciones
+        if (mode === 'create') {
+            if (form.password.length < 6) {
+                setFormError('La contraseña debe tener al menos 6 caracteres.');
+                return;
+            }
+            if (form.password !== form.passwordConfirm) {
+                setFormError('La contraseña y la confirmación no coinciden.');
+                return;
+            }
+        }
+
+        const dniDeportistaSolo = form.dni.replace(/\D/g, '');
+        if (!/^\d{7,8}$/.test(dniDeportistaSolo)) {
+            setFormError('El DNI del deportista debe tener 7 u 8 dígitos (solo números).');
+            return;
+        }
+        if (isMenor) {
+            const a = form.adultoResponsable;
+            const dniSoloNumeros = a.dni.replace(/\D/g, '');
+            if (!a.nombre.trim() || !a.apellido.trim() || !a.dni.trim() || !a.email.trim() || !a.telefono.trim()) {
+                setFormError('Completá todos los datos del adulto responsable (Infantil/Juvenil).');
+                return;
+            }
+            if (!/^\d{7,8}$/.test(dniSoloNumeros)) {
+                setFormError('El DNI del adulto responsable debe tener 7 u 8 dígitos (solo números, sin puntos ni espacios).');
+                return;
+            }
+        }
+
+        setSaving(true);
+
+        try {
+            // Buscar IDs de disciplina, género, categoría
+            const disciplinaObj = disciplinas.find(d => d.nombre === form.disciplina);
+            const generoObj = generos.find(g => g.nombre === form.genero);
+            const categoriaObj = categorias.find(c => c.nombre === form.categoria);
+
+            if (!disciplinaObj) {
+                setFormError('Disciplina no encontrada');
+                setSaving(false);
+                return;
+            }
+            if (!generoObj) {
+                setFormError('Género no encontrado');
+                setSaving(false);
+                return;
+            }
+            if (!categoriaObj) {
+                setFormError('Categoría no encontrada');
+                setSaving(false);
+                return;
+            }
+
+            const generoId = generoObj.id;
+            const categoriaId = categoriaObj.id;
+
+            // Resolver subcategoriaId por nombre (si hay subcategoría elegida)
+            let subcategoriaId: number | undefined | null = undefined;
+            if (form.subcategoria.trim()) {
+                const subRes = await clasificacionService.getSubcategorias(
+                    disciplinaObj.id,
+                    categoriaId,
+                    generoId
+                );
+                const arr = subRes.success && Array.isArray(subRes.data) ? subRes.data : [];
+                const sub = arr.find((s: any) => s.nombre === form.subcategoria);
+                if (sub) subcategoriaId = sub.id ?? (sub as any).id_subcategoria;
+            } else if (mode === 'edit') {
+                subcategoriaId = null; // Permitir vaciar subcategoría al editar
+            }
+
+            if (mode === 'create') {
+                if (!form.fechaNac || !form.fechaNac.trim()) {
+                    setFormError('La fecha de nacimiento es obligatoria.');
+                    setSaving(false);
+                    return;
+                }
+                const dniDeportista = form.dni.replace(/\D/g, '').trim();
+                // Asegurar fecha en YYYY-MM-DD (input type="date" ya lo da; por si acaso normalizar dd/mm/yyyy)
+                let fechaNac = form.fechaNac.trim();
+                const matchDDMMYYYY = fechaNac.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+                if (matchDDMMYYYY) {
+                    const [, d, m, y] = matchDDMMYYYY;
+                    fechaNac = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+                }
+                const createData = {
+                    nombre: form.nombre.trim(),
+                    apellido: form.apellido.trim(),
+                    dni: dniDeportista,
+                    fechaNac,
+                   generoId: Number(generoId),
+                    categoriaId: Number(categoriaId),
+                    ...(subcategoriaId != null && subcategoriaId !== undefined ? { subcategoriaId: Number(subcategoriaId) } : {}),
+                    disciplinaId: Number(disciplinaObj.id),
+                    email: `${dniDeportista}@temp.com`,
+                    password: form.password,
+                    adultoResponsable: isMenor ? {
+                        nombre: form.adultoResponsable.nombre.trim(),
+                        apellido: form.adultoResponsable.apellido.trim(),
+                        dni: form.adultoResponsable.dni.replace(/\D/g, '').trim(),
+                        email: form.adultoResponsable.email.trim(),
+                        telefono: form.adultoResponsable.telefono.trim(),
+                    } : undefined,
+                };
+
+                const response = await deportistaService.create(createData);
+                if (response.success) {
+                    await fetchDeportistas();
+                    resetForm();
+                } else {
+                    setFormError('Error al crear deportista');
+                }
+            } else if (mode === 'edit' && editingId !== null) {
+                const updateData = {
+                    nombre: form.nombre.trim(),
+                    apellido: form.apellido.trim(),
+                    fechaNac: form.fechaNac || undefined,
+                    generoId,
+                    categoriaId,
+                    subcategoriaId: subcategoriaId ?? null,
+                    disciplinaId: disciplinaObj.id,
+                    adultoResponsable: isMenor ? {
+                        nombre: form.adultoResponsable.nombre.trim(),
+                        apellido: form.adultoResponsable.apellido.trim(),
+                        dni: form.adultoResponsable.dni.replace(/\D/g, '').trim(),
+                        email: form.adultoResponsable.email.trim(),
+                        telefono: form.adultoResponsable.telefono.trim(),
+                    } : undefined,
+                };
+
+                const response = await deportistaService.update(editingId, updateData);
+                if (response.success) {
+                    await fetchDeportistas();
+                    resetForm();
+                } else {
+                    setFormError('Error al actualizar deportista');
+                }
+            }
+        } catch (error: any) {
+            console.error('Error en submit:', error);
+            const data = error.response?.data;
+            let message = '';
+            if (data?.errors && typeof data.errors === 'object' && !Array.isArray(data.errors)) {
+                const parts = Object.entries(data.errors).map(([field, msgs]) => `${field}: ${(msgs as string[]).join(', ')}`);
+                message = parts.length ? parts.join('. ') : (data?.error || data?.message || '');
+            } else if (Array.isArray(data?.errors)) {
+                message = data.errors.map((e: any) => e.message || e.msg).join('. ');
+            }
+            if (!message) message = data?.error || data?.message || 'Error al guardar deportista';
+            setFormError(message);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const updateAdulto = (field: keyof AdultoResponsable, value: string) => {
+        setForm((f) => ({
+            ...f,
+            adultoResponsable: { ...f.adultoResponsable, [field]: value },
+        }));
+    };
+
+    if (loading) return <p className={styles.loading}>Cargando...</p>;
+
+    return (
+        <div className={styles.page}>
+            <h2 className={styles.title}>Gestión deportistas</h2>
+
+            {mode === 'list' && (
+                <>
+                    <div>
+                        <button className={styles.btnNew} onClick={openCreate}>
+                            <Plus size={20} /> Nuevo deportista
+                        </button>
+                    </div>
+
+                    <div className={styles.filters}>
+                        <p className={styles.filtersLabel}>
+                            <Filter size={18} /> Filtros
+                        </p>
+                        <div className={styles.filtersGrid}>
+                            <div>
+                                <label>Disciplina</label>
+                                <select value={filtroDisciplina} onChange={(e) => setFiltroDisciplina(e.target.value)}>
+                                    <option value="">Todas</option>
+                                    {disciplinasNombres.map((d) => (
+                                        <option key={d} value={d}>
+                                            {d}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label>Género</label>
+                                <select value={filtroGenero} onChange={(e) => setFiltroGenero(e.target.value)}>
+                                    <option value="">Todos</option>
+                                    {generosNombres.map((g) => (
+                                        <option key={g} value={g}>
+                                            {g}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label>Categoría</label>
+                                <select value={filtroCategoria} onChange={(e) => setFiltroCategoria(e.target.value)}>
+                                    <option value="">Todas</option>
+                                    {categoriasFiltroOptions.map((c) => (
+                                        <option key={c} value={c}>
+                                            {c}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label>Subcategoría</label>
+                                <select value={filtroSubcategoria} onChange={(e) => setFiltroSubcategoria(e.target.value)}>
+                                    <option value="">Todas</option>
+                                    {subcategoriasFiltroOptions.map((s) => (
+                                        <option key={s} value={s}>
+                                            {s}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className={styles.tableContainer}>
+                        <table className={styles.table}>
+                            <thead>
+                                <tr>
+                                    <th>DNI</th>
+                                    <th>Nombre</th>
+                                    <th>Apellido</th>
+                                    <th>Disciplina</th>
+                                    <th>Género</th>
+                                    <th>Categoría</th>
+                                    <th>Subcategoría</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {deportistasFiltrados.map((d) => (
+                                    <tr key={d.id}>
+                                        <td>{d.dni}</td>
+                                        <td>{d.nombre}</td>
+                                        <td>{d.apellido}</td>
+                                        <td>{d.disciplina}</td>
+                                        <td>{d.genero}</td>
+                                        <td>{d.categoria}</td>
+                                        <td>{d.subcategoria}</td>
+                                        <td>
+                                            <span className={d.activo ? styles.badgeActivo : styles.badgeInactivo}>
+                                                {d.activo ? 'Activo' : 'Inactivo'}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div className={styles.actions}>
+                                                <button className={styles.btnEdit} onClick={() => openEdit(d)} title="Editar">
+                                                    <Pencil size={16} />
+                                                </button>
+                                                {d.activo ? (
+                                                    <button className={styles.btnDanger} onClick={() => handleDarDeBaja(d.id)} title="Dar de baja">
+                                                        <UserMinus size={16} />
+                                                    </button>
+                                                ) : (
+                                                    <button className={styles.btnSuccess} onClick={() => handleAlta(d.id)} title="Dar de alta">
+                                                        <UserPlus size={16} />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        {deportistasFiltrados.length === 0 && (
+                            <p className={styles.emptyState}>No hay deportistas que coincidan con los filtros.</p>
+                        )}
+                    </div>
+                </>
+            )}
+
+            {(mode === 'create' || mode === 'edit') && (
+                <div className={styles.formContainer}>
+                    <h3 className={styles.formTitle}>{mode === 'create' ? 'Nuevo deportista' : 'Editar deportista'}</h3>
+                    {formError && <p className={styles.formError}>{formError}</p>}
+                    <form onSubmit={handleSubmit} className={styles.form}>
+                        <div className={styles.formRow}>
+                            <div>
+                                <label>Nombre *</label>
+                                <input
+                                    type="text"
+                                    value={form.nombre}
+                                    onChange={(e) => setForm({ ...form, nombre: e.target.value })}
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label>Apellido *</label>
+                                <input
+                                    type="text"
+                                    value={form.apellido}
+                                    onChange={(e) => setForm({ ...form, apellido: e.target.value })}
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        <div className={styles.formRow}>
+                            <div>
+                                <label>DNI *</label>
+                                <input
+                                    type="text"
+                                    value={form.dni}
+                                    onChange={(e) => setForm({ ...form, dni: e.target.value })}
+                                    required
+                                    disabled={mode === 'edit'}
+                                />
+                            </div>
+                            <div>
+                                <label>Fecha de Nacimiento *</label>
+                                <input
+                                    type="date"
+                                    value={form.fechaNac}
+                                    onChange={(e) => setForm({ ...form, fechaNac: e.target.value })}
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        <div className={styles.formRow}>
+                            <div>
+                                <label>Disciplina *</label>
+                                <select value={form.disciplina} onChange={(e) => setForm({ ...form, disciplina: e.target.value })} required>
+                                    {disciplinasNombres.map((d) => (
+                                        <option key={d} value={d}>
+                                            {d}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label>Género *</label>
+                                <select value={form.genero} onChange={(e) => setForm({ ...form, genero: e.target.value })} required>
+                                    {generosNombres.map((g) => (
+                                        <option key={g} value={g}>
+                                            {g}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className={styles.formRow}>
+                            <div>
+                                <label>Categoría *</label>
+                                <select value={form.categoria} onChange={(e) => setForm({ ...form, categoria: e.target.value })} required>
+                                    <option value="">Seleccionar</option>
+                                    {categoriasOptions.map((c) => (
+                                        <option key={c} value={c}>
+                                            {c}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label>Subcategoría</label>
+                                <select value={form.subcategoria} onChange={(e) => setForm({ ...form, subcategoria: e.target.value })}>
+                                    <option value="">Seleccionar</option>
+                                    {subcategoriaOptions.map((s) => (
+                                        <option key={s} value={s}>
+                                            {s}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+
+                        {mode === 'create' && (
+                            <div className={styles.formRow}>
+                                <div>
+                                    <label>Contraseña *</label>
+                                    <input
+                                        type="password"
+                                        value={form.password}
+                                        onChange={(e) => setForm({ ...form, password: e.target.value })}
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label>Confirmar contraseña *</label>
+                                    <input
+                                        type="password"
+                                        value={form.passwordConfirm}
+                                        onChange={(e) => setForm({ ...form, passwordConfirm: e.target.value })}
+                                        required
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {isMenor && (
+                            <div className={styles.adultoResponsableSection}>
+                                <h4>Adulto Responsable (Obligatorio para Juveniles e Infantiles)</h4>
+                                <div className={styles.formRow}>
+                                    <div>
+                                        <label>Nombre *</label>
+                                        <input
+                                            type="text"
+                                            value={form.adultoResponsable.nombre}
+                                            onChange={(e) => updateAdulto('nombre', e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label>Apellido *</label>
+                                        <input
+                                            type="text"
+                                            value={form.adultoResponsable.apellido}
+                                            onChange={(e) => updateAdulto('apellido', e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                                <div className={styles.formRow}>
+                                    <div>
+                                        <label>DNI *</label>
+                                        <input
+                                            type="text"
+                                            value={form.adultoResponsable.dni}
+                                            onChange={(e) => updateAdulto('dni', e.target.value)}
+                                            placeholder="7 u 8 dígitos, sin puntos ni espacios"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label>Email *</label>
+                                        <input
+                                            type="email"
+                                            value={form.adultoResponsable.email}
+                                            onChange={(e) => updateAdulto('email', e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                                <div className={styles.formRow}>
+                                    <div>
+                                        <label>Teléfono *</label>
+                                        <input
+                                            type="tel"
+                                            value={form.adultoResponsable.telefono}
+                                            onChange={(e) => updateAdulto('telefono', e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className={styles.formActions}>
+                            <button type="button" className={styles.btnCancel} onClick={resetForm} disabled={saving}>
+                                Cancelar
+                            </button>
+                            <button type="submit" className={styles.btnSubmit} disabled={saving}>
+                                {saving ? 'Guardando...' : mode === 'create' ? 'Crear' : 'Guardar'}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            )}
+        </div>
+    );
+};

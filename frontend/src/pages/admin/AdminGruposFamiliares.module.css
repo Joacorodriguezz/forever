@@ -1,0 +1,59 @@
+.page { max-width: 100%; }
+.title { font-size: 1.35rem; font-weight: 700; color: var(--color-blue); margin: 0 0 0.25rem 0; }
+.subtitle { color: #555; margin: 0 0 var(--spacing-lg) 0; }
+.loading { padding: 2rem; color: #666; }
+
+/* Botón principal (Crear grupo, etc.) */
+.btnPrimary { display: inline-flex; align-items: center; gap: var(--spacing-xs); padding: var(--spacing-sm) var(--spacing-lg); background: var(--color-blue); color: #fff; border: none; border-radius: 8px; font-weight: 600; font-size: 0.9375rem; cursor: pointer; margin-bottom: var(--spacing-lg); }
+.btnPrimary:hover { background: #002244; }
+
+/* Botones de acción en modales: mismo tamaño y estilo, distinto color */
+.modalActions { display: flex; gap: var(--spacing-md); margin-top: var(--spacing-lg); flex-wrap: wrap; }
+.btnGuardar { padding: 0.6rem 1.25rem; background: var(--color-blue); color: #fff; border: none; border-radius: 8px; font-weight: 600; font-size: 0.9375rem; cursor: pointer; min-width: 100px; }
+.btnGuardar:hover:not(:disabled) { background: #002244; }
+.btnGuardar:disabled { opacity: 0.6; cursor: not-allowed; }
+.btnCancelar { padding: 0.6rem 1.25rem; background: #c62828; color: #fff; border: none; border-radius: 8px; font-weight: 600; font-size: 0.9375rem; cursor: pointer; min-width: 100px; }
+.btnCancelar:hover { background: #b71c1c; }
+
+.tableWrap { overflow-x: auto; background: #fff; border-radius: 12px; border: 1px solid #e8e8e8; color: #1a1a1a; }
+.table { width: 100%; border-collapse: collapse; color: #1a1a1a; }
+.table th, .table td { padding: var(--spacing-sm) var(--spacing-md); text-align: left; border-bottom: 1px solid #eee; color: #1a1a1a; }
+.table th { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--color-blue); }
+.miembroLine { font-size: 0.875rem; margin-bottom: 0.25rem; }
+.miembroLine:last-child { margin-bottom: 0; }
+.btnEdit { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.5rem; margin-right: 0.5rem; background: var(--color-blue); color: #fff; border: none; border-radius: 6px; font-size: 0.875rem; cursor: pointer; }
+.btnEdit:hover { background: #002244; }
+.btnDelete { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.5rem; background: transparent; color: #c62828; border: 1px solid #c62828; border-radius: 6px; font-size: 0.875rem; cursor: pointer; }
+.btnDelete:hover { background: rgba(198, 40, 40, 0.08); }
+.btnCuotaHermano { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.5rem; margin-right: 0.5rem; background: #2e7d32; color: #fff; border: none; border-radius: 6px; font-size: 0.875rem; cursor: pointer; }
+.btnCuotaHermano:hover { background: #1b5e20; }
+
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 100; }
+.modal { background: #fff; border-radius: 12px; padding: var(--spacing-xl); max-width: 560px; width: 90%; max-height: 90vh; overflow-y: auto; color: #1a1a1a; }
+.modal h3 { margin: 0 0 var(--spacing-md) 0; }
+.modalHint { font-size: 0.875rem; color: #555; margin: 0 0 var(--spacing-md) 0; }
+.filtersRow { display: flex; flex-wrap: wrap; gap: var(--spacing-sm); margin-bottom: var(--spacing-md); }
+.filterItem { display: flex; align-items: center; gap: 0.35rem; }
+.filterLabel { font-size: 0.8rem; font-weight: 500; }
+.select { padding: 0.35rem 0.5rem; border-radius: 6px; border: 1px solid #ccc; font-size: 0.875rem; color: #1a1a1a; background: #fff; }
+.field { margin-bottom: var(--spacing-md); }
+.field label { display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.25rem; color: #1a1a1a; }
+.input { width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 6px; color: #1a1a1a; }
+.listaDeportistas { margin-bottom: var(--spacing-md); }
+.listaDeportistas > strong { display: block; font-size: 0.875rem; margin-bottom: 0.5rem; color: #1a1a1a; }
+.lista { list-style: none; margin: 0; padding: 0; max-height: 180px; overflow-y: auto; }
+.listaItem { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; padding: 0.4rem 0; border-bottom: 1px solid #eee; font-size: 0.875rem; color: #1a1a1a; }
+.btnAddSmall { padding: 0.25rem 0.5rem; font-size: 0.8rem; background: var(--color-blue); color: #fff; border: none; border-radius: 6px; cursor: pointer; white-space: nowrap; }
+.btnAddSmall:hover:not(:disabled) { background: #002244; }
+.btnAddSmall:disabled { opacity: 0.6; cursor: default; }
+.emptyList { font-size: 0.875rem; color: #666; margin: 0.5rem 0; }
+.miembrosSection { margin-bottom: var(--spacing-md); }
+.miembrosSection > label { display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.5rem; color: #1a1a1a; }
+.titularSection { margin-bottom: var(--spacing-md); }
+.titularLabel { display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.25rem; color: #1a1a1a; }
+.titularHint { font-size: 0.8125rem; color: #555; margin: 0 0 0.5rem 0; }
+.titularSection .select { width: 100%; max-width: 320px; padding: 0.5rem; }
+.btnRemove { padding: 0.35rem 0.5rem; font-size: 0.8rem; background: #eee; color: #333; border: none; border-radius: 6px; cursor: pointer; }
+.btnRemove:hover { background: #e0e0e0; }
+.modalSmall { background: #fff; border-radius: 12px; padding: var(--spacing-xl); max-width: 360px; width: 90%; color: #1a1a1a; }
+.modalSmall h3 { margin: 0 0 var(--spacing-md) 0; }

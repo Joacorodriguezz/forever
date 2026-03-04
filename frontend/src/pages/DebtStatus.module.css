@@ -1,0 +1,378 @@
+/* Mismo estilo LoginPage / ProfileEdit: ancho completo, header azul */
+.debtStatusPage {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    background-color: #fff;
+}
+
+/* Header: gradiente azul, logo + nombre izquierda, título centrado */
+.header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(135deg, #002244 0%, #003366 50%, #004080 100%);
+    padding: var(--spacing-md) var(--spacing-xl);
+    flex-shrink: 0;
+}
+
+.headerLeft {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    min-width: 180px;
+}
+
+.headerLogo {
+    height: 72px;
+    width: 72px;
+    object-fit: contain;
+}
+
+.headerClubName {
+    font-size: 1.125rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--color-white);
+}
+
+.title {
+    flex: 1;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--color-white);
+    text-align: center;
+    margin: 0;
+    transform: translateX(-24px);
+}
+
+.headerRight {
+    min-width: 180px;
+}
+
+/* Contenido principal: ancho completo */
+.mainContent {
+    flex: 1;
+    width: 100%;
+    padding: var(--spacing-xl);
+    background-color: #f8f9fa;
+}
+
+.loadingText {
+    text-align: center;
+    color: var(--color-gray);
+    padding: var(--spacing-xl);
+}
+
+/* Card contenedor (mismo estilo ProfileEdit) */
+.contentCard {
+    width: 100%;
+    max-width: none;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0, 51, 102, 0.08);
+    padding: var(--spacing-xl);
+}
+
+/* Status Banner */
+.statusBanner {
+    border-radius: 12px;
+    padding: var(--spacing-xl);
+    text-align: center;
+    margin-bottom: var(--spacing-xl);
+}
+
+.statusBannerDebt {
+    border: 2px solid #ff4444;
+    background: rgba(255, 68, 68, 0.04);
+}
+
+.statusBannerPaid {
+    border: 2px solid #4caf50;
+    background: rgba(76, 175, 80, 0.06);
+}
+
+.statusIcon {
+    margin-bottom: var(--spacing-sm);
+}
+
+.statusIconDebt {
+    color: #ff4444;
+}
+
+.statusIconPaid {
+    color: #4caf50;
+}
+
+.statusText {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: var(--spacing-xs);
+}
+
+.statusTextDebt {
+    color: #ff4444;
+}
+
+.statusTextPaid {
+    color: #4caf50;
+}
+
+.statusMessage {
+    font-size: 1rem;
+    color: var(--color-gray);
+    margin: 0;
+}
+
+/* Sección cuotas */
+.quotasSection {
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid #eee;
+}
+
+.sectionTitle {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-blue);
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-xs);
+    border-bottom: 2px solid var(--color-blue);
+}
+
+.quotasList {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.quotaCard {
+    border: 1px solid #e0e0e0;
+    border-radius: var(--border-radius);
+    padding: var(--spacing-md);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: var(--transition);
+    background: #f8f8f8;
+}
+
+.quotaCard:hover {
+    border-color: var(--color-blue);
+    box-shadow: 0 2px 8px rgba(0, 51, 102, 0.08);
+}
+
+.quotaInfo {
+    flex: 1;
+    min-width: 0;
+}
+
+.quotaHeader {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xs);
+}
+
+.quotaNumber {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.quotaStatus {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.quotaStatusPending {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.quotaStatusOverdue {
+    background-color: #ffe5e5;
+    color: #cc0000;
+}
+
+.quotaDetails {
+    display: flex;
+    gap: var(--spacing-lg);
+    color: var(--color-gray);
+    font-size: 0.875rem;
+}
+
+.quotaDetail {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.quotaActions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.quotaAmount {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1a1a1a;
+}
+
+.payButton {
+    padding: var(--spacing-sm) var(--spacing-lg);
+    background-color: var(--color-blue);
+    color: var(--color-white);
+    border: none;
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.payButton:hover {
+    background-color: #002244;
+}
+
+.payDisabled {
+    font-size: 0.875rem;
+    color: #666;
+    font-style: italic;
+}
+
+.titularNotice {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md) var(--spacing-lg);
+    margin-top: var(--spacing-lg);
+    background: rgba(0, 51, 102, 0.06);
+    border: 1px solid rgba(0, 51, 102, 0.2);
+    border-radius: var(--border-radius);
+}
+
+.titularNotice svg {
+    flex-shrink: 0;
+    color: var(--color-blue);
+    margin-top: 0.15rem;
+}
+
+.titularNotice p {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #333;
+    line-height: 1.5;
+}
+
+.totalDebt {
+    margin-top: var(--spacing-lg);
+    padding-top: var(--spacing-lg);
+    border-top: 2px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.totalLabel {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.totalAmount {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #ff4444;
+}
+
+/* Acciones: Volver abajo a la izquierda (como ProfileEdit) */
+.actions {
+    margin-top: var(--spacing-xl);
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid #eee;
+}
+
+.backButton {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-lg);
+    background-color: transparent;
+    color: var(--color-blue);
+    border: 2px solid var(--color-blue);
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.backButton:hover {
+    background-color: rgba(0, 51, 102, 0.06);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .mainContent {
+        padding: var(--spacing-md);
+    }
+
+    .contentCard {
+        padding: var(--spacing-lg);
+    }
+
+    .headerClubName {
+        font-size: 0.9rem;
+    }
+
+    .title {
+        font-size: 1.5rem;
+    }
+
+    .statusText {
+        font-size: 1.5rem;
+    }
+
+    .statusIcon svg {
+        width: 48px;
+        height: 48px;
+    }
+
+    .quotaCard {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-md);
+    }
+
+    .quotaDetails {
+        flex-direction: column;
+        gap: var(--spacing-xs);
+    }
+
+    .quotaActions {
+        width: 100%;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .payButton {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .totalDebt {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+        text-align: center;
+    }
+}

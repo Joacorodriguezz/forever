@@ -1,0 +1,367 @@
+/* Page Layout */
+.page {
+  max-width: 100%;
+  padding: var(--spacing-md);
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-blue);
+  margin: 0 0 var(--spacing-lg) 0;
+}
+
+.loading {
+  padding: 2rem;
+  text-align: center;
+  color: #666;
+  font-size: 1rem;
+}
+
+/* Toolbar */
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+}
+
+.btnNew {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: 0.75rem 1.5rem;
+  background: var(--color-blue);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btnNew:hover {
+  background: #002244;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 51, 102, 0.2);
+}
+
+/* Filters Section */
+.filters {
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 12px;
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.filtersLabel {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-blue);
+  margin: 0 0 var(--spacing-md) 0;
+}
+
+.filtersGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.filtersGrid > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.filtersGrid label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.filtersGrid select {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: #fff;
+  color: #1a1a1a;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.filtersGrid select:focus {
+  outline: none;
+  border-color: var(--color-blue);
+  box-shadow: 0 0 0 3px rgba(0, 51, 102, 0.1);
+}
+
+/* Table */
+.tableContainer {
+  overflow-x: auto;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e8e8e8;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: var(--spacing-md);
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.table th {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--color-blue);
+  background: #f8f9fa;
+  white-space: nowrap;
+}
+
+.table td {
+  font-size: 0.95rem;
+  color: #1a1a1a;
+}
+
+.table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.emptyState {
+  text-align: center;
+  color: #999;
+  padding: var(--spacing-xl);
+  font-size: 1rem;
+}
+
+/* Badges */
+.badgeActivo {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background: #e8f5e9;
+  color: #2e7d32;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.badgeInactivo {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background: #ffebee;
+  color: #c62828;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+/* Action Buttons */
+.actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btnEdit,
+.btnDanger,
+.btnSuccess {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btnEdit {
+  background: var(--color-blue);
+  color: #fff;
+}
+
+.btnEdit:hover {
+  background: #002244;
+}
+
+.btnDanger {
+  background: transparent;
+  color: #c62828;
+  border: 1px solid #c62828;
+}
+
+.btnDanger:hover {
+  background: rgba(198, 40, 40, 0.1);
+}
+
+.btnSuccess {
+  background: transparent;
+  color: #2e7d32;
+  border: 1px solid #2e7d32;
+}
+
+.btnSuccess:hover {
+  background: rgba(46, 125, 50, 0.1);
+}
+
+/* Form Container */
+.formContainer {
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 12px;
+  padding: var(--spacing-xl);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.formTitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-blue);
+  margin: 0 0 var(--spacing-lg) 0;
+}
+
+.formError {
+  padding: var(--spacing-md);
+  background: rgba(198, 40, 40, 0.1);
+  color: #c62828;
+  border-radius: 8px;
+  margin-bottom: var(--spacing-lg);
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+/* Form Layout */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.formRow > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.formRow label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.formRow input,
+.formRow select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.formRow input:focus,
+.formRow select:focus {
+  outline: none;
+  border-color: var(--color-blue);
+  box-shadow: 0 0 0 3px rgba(0, 51, 102, 0.1);
+}
+
+.formRow input:disabled {
+  background: #f0f0f0;
+  color: #999;
+  cursor: not-allowed;
+}
+
+/* Adulto Responsable Section */
+.adultoResponsableSection {
+  margin-top: var(--spacing-lg);
+  padding: var(--spacing-lg);
+  background: #f0f4f8;
+  border: 1px solid #d0dce8;
+  border-radius: 10px;
+}
+
+.adultoResponsableSection h4 {
+  font-size: 1.1rem;
+  color: var(--color-blue);
+  margin: 0 0 var(--spacing-md) 0;
+  font-weight: 600;
+}
+
+/* Form Actions */
+.formActions {
+  display: flex;
+  gap: 1rem;
+  margin-top: var(--spacing-lg);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid #eee;
+}
+
+.btnCancel,
+.btnSubmit {
+  flex: 1;
+  padding: 0.875rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btnCancel {
+  background: #f5f5f5;
+  color: #666;
+}
+
+.btnCancel:hover {
+  background: #e0e0e0;
+}
+
+.btnCancel:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btnSubmit {
+  background: var(--color-blue);
+  color: #fff;
+}
+
+.btnSubmit:hover {
+  background: #002244;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 51, 102, 0.2);
+}
+
+.btnSubmit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}

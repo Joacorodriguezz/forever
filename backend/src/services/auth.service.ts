@@ -1,72 +1,199 @@
-import prisma from '../config/prisma';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { LoginRequest } from '../types/auth';
+import prisma from '../config/prisma';
+import { env } from '../config/env';
+import { LoginDTO, RegisterDTO } from '../types/requests';
+import { AuthResponse } from '../types/responses';
+import { JwtPayload } from '../types';
+import {
+  UnauthorizedError,
+  ConflictError,
+  ForbiddenError,
+  ErrorMessages,
+} from '../utils/errors';
+import { Rol } from '@prisma/client';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'mi_secreto';
-
-export async function login(data: LoginRequest) {
-  const { emailOdni, password } = data;
-  let usuario;
-
-  // Buscar usuario según email o DNI
-  if (/^\d+$/.test(emailOdni)) {
-    // Por DNI
-    const socio = await prisma.socio.findUnique({
-      where: { dni: parseInt(emailOdni, 10) },
-    });
-
-    if (!socio) throw new Error("Credenciales inválidas");
-
-    usuario = await prisma.usuario.findUnique({
-      where: { id: socio.usuarioId },
+export class AuthService {
+  async login(data: LoginDTO): Promise<AuthResponse> {
+    // Intentar login por email O por DNI (deportista/admin)
+    let cuenta = await prisma.cuentaUsuario.findUnique({
+      where: { email: data.email },
       include: {
-        socio: true,
+        deportista: true,
         administrativo: true,
       },
     });
-  } else {
-    // Por email
-    usuario = await prisma.usuario.findUnique({
-      where: { email: emailOdni },
-      include: {
-        socio: true,
-        administrativo: true,
+
+    // Si no se encuentra por email, buscar por DNI de deportista
+    if (!cuenta) {
+      const deportista = await prisma.deportista.findUnique({
+        where: { dni: data.email }, // El frontend envía DNI en el campo 'email'
+        include: {
+          cuenta: {
+            include: {
+              deportista: true,
+              administrativo: true,
+            },
+          },
+        },
+      });
+      if (deportista) cuenta = deportista.cuenta;
+    }
+
+    // Si tampoco, buscar por DNI de administrativo
+    if (!cuenta) {
+      const admin = await prisma.administrativo.findUnique({
+        where: { dni: data.email }, // El frontend envía documento en el campo 'email'
+        include: {
+          cuenta: {
+            include: {
+              deportista: true,
+              administrativo: true,
+            },
+          },
+        },
+      });
+      if (admin) cuenta = admin.cuenta;
+    }
+
+    if (!cuenta) {
+      throw new UnauthorizedError(ErrorMessages.INVALID_CREDENTIALS);
+    }
+
+    // Verificar si está bloqueado
+    if (cuenta.bloqueadoHasta && cuenta.bloqueadoHasta > new Date()) {
+      throw new ForbiddenError(ErrorMessages.USER_BLOCKED);
+    }
+
+    // Verificar si está activo
+    if (!cuenta.activo) {
+      throw new ForbiddenError(ErrorMessages.USER_INACTIVE);
+    }
+
+    const validPassword = await bcrypt.compare(data.password, cuenta.password);
+
+    if (!validPassword) {
+      await this.handleFailedLogin(cuenta.id);
+      throw new UnauthorizedError(ErrorMessages.INVALID_CREDENTIALS);
+    }
+
+    // Reset intentos fallidos
+    await prisma.cuentaUsuario.update({
+      where: { id: cuenta.id },
+      data: { intentosFallidos: 0, bloqueadoHasta: null },
+    });
+
+    const token = this.generateToken({
+      id: cuenta.id,
+      email: cuenta.email,
+      rol: cuenta.rol,
+    });
+
+    const perfil = cuenta.deportista || cuenta.administrativo;
+
+    return {
+      token,
+      user: {
+        id: cuenta.id,
+        email: cuenta.email,
+        rol: cuenta.rol,
+        nombre: perfil?.nombre,
+        apellido: perfil?.apellido,
       },
+    };
+  }
+
+  async register(data: RegisterDTO): Promise<AuthResponse> {
+    // Verificar email único
+    const existingEmail = await prisma.cuentaUsuario.findUnique({
+      where: { email: data.email },
+    });
+
+    if (existingEmail) {
+      throw new ConflictError(ErrorMessages.EMAIL_EXISTS);
+    }
+
+    // Verificar DNI único
+    const existingDni = await prisma.administrativo.findUnique({
+      where: { dni: data.dni },
+    });
+
+    if (existingDni) {
+      throw new ConflictError(ErrorMessages.DNI_EXISTS);
+    }
+
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+
+    const cuenta = await prisma.$transaction(async (tx) => {
+      const nuevaCuenta = await tx.cuentaUsuario.create({
+        data: {
+          email: data.email,
+          password: hashedPassword,
+          rol: data.rol as Rol,
+        },
+      });
+
+      if (data.rol === 'ADMIN' || data.rol === 'ADMINISTRATIVO') {
+        await tx.administrativo.create({
+          data: {
+            nombre: data.nombre,
+            apellido: data.apellido,
+            dni: data.dni,
+            cuentaId: nuevaCuenta.id,
+          },
+        });
+      }
+
+      return nuevaCuenta;
+    });
+
+    const token = this.generateToken({
+      id: cuenta.id,
+      email: cuenta.email,
+      rol: cuenta.rol,
+    });
+
+    return {
+      token,
+      user: {
+        id: cuenta.id,
+        email: cuenta.email,
+        rol: cuenta.rol,
+        nombre: data.nombre,
+        apellido: data.apellido,
+      },
+    };
+  }
+
+  private generateToken(payload: Omit<JwtPayload, 'iat' | 'exp'>): string {
+    return jwt.sign(payload, env.JWT_SECRET, {
+      expiresIn: env.JWT_EXPIRES_IN as jwt.SignOptions['expiresIn'],
     });
   }
 
-  if (!usuario) throw new Error("Credenciales inválidas");
+  private async handleFailedLogin(cuentaId: number): Promise<void> {
+    const cuenta = await prisma.cuentaUsuario.findUnique({
+      where: { id: cuentaId },
+    });
 
-  // ⚠️ Validar estado de socio o administrativo
-  if (usuario.socio && usuario.socio.estado !== "ACTIVO") {
-    throw new Error("Tu cuenta de socio está inactiva.");
+    if (!cuenta) return;
+
+    const intentosFallidos = cuenta.intentosFallidos + 1;
+    const updateData: { intentosFallidos: number; bloqueadoHasta?: Date } = {
+      intentosFallidos,
+    };
+
+    if (intentosFallidos >= env.MAX_LOGIN_ATTEMPTS) {
+      updateData.bloqueadoHasta = new Date(
+        Date.now() + env.LOGIN_BLOCK_TIME * 60 * 1000
+      );
+    }
+
+    await prisma.cuentaUsuario.update({
+      where: { id: cuentaId },
+      data: updateData,
+    });
   }
-
-  if (usuario.administrativo && usuario.administrativo.activo === false) {
-    throw new Error("Tu cuenta de administrativo está inactiva.");
-  }
-
-  // Validar contraseña
-  const passwordValida = await bcrypt.compare(password, usuario.password);
-  if (!passwordValida) throw new Error("Credenciales inválidas");
-
-  // Generar token
-  const token = jwt.sign(
-    { id: usuario.id, socioId: usuario.socio?.id, role: usuario.rol.toUpperCase() },
-    JWT_SECRET,
-    { expiresIn: "1h" }
-  );
-
-  const { password: _, ...resto } = usuario;
-  return {
-    token,
-    user: {
-      id: resto.id,
-      email: resto.email,
-      role: resto.rol.toUpperCase(),
-      socio: resto.socio,
-      administrativo: resto.administrativo,
-    },
-  };
 }
+
+export const authService = new AuthService();
