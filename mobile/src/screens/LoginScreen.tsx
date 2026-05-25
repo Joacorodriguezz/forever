@@ -1,3 +1,4 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import {
   ActivityIndicator,
@@ -11,6 +12,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { cardShadow } from '../utils/cardShadow';
 
@@ -55,6 +57,7 @@ function validateForm(dni: string, password: string): FormErrors {
 }
 
 export function LoginScreen() {
+  const insets = useSafeAreaInsets();
   const { login, loading } = useAuth();
   const [dni, setDni] = useState('');
   const [password, setPassword] = useState('');
@@ -93,7 +96,12 @@ export function LoginScreen() {
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.header}>
+        <LinearGradient
+          colors={['#002244', '#003366', '#004080']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.hero, { paddingTop: insets.top + 32 }]}
+        >
           <View style={styles.logoCircle} accessibilityLabel="Logo Club For Ever">
             <Text style={styles.logoText}>FE</Text>
           </View>
@@ -101,8 +109,9 @@ export function LoginScreen() {
             CLUB SOCIAL CULTURAL Y DEPORTIVO FOR EVER
           </Text>
           <Text style={styles.subtitle}>Sistema de socios</Text>
-        </View>
+        </LinearGradient>
 
+        <View style={styles.formSection}>
         <View style={styles.card}>
           <Text style={styles.title}>Iniciar sesión</Text>
 
@@ -201,6 +210,7 @@ export function LoginScreen() {
             <Text style={styles.whatsappText}>Olvidar contraseña → WhatsApp</Text>
           </Pressable>
         </View>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -213,39 +223,48 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
+  },
+  hero: {
+    alignItems: 'center',
+    paddingBottom: 40,
+    paddingHorizontal: 24,
+    gap: 20,
+  },
+  formSection: {
+    flex: 1,
+    backgroundColor: COLORS.background,
     padding: 24,
   },
-  header: {
-    alignItems: 'center',
-    marginBottom: 24,
-  },
   logoCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: COLORS.primary,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 8,
   },
   logoText: {
-    color: '#FFFFFF',
-    fontSize: 24,
+    color: COLORS.primary,
+    fontSize: 36,
     fontWeight: '700',
   },
   clubName: {
     textAlign: 'center',
     fontSize: 14,
-    fontWeight: '700',
-    color: COLORS.text,
-    letterSpacing: 0.5,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    letterSpacing: 1.5,
     lineHeight: 20,
+    maxWidth: 280,
   },
   subtitle: {
-    marginTop: 8,
-    fontSize: 15,
-    color: COLORS.textMuted,
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.75)',
   },
   card: {
     backgroundColor: COLORS.surface,
