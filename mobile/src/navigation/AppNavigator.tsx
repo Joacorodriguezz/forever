@@ -29,7 +29,7 @@ function AppNavigatorStack() {
       <AppStack.Screen
         name="DebtStatus"
         component={DebtStatusScreen}
-        options={{ title: 'Estado de deuda' }}
+        options={{ headerShown: false }}
       />
     </AppStack.Navigator>
   );
