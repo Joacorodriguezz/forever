@@ -1,39 +1,9 @@
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
-import { DebtStatusScreen } from '../screens/DebtStatusScreen';
-import { HomeScreen } from '../screens/HomeScreen';
 import { LoginScreen } from '../screens/LoginScreen';
-import type { AppStackParamList, AuthStackParamList } from './types';
-
-const AuthStack = createNativeStackNavigator<AuthStackParamList>();
-const AppStack = createNativeStackNavigator<AppStackParamList>();
-
-function AuthNavigator() {
-  return (
-    <AuthStack.Navigator screenOptions={{ headerShown: false }}>
-      <AuthStack.Screen name="Login" component={LoginScreen} />
-    </AuthStack.Navigator>
-  );
-}
-
-function AppNavigatorStack() {
-  return (
-    <AppStack.Navigator>
-      <AppStack.Screen
-        name="Home"
-        component={HomeScreen}
-        options={{ title: 'Inicio' }}
-      />
-      <AppStack.Screen
-        name="DebtStatus"
-        component={DebtStatusScreen}
-        options={{ headerShown: false }}
-      />
-    </AppStack.Navigator>
-  );
-}
+import { MainTabNavigator } from './MainTabNavigator';
+import { COLORS } from '../constants/theme';
 
 export function AppNavigator() {
   const { user, isBootstrapping } = useAuth();
@@ -41,14 +11,14 @@ export function AppNavigator() {
   if (isBootstrapping) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#003366" />
+        <ActivityIndicator size="large" color={COLORS.primary} />
       </View>
     );
   }
 
   return (
     <NavigationContainer>
-      {user ? <AppNavigatorStack /> : <AuthNavigator />}
+      {user ? <MainTabNavigator /> : <LoginScreen />}
     </NavigationContainer>
   );
 }
@@ -58,6 +28,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F5F7FA',
+    backgroundColor: COLORS.background,
   },
 });

@@ -13,10 +13,10 @@ import { useAuth } from '../context/AuthContext';
 import { cardShadow } from '../utils/cardShadow';
 import { cuotaService } from '../services/cuotaService';
 import { grupoFamiliarService } from '../services/grupoFamiliarService';
-import type { AppStackParamList } from '../navigation/types';
+import type { PagosStackParamList } from '../navigation/types';
 import type { CuotaPendiente, DebtStatusData } from '../types/cuota';
 
-type Props = NativeStackScreenProps<AppStackParamList, 'DebtStatus'>;
+type Props = NativeStackScreenProps<PagosStackParamList, 'DebtStatus'>;
 
 const COLORS = {
   primary: '#003366',
@@ -159,20 +159,28 @@ export function DebtStatusScreen({ navigation }: Props) {
   const hasDebt = !!debtData && debtData.cuotasPendientes.length > 0;
   const cuotasCount = debtData?.cuotasPendientes.length ?? 0;
   const cuotasLabel = cuotasCount === 1 ? '1 cuota pendiente' : `${cuotasCount} cuotas pendientes`;
+  const canGoBack = navigation.canGoBack();
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Pressable
-          onPress={() => navigation.goBack()}
-          style={styles.backIconButton}
-          accessibilityRole="button"
-          accessibilityLabel="Volver"
-          hitSlop={12}
-        >
-          <Text style={styles.backIcon}>{'‹'}</Text>
-        </Pressable>
-        <Text style={styles.headerTitle}>Estado de Deuda</Text>
+        {canGoBack ? (
+          <Pressable
+            onPress={() => navigation.goBack()}
+            style={styles.backIconButton}
+            accessibilityRole="button"
+            accessibilityLabel="Volver"
+            hitSlop={12}
+          >
+            <Text style={styles.backIcon}>{'‹'}</Text>
+          </Pressable>
+        ) : (
+          <View style={styles.backPlaceholder} />
+        )}
+        <Text style={[styles.headerTitle, !canGoBack && styles.headerTitleCentered]}>
+          Estado de Deuda
+        </Text>
+        <View style={styles.backPlaceholder} />
       </View>
 
       {loading ? (
@@ -303,10 +311,14 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
   backIconButton: {
     padding: 4,
-    marginRight: 8,
+    width: 36,
+  },
+  backPlaceholder: {
+    width: 36,
   },
   backIcon: {
     color: '#FFFFFF',
@@ -318,6 +330,10 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 20,
     fontWeight: '700',
+    flex: 1,
+  },
+  headerTitleCentered: {
+    textAlign: 'center',
   },
   loadingContainer: {
     flex: 1,

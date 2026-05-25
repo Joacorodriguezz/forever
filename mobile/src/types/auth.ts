@@ -52,4 +52,15 @@ export interface DeportistaProfile {
   nombre: string;
   apellido: string;
   dni: string;
+  email?: string;
+  disciplina?: { id?: number; nombre?: string } | string;
+  categoria?: { id?: number; nombre?: string } | string;
+  genero?: { id?: number; nombre?: string } | string;
+}
+
+export interface UpdateProfileRequest {
+  email?: string;
+  telefono?: string;
+  currentPassword?: string;
+  password?: string;
 }
