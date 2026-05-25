@@ -1,40 +1,92 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useAuth } from '../context/AuthContext';
-import { cardShadow } from '../utils/cardShadow';
-import type { AppStackParamList } from '../navigation/types';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import type { CompositeNavigationProp } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { HomeHeader } from '../components/HomeHeader';
+import { MenuRow } from '../components/MenuRow';
+import { SectionLabel } from '../components/LoadingState';
+import { SocialLinkCard } from '../components/SocialLinkCard';
+import { INSTAGRAM_URL, WHATSAPP_URL } from '../constants/socialLinks';
+import { COLORS } from '../constants/theme';
+import type { InicioStackParamList, MainTabParamList } from '../navigation/types';
 
-type Props = NativeStackScreenProps<AppStackParamList, 'Home'>;
+type HomeNavigationProp = CompositeNavigationProp<
+  NativeStackNavigationProp<InicioStackParamList, 'Home'>,
+  BottomTabNavigationProp<MainTabParamList>
+>;
 
-export function HomeScreen({ navigation }: Props) {
-  const { user, logout } = useAuth();
-
-  const greetingName = user?.nombre?.trim() || user?.loginId;
+export function HomeScreen() {
+  const navigation = useNavigation<HomeNavigationProp>();
 
   return (
     <View style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.greeting}>Hola{greetingName ? `, ${greetingName}` : ''}</Text>
-        <Text style={styles.welcome}>Bienvenido al club</Text>
+      <HomeHeader />
 
-        <Pressable
-          style={styles.primaryButton}
-          onPress={() => navigation.navigate('DebtStatus')}
-          accessibilityRole="button"
-          accessibilityLabel="Estado de deuda"
-        >
-          <Text style={styles.primaryButtonText}>Estado de deuda</Text>
-        </Pressable>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <SectionLabel>MENÚ</SectionLabel>
 
-        <Pressable
-          style={styles.secondaryButton}
-          onPress={() => void logout()}
-          accessibilityRole="button"
-          accessibilityLabel="Cerrar sesión"
-        >
-          <Text style={styles.secondaryButtonText}>Cerrar sesión</Text>
-        </Pressable>
-      </View>
+        <View style={styles.menuList}>
+          <MenuRow
+            label="Estado de deuda"
+            icon="credit-card"
+            iconBg={COLORS.iconBgDebt}
+            iconColor={COLORS.iconDebt}
+            onPress={() => navigation.navigate('Pagos', { screen: 'DebtStatus' })}
+          />
+          <MenuRow
+            label="Historial de pagos"
+            icon="file-text"
+            iconBg={COLORS.iconBgHistory}
+            iconColor={COLORS.iconHistory}
+            onPress={() => navigation.navigate('Pagos', { screen: 'PaymentHistory' })}
+          />
+          <MenuRow
+            label="Grupo familiar"
+            icon="users"
+            iconBg={COLORS.iconBgFamily}
+            iconColor={COLORS.iconFamily}
+            onPress={() => navigation.navigate('FamilyGroup')}
+          />
+          <MenuRow
+            label="Noticias del club"
+            icon="book-open"
+            iconBg={COLORS.iconBgNews}
+            iconColor={COLORS.iconNews}
+            onPress={() => navigation.navigate('Noticias')}
+          />
+          <MenuRow
+            label="Mi perfil"
+            icon="user"
+            iconBg={COLORS.iconBgProfile}
+            iconColor={COLORS.iconProfile}
+            onPress={() => navigation.navigate('Perfil')}
+          />
+        </View>
+
+        <SectionLabel>REDES DEL CLUB</SectionLabel>
+
+        <View style={styles.socialRow}>
+          <SocialLinkCard
+            label="WhatsApp"
+            url={WHATSAPP_URL}
+            iconFamily="feather"
+            iconName="message-circle"
+            iconColor={COLORS.whatsapp}
+          />
+          <SocialLinkCard
+            label="Instagram"
+            url={INSTAGRAM_URL}
+            iconFamily="fontawesome"
+            iconName="instagram"
+            iconColor={COLORS.instagram}
+          />
+        </View>
+      </ScrollView>
     </View>
   );
 }
@@ -42,49 +94,21 @@ export function HomeScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F7FA',
-    padding: 24,
-    justifyContent: 'center',
+    backgroundColor: COLORS.background,
   },
-  content: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 24,
-    ...cardShadow,
+  scroll: {
+    flex: 1,
   },
-  greeting: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#1A1A1A',
-    marginBottom: 8,
+  scrollContent: {
+    padding: 16,
+    paddingBottom: 24,
+    gap: 12,
   },
-  welcome: {
-    fontSize: 16,
-    color: '#666666',
-    marginBottom: 32,
+  menuList: {
+    gap: 12,
   },
-  primaryButton: {
-    backgroundColor: '#003366',
-    borderRadius: 8,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  primaryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  secondaryButton: {
-    borderWidth: 1,
-    borderColor: '#003366',
-    borderRadius: 8,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  secondaryButtonText: {
-    color: '#003366',
-    fontSize: 16,
-    fontWeight: '600',
+  socialRow: {
+    flexDirection: 'row',
+    gap: 12,
   },
 });

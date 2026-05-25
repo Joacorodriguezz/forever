@@ -1,15 +1,25 @@
 import api from '../config/api';
 import type { ApiResponse } from '../types/auth';
 
+export interface GrupoFamiliarIntegrante {
+  deportista?: {
+    id?: number;
+    nombre?: string;
+    apellido?: string;
+    dni?: string;
+    disciplina?: { nombre?: string } | string;
+    categoria?: { nombre?: string } | string;
+  };
+  deportistaId?: number;
+  vinculo?: string;
+  esPrincipal?: boolean;
+}
+
 export interface GrupoFamiliarMio {
   id: number;
   nombre?: string;
   titularDni?: string;
-  integrantes?: Array<{
-    deportista?: { dni?: string };
-    vinculo?: string;
-    esPrincipal?: boolean;
-  }>;
+  integrantes?: GrupoFamiliarIntegrante[];
 }
 
 export const grupoFamiliarService = {
