@@ -52,4 +52,10 @@ export interface DeportistaProfile {
   nombre: string;
   apellido: string;
   dni: string;
+  fechaNac?: string;
+  disciplina?: { nombre: string };
+  genero?: { nombre: string };
+  categoria?: { nombre: string };
+  subcategoria?: { nombre: string };
+  cuenta?: { email: string };
 }
