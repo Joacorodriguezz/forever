@@ -5,6 +5,7 @@ import { Footer } from '../components/Footer';
 import { useAuth } from '../context/AuthContext';
 import { cuotaService } from '../services/cuota.service';
 import { grupoFamiliarService } from '../services/grupoFamiliar.service';
+import { pagoService } from '../services/pago.service';
 import styles from './DebtStatus.module.css';
 
 interface Quota {
@@ -83,10 +84,17 @@ export const DebtStatus = () => {
         return () => { cancelled = true; };
     }, []);
 
-    const handlePayQuota = (quotaId: number) => {
-        // TODO: Implement payment flow
-        console.log('Pagar cuota:', quotaId);
-        alert('Funcionalidad de pago en desarrollo');
+    const handlePayQuota = async (quotaId: number) => {
+        try {
+            const res = await pagoService.crear(quotaId);
+            if (res.success && res.data?.checkoutUrl) {
+                window.location.href = res.data.checkoutUrl;
+            } else {
+                alert('No se pudo iniciar el pago.');
+            }
+        } catch {
+            alert('No se pudo conectar con el servidor.');
+        }
     };
 
     const formatCurrency = (amount: number) => {

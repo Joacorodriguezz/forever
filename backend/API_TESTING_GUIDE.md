@@ -100,10 +100,41 @@ curl -X POST http://localhost:3000/api/cuotas/generar-mensual \
      -d '{"mes": 3, "anio": 2026}'
 ```
 
+### Crear pago / checkout Mercado Pago (Deportista)
+```bash
+curl -X POST http://localhost:3000/api/pagos/crear \
+     -H "Content-Type: application/json" \
+     -H "Authorization: Bearer <token_deportista>" \
+     -d '{"cuotaId": 1, "medioPago": "Mercado Pago"}'
+```
+
+**Respuesta esperada (201):**
+```json
+{
+  "success": true,
+  "message": "Pago iniciado correctamente",
+  "data": {
+    "pago": { "id": 1, "estadoPago": "PENDIENTE", "monto": 5000 },
+    "checkoutUrl": "https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=...",
+    "publicKey": "TEST-...",
+    "preferenceId": "..."
+  }
+}
+```
+
+Sin credenciales MP configuradas, `checkoutUrl` apunta a simulación:
+`GET /api/pagos/simular-retorno?pagoId=1&status=approved`
+
 ### Ver mis Pagos (Deportista)
 ```bash
 curl -X GET http://localhost:3000/api/pagos/mis-pagos \
      -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6OSwiZW1haWwiOiJqdWFuLnBlcmV6QG1haWwuY29tIiwicm9sIjoiREVQT1JUSVNUQSIsImlhdCI6MTc3MDUwMjQ5OCwiZXhwIjoxNzcxMTA3Mjk4fQ.jxhI9W7-iJariNnYuXQWQYDmS-aTwzizg8Ws7ZG6p3s"
+```
+
+### Ver historial de pagos (Deportista)
+```bash
+curl -X GET http://localhost:3000/api/deportistas/mi-historial \
+     -H "Authorization: Bearer <token_deportista>"
 ```
 
 ---

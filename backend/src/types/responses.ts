@@ -26,16 +26,20 @@ export interface EstadoCuentaResponse {
   cuotasPagadas: {
     id: number;
     nroCuota: number;
+    anio: number;
     monto: number;
     fechaPago: Date;
     medioPago: string | null;
+    disciplina: string;
   }[];
   cuotasPendientes: {
     id: number;
     nroCuota: number;
+    anio: number;
     monto: number;
     fechaVencimiento: Date;
     estadoCuota: string;
+    disciplina: string;
   }[];
   totalAdeudado: number;
 }
@@ -47,8 +51,11 @@ export interface HistorialPagosResponse {
     monto: number;
     medioPago: string | null;
     estado: string;
+    linkComprobante: string | null;
+    mercadoPagoId: string | null;
     cuota: {
       nroCuota: number;
+      anio: number;
       disciplina: string;
     };
   }[];

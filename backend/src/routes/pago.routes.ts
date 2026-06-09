@@ -14,6 +14,9 @@ const router = Router();
 // POST /api/pagos/webhook - Webhook de Mercado Pago
 router.post('/webhook', pagoController.webhook.bind(pagoController));
 
+// GET /api/pagos/simular-retorno - Simular retorno MP sin credenciales (desarrollo)
+router.get('/simular-retorno', pagoController.simularRetorno.bind(pagoController));
+
 // POST /api/pagos/crear - CU08 Pagar cuota (solo Deportista)
 router.post(
   '/crear',

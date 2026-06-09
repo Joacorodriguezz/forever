@@ -1,9 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import { pagoService } from '../services/pago.service';
 import { deportistaService } from '../services/deportista.service';
+import { mercadoPagoService } from '../services/mercadopago.service';
 import { sendSuccess, sendCreated } from '../utils/response';
 import { AuthenticatedRequest } from '../types';
 import { CreatePagoInput } from '../validators/pago.validator';
+import { ForbiddenError, NotFoundError } from '../utils/errors';
+import { Rol } from '@prisma/client';
 
 export class PagoController {
   async crear(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
@@ -21,11 +24,27 @@ export class PagoController {
     try {
       const { type, data } = req.body;
 
-      if (type === 'payment') {
-        const paymentId = data.id;
-        const pago = await pagoService.getByMercadoPagoId(paymentId);
-        if (pago) {
-          await pagoService.confirmarPago(pago.id, paymentId, 'approved');
+      if (type === 'payment' && data?.id) {
+        const paymentId = String(data.id);
+        const paymentInfo = await mercadoPagoService.getPayment(paymentId);
+
+        if (paymentInfo) {
+          let pagoId: number | null = null;
+
+          if (paymentInfo.externalReference) {
+            pagoId = parseInt(paymentInfo.externalReference, 10);
+          }
+
+          if (!pagoId || Number.isNaN(pagoId)) {
+            const pagoByMp = await pagoService.getByMercadoPagoId(paymentId);
+            if (pagoByMp) {
+              pagoId = pagoByMp.id;
+            }
+          }
+
+          if (pagoId && !Number.isNaN(pagoId)) {
+            await pagoService.confirmarPago(pagoId, paymentId, paymentInfo.status);
+          }
         }
       }
 
@@ -39,6 +58,14 @@ export class PagoController {
     try {
       const id = parseInt(req.params.id as string, 10);
       const result = await pagoService.getById(id);
+
+      if (req.user!.rol === Rol.DEPORTISTA) {
+        const deportista = await deportistaService.getByUserId(req.user!.id);
+        if (result.deportistaId !== deportista.id) {
+          throw new ForbiddenError('No tenés permiso para ver este pago');
+        }
+      }
+
       sendSuccess(res, result);
     } catch (error) {
       next(error);
@@ -75,6 +102,34 @@ export class PagoController {
       const { mercadoPagoId, status } = req.body;
       const result = await pagoService.confirmarPago(id, mercadoPagoId, status);
       sendSuccess(res, result, 'Pago confirmado correctamente');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async simularRetorno(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const pagoId = parseInt(req.query.pagoId as string, 10);
+      const status = (req.query.status as string) || 'approved';
+      const redirect = req.query.redirect as string | undefined;
+
+      if (!pagoId || Number.isNaN(pagoId)) {
+        throw new NotFoundError('Pago no encontrado');
+      }
+
+      const mockMpId = `mock_payment_${pagoId}`;
+      const result = await pagoService.confirmarPago(pagoId, mockMpId, status);
+
+      if (redirect === 'mobile') {
+        res.redirect(`forever://payment/result?pagoId=${pagoId}&status=${status}`);
+        return;
+      }
+
+      sendSuccess(res, {
+        pagoId: result.id,
+        status: result.estadoPago,
+        message: 'Pago simulado correctamente (sin credenciales de Mercado Pago)',
+      });
     } catch (error) {
       next(error);
     }
