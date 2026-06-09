@@ -9,6 +9,7 @@ export const env = {
   JWT_SECRET: process.env.JWT_SECRET || 'default-secret-change-me',
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '7d',
   FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:5173',
+  API_URL: process.env.API_URL || `http://localhost:${parseInt(process.env.PORT || '3000', 10)}`,
   MERCADOPAGO_ACCESS_TOKEN: process.env.MERCADOPAGO_ACCESS_TOKEN || '',
   MERCADOPAGO_PUBLIC_KEY: process.env.MERCADOPAGO_PUBLIC_KEY || '',
   MERCADOPAGO_SUCCESS_URL: process.env.MERCADOPAGO_SUCCESS_URL || '',

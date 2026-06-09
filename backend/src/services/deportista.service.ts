@@ -297,6 +297,8 @@ export class DeportistaService {
         monto: p.monto,
         medioPago: p.medioPago,
         estado: p.estadoPago,
+        linkComprobante: p.linkComprobante,
+        mercadoPagoId: p.mercadoPagoId,
         cuota: {
           nroCuota: p.cuota.nroCuota,
           anio: p.cuota.anio,

@@ -32,6 +32,22 @@ jest.mock('../config/prisma', () => {
 
 import prisma from '../config/prisma';
 
+jest.mock('../services/mercadopago.service', () => ({
+  mercadoPagoService: {
+    isConfigured: jest.fn().mockReturnValue(false),
+    createPreference: jest.fn().mockResolvedValue({
+      preferenceId: 'mock_pref_1',
+      checkoutUrl: 'http://localhost:3000/api/pagos/simular-retorno?pagoId=1&status=approved&redirect=mobile',
+      publicKey: 'TEST-public-key',
+    }),
+    getPayment: jest.fn().mockResolvedValue({
+      id: 'MP123',
+      status: 'approved',
+      externalReference: '1',
+    }),
+  },
+}));
+
 const mockPrisma = prisma as jest.Mocked<typeof prisma>;
 
 describe('Pago Module', () => {
@@ -155,17 +171,31 @@ describe('Pago Module', () => {
       (mockPrisma.cuota.findUnique as jest.Mock).mockResolvedValue({
         id: 1,
         deportistaId: 1,
+        nroCuota: 1,
+        anio: 2026,
         monto: 5000,
         estadoCuota: EstadoCuota.PENDIENTE,
-        deportista: { id: 1 },
+        disciplina: { nombre: 'Futbol' },
+        deportista: { id: 1, nombre: 'Juan', apellido: 'Perez' },
       });
-      (mockPrisma.pago.create as jest.Mock).mockResolvedValue({
+      const mockPago = {
         id: 1,
         fechaPago: new Date(),
         monto: 5000,
         estadoPago: EstadoPago.PENDIENTE,
         medioPago: 'Mercado Pago',
-        cuota: { nroCuota: 1, disciplina: { nombre: 'Futbol' } },
+        cuotaId: 1,
+        deportistaId: 1,
+        cuota: { nroCuota: 1, anio: 2026, disciplina: { nombre: 'Futbol' } },
+        deportista: { nombre: 'Juan', apellido: 'Perez' },
+      };
+
+      (mockPrisma.pago.create as jest.Mock).mockResolvedValue(mockPago);
+      (mockPrisma.pago.update as jest.Mock).mockResolvedValue(mockPago);
+      (mockPrisma.pago.findUnique as jest.Mock).mockResolvedValue({
+        ...mockPago,
+        mercadoPagoId: 'mock_pref_1',
+        mercadoPagoStatus: 'preference_created',
       });
 
       const response = await request(app)
@@ -175,6 +205,9 @@ describe('Pago Module', () => {
 
       expect(response.status).toBe(201);
       expect(response.body.success).toBe(true);
+      expect(response.body.data.checkoutUrl).toBeDefined();
+      expect(response.body.data.publicKey).toBeDefined();
+      expect(response.body.data.pago).toBeDefined();
     });
   });
 

@@ -6,12 +6,23 @@ import {
   ErrorMessages,
 } from '../utils/errors';
 import { EstadoPago, EstadoCuota, EstadoDeportista } from '@prisma/client';
+import { mercadoPagoService } from './mercadopago.service';
+
+export interface CrearPagoResult {
+  pago: Awaited<ReturnType<PagoService['getById']>>;
+  checkoutUrl: string;
+  publicKey: string;
+  preferenceId: string;
+}
 
 export class PagoService {
-  async crear(deportistaId: number, data: CreatePagoDTO) {
+  async crear(deportistaId: number, data: CreatePagoDTO): Promise<CrearPagoResult> {
     const cuota = await prisma.cuota.findUnique({
       where: { id: data.cuotaId },
-      include: { deportista: true },
+      include: {
+        deportista: true,
+        disciplina: true,
+      },
     });
 
     if (!cuota) {
@@ -43,10 +54,36 @@ export class PagoService {
         cuota: {
           include: { disciplina: true },
         },
+        deportista: true,
       },
     });
 
-    return pago;
+    const preference = await mercadoPagoService.createPreference({
+      pagoId: pago.id,
+      cuotaNro: cuota.nroCuota,
+      cuotaAnio: cuota.anio,
+      disciplinaNombre: cuota.disciplina.nombre,
+      monto: Number(cuota.monto),
+      deportistaNombre: cuota.deportista.nombre,
+      deportistaApellido: cuota.deportista.apellido,
+    });
+
+    await prisma.pago.update({
+      where: { id: pago.id },
+      data: {
+        mercadoPagoId: preference.preferenceId,
+        mercadoPagoStatus: 'preference_created',
+      },
+    });
+
+    const pagoActualizado = await this.getById(pago.id);
+
+    return {
+      pago: pagoActualizado,
+      checkoutUrl: preference.checkoutUrl,
+      publicKey: preference.publicKey,
+      preferenceId: preference.preferenceId,
+    };
   }
 
   async confirmarPago(pagoId: number, mercadoPagoId: string, status: string) {
@@ -59,7 +96,19 @@ export class PagoService {
       throw new NotFoundError(ErrorMessages.PAGO_NOT_FOUND);
     }
 
-    const estadoPago = status === 'approved' ? EstadoPago.APROBADO : EstadoPago.RECHAZADO;
+    let estadoPago: EstadoPago;
+    if (status === 'approved') {
+      estadoPago = EstadoPago.APROBADO;
+    } else if (status === 'pending' || status === 'in_process') {
+      estadoPago = EstadoPago.PENDIENTE;
+    } else {
+      estadoPago = EstadoPago.RECHAZADO;
+    }
+
+    const linkComprobante =
+      estadoPago === EstadoPago.APROBADO && mercadoPagoId
+        ? `https://www.mercadopago.com.ar/activities/payments/${mercadoPagoId}`
+        : null;
 
     await prisma.$transaction(async (tx) => {
       await tx.pago.update({
@@ -68,6 +117,7 @@ export class PagoService {
           estadoPago,
           mercadoPagoId,
           mercadoPagoStatus: status,
+          linkComprobante,
         },
       });
 
@@ -77,7 +127,6 @@ export class PagoService {
           data: { estadoCuota: EstadoCuota.PAGADA },
         });
 
-        // Actualizar estado del deportista si ya no tiene deudas
         const cuotasPendientes = await tx.cuota.count({
           where: {
             deportistaId: pago.deportistaId,

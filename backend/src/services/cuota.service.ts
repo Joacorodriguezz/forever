@@ -131,6 +131,7 @@ export class CuotaService {
     const cuotas = await prisma.cuota.findMany({
       where: { deportistaId },
       include: {
+        disciplina: true,
         pagos: {
           where: { estadoPago: 'APROBADO' },
         },
@@ -143,9 +144,11 @@ export class CuotaService {
       .map((c) => ({
         id: c.id,
         nroCuota: c.nroCuota,
+        anio: c.anio,
         monto: c.monto,
         fechaPago: c.pagos[0]?.fechaPago,
         medioPago: c.pagos[0]?.medioPago,
+        disciplina: c.disciplina.nombre,
       }));
 
     const cuotasPendientes = cuotas
@@ -153,9 +156,11 @@ export class CuotaService {
       .map((c) => ({
         id: c.id,
         nroCuota: c.nroCuota,
+        anio: c.anio,
         monto: c.monto,
         fechaVencimiento: c.fechaVencimiento,
         estadoCuota: c.estadoCuota,
+        disciplina: c.disciplina.nombre,
       }));
 
     const totalAdeudado = cuotasPendientes.reduce(
