@@ -17,7 +17,7 @@ Para la entrega E1 se implementa:
 
 - El modelo de datos actual (`Pago` → una `cuotaId`) y el endpoint `POST /api/pagos/crear` están diseñados para un pago por cuota.
 - Permite cerrar el flujo completo de pago (RF-06, RF-07) en el plazo de E1 con integración real a Mercado Pago Sandbox.
-- El pago múltiple en una sola transacción queda planificado para E2 (extensión de API con `cuotaIds[]` y preferencia multi-item).
+- El pago de varias cuotas en una sola transacción **no forma parte del alcance del producto**; se adopta de forma definitiva el modelo de cuotas simples (una por transacción).
 
 ## Criterio de aceptación E1
 
