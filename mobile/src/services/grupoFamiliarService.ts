@@ -6,9 +6,15 @@ export interface GrupoFamiliarMio {
   nombre?: string;
   titularDni?: string;
   integrantes?: Array<{
-    deportista?: { dni?: string };
-    vinculo?: string;
     esPrincipal?: boolean;
+    deportista?: {
+      id?: number;
+      nombre?: string;
+      apellido?: string;
+      dni?: string;
+      disciplina?: { nombre?: string };
+      categoria?: { nombre?: string };
+    };
   }>;
 }
 

@@ -98,14 +98,14 @@ export function HomeScreen({ navigation }: Props) {
           iconName="users"
           iconColor="#E65100"
           iconBg="#FFF3E0"
-          onPress={showComingSoon}
+          onPress={() => navigation.navigate('FamilyGroup')}
         />
         <MenuRow
           label="Noticias del club"
           iconName="book-open"
           iconColor="#6A1B9A"
           iconBg="#F3E5F5"
-          onPress={showComingSoon}
+          onPress={() => navigation.navigate('Noticias')}
         />
         <MenuRow
           label="Mi perfil"

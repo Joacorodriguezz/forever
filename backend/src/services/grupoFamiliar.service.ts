@@ -69,6 +69,7 @@ export class GrupoFamiliarService {
                 deportista: {
                   include: {
                     disciplina: true,
+                    categoria: true,
                   },
                 },
               },
@@ -91,6 +92,7 @@ export class GrupoFamiliarService {
             deportista: {
               include: {
                 disciplina: true,
+                categoria: true,
               },
             },
           },
