@@ -1,11 +1,6 @@
 import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
-import {
-  PrismaClient,
-  Rol,
-  EstadoDeportista,
-  Vinculo,
-} from '@prisma/client';
+import { PrismaClient, Rol, EstadoDeportista } from '@prisma/client';
 
 dotenv.config();
 
@@ -27,6 +22,28 @@ async function ensurePrismaColumns() {
   await prisma.$executeRawUnsafe(
     'ALTER TABLE disciplinas ADD COLUMN IF NOT EXISTS descripcion TEXT'
   );
+  await prisma.$executeRawUnsafe(
+    `ALTER TABLE "grupo_familiar_integrantes" ADD COLUMN IF NOT EXISTS "es_principal" BOOLEAN NOT NULL DEFAULT false`
+  );
+  await prisma.$executeRawUnsafe(
+    `ALTER TABLE "grupos_familiares" ADD COLUMN IF NOT EXISTS "titular_dni" VARCHAR(20)`
+  );
+  await prisma.$executeRawUnsafe(
+    `ALTER TABLE "grupos_familiares" ADD COLUMN IF NOT EXISTS "cuota_hermano" DECIMAL(10,2)`
+  );
+}
+
+async function insertGrupoFamiliarIntegrante(
+  grupoId: number,
+  deportistaId: number,
+  vinculo: 'Hijo' | 'Hermano',
+  esPrincipal: boolean
+) {
+  await prisma.$executeRaw`
+    INSERT INTO "grupo_familiar_integrantes" ("id_grupo_familiar", "id_deportista", "vinculo", "es_principal")
+    VALUES (${grupoId}, ${deportistaId}, ${vinculo}::"Vinculo", ${esPrincipal})
+    ON CONFLICT ("id_grupo_familiar", "id_deportista") DO NOTHING
+  `;
 }
 
 async function getBaseRefs() {
@@ -128,27 +145,16 @@ async function ensureGrupoFamiliar(titularId: number, hermanoId: number) {
     }
   }
 
-  await prisma.grupoFamiliar.create({
+  const grupo = await prisma.grupoFamiliar.create({
     data: {
       nombre: `Grupo ${DNI_TITULAR}`,
       titularDni: DNI_TITULAR,
       cuotaHermano: 8000,
-      integrantes: {
-        create: [
-          {
-            deportistaId: titularId,
-            vinculo: Vinculo.HIJO,
-            esPrincipal: true,
-          },
-          {
-            deportistaId: hermanoId,
-            vinculo: Vinculo.HERMANO,
-            esPrincipal: false,
-          },
-        ],
-      },
     },
   });
+
+  await insertGrupoFamiliarIntegrante(grupo.id, titularId, 'Hijo', true);
+  await insertGrupoFamiliarIntegrante(grupo.id, hermanoId, 'Hermano', false);
 
   console.log('✅ Grupo familiar creado.');
 }
