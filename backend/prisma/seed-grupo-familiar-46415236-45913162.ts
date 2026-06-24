@@ -36,12 +36,11 @@ async function ensurePrismaColumns() {
 async function insertGrupoFamiliarIntegrante(
   grupoId: number,
   deportistaId: number,
-  vinculo: 'Hijo' | 'Hermano',
   esPrincipal: boolean
 ) {
   await prisma.$executeRaw`
-    INSERT INTO "grupo_familiar_integrantes" ("id_grupo_familiar", "id_deportista", "vinculo", "es_principal")
-    VALUES (${grupoId}, ${deportistaId}, ${vinculo}::"Vinculo", ${esPrincipal})
+    INSERT INTO "grupo_familiar_integrantes" ("id_grupo_familiar", "id_deportista", "es_principal")
+    VALUES (${grupoId}, ${deportistaId}, ${esPrincipal})
     ON CONFLICT ("id_grupo_familiar", "id_deportista") DO NOTHING
   `;
 }
@@ -153,8 +152,8 @@ async function ensureGrupoFamiliar(titularId: number, hermanoId: number) {
     },
   });
 
-  await insertGrupoFamiliarIntegrante(grupo.id, titularId, 'Hijo', true);
-  await insertGrupoFamiliarIntegrante(grupo.id, hermanoId, 'Hermano', false);
+  await insertGrupoFamiliarIntegrante(grupo.id, titularId, true);
+  await insertGrupoFamiliarIntegrante(grupo.id, hermanoId, false);
 
   console.log('✅ Grupo familiar creado.');
 }

@@ -1,7 +1,6 @@
 import prisma from '../config/prisma';
 import { CreateGrupoFamiliarDTO, UpdateGrupoFamiliarDTO } from '../types/requests';
 import { NotFoundError, ConflictError, ErrorMessages } from '../utils/errors';
-import { Vinculo } from '@prisma/client';
 
 export class GrupoFamiliarService {
   async create(data: CreateGrupoFamiliarDTO) {
@@ -41,7 +40,6 @@ export class GrupoFamiliarService {
         integrantes: {
           create: data.integrantes.map((i) => ({
             deportistaId: i.deportistaId,
-            vinculo: i.vinculo as Vinculo,
             esPrincipal: i.esPrincipal || false,
           })),
         },
@@ -167,7 +165,6 @@ export class GrupoFamiliarService {
             data: {
               grupoId: id,
               deportistaId: integrante.deportistaId,
-              vinculo: integrante.vinculo as Vinculo,
               esPrincipal: integrante.esPrincipal || false,
             },
           });

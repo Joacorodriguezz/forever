@@ -16,17 +16,20 @@ async function ensureGrupoFamiliarSchema() {
     await prisma.$executeRawUnsafe(
         `ALTER TABLE "grupos_familiares" ADD COLUMN IF NOT EXISTS "cuota_hermano" DECIMAL(10,2)`
     );
+    await prisma.$executeRawUnsafe(
+        `ALTER TABLE "grupo_familiar_integrantes" DROP COLUMN IF EXISTS "vinculo"`
+    );
+    await prisma.$executeRawUnsafe(`DROP TYPE IF EXISTS "Vinculo"`);
 }
 
 async function insertGrupoFamiliarIntegrante(
     grupoId: number,
     deportistaId: number,
-    vinculo: 'Hijo' | 'Hermano',
     esPrincipal: boolean
 ) {
     await prisma.$executeRaw`
-        INSERT INTO "grupo_familiar_integrantes" ("id_grupo_familiar", "id_deportista", "vinculo", "es_principal")
-        VALUES (${grupoId}, ${deportistaId}, ${vinculo}::"Vinculo", ${esPrincipal})
+        INSERT INTO "grupo_familiar_integrantes" ("id_grupo_familiar", "id_deportista", "es_principal")
+        VALUES (${grupoId}, ${deportistaId}, ${esPrincipal})
         ON CONFLICT ("id_grupo_familiar", "id_deportista") DO NOTHING
     `;
 }
@@ -272,8 +275,8 @@ async function main() {
         },
     });
 
-    await insertGrupoFamiliarIntegrante(grupoFamiliar1.id, deportista1.id, 'Hijo', true);
-    await insertGrupoFamiliarIntegrante(grupoFamiliar1.id, deportista2.id, 'Hermano', false);
+    await insertGrupoFamiliarIntegrante(grupoFamiliar1.id, deportista1.id, true);
+    await insertGrupoFamiliarIntegrante(grupoFamiliar1.id, deportista2.id, false);
 
     console.log('✅ Grupos familiares creados');
 

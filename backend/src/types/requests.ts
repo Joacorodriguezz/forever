@@ -1,4 +1,4 @@
-import { Rol, Vinculo, Periodicidad } from '@prisma/client';
+import { Rol, Periodicidad } from '@prisma/client';
 
 // =============================================================================
 // AUTH DTOs
@@ -83,7 +83,6 @@ export interface UpdateDeportistaDTO {
 
 export interface GrupoFamiliarIntegranteDTO {
   deportistaId: number;
-  vinculo: Vinculo;
   esPrincipal?: boolean;
 }
 

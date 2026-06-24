@@ -16,7 +16,9 @@
     "prisma:reset": "prisma migrate reset --force",
     "prisma:seed": "tsx prisma/seed.ts",
     "prisma:seed:deportista-test": "tsx prisma/seed-deportista-46415236.ts",
-    "prisma:seed:grupo-familiar": "tsx prisma/seed-grupo-familiar-46415236-45913162.ts"
+    "prisma:seed:grupo-familiar": "tsx prisma/seed-grupo-familiar-46415236-45913162.ts",
+    "prisma:seed:cuotas-deuda": "tsx prisma/seed-cuotas-deuda-46415236.ts",
+    "prisma:seed:noticias": "tsx prisma/seed-noticias.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
