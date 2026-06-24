@@ -375,8 +375,8 @@ describe('Tests de Integración - Base de Datos Real', () => {
         .send({
           nombre: 'Familia Perez Test',
           integrantes: [
-            { deportistaId: deportistaId, vinculo: 'PADRE', esPrincipal: true },
-            { deportistaId: deportista2Id, vinculo: 'HIJO', esPrincipal: false },
+            { deportistaId: deportistaId, esPrincipal: true },
+            { deportistaId: deportista2Id, esPrincipal: false },
           ],
         });
 

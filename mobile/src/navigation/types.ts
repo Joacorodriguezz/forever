@@ -16,6 +16,8 @@ export type RootStackParamList = {
   PaymentHistory: undefined;
   PaymentDetail: { pagoId: number };
   PaymentResult: { pagoId: number; status?: string };
+  FamilyGroup: undefined;
+  NewsDetail: { noticiaId: number };
 };
 
 /** @deprecated Use RootStackParamList / MainTabParamList */

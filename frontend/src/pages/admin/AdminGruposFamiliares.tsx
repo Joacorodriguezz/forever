@@ -151,7 +151,6 @@ export const AdminGruposFamiliares = () => {
         const titularDni = form.titularDni?.trim() || form.miembros[0]?.dni || '';
         const integrantes = form.miembros.map((m, idx) => ({
             deportistaId: m.deportistaId,
-            vinculo: idx === 0 ? 'PADRE' : 'HIJO',
             esPrincipal: idx === 0,
         }));
         try {

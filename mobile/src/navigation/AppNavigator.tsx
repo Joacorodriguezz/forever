@@ -5,7 +5,9 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
-import { ComingSoonScreen } from '../screens/ComingSoonScreen';
+import { FamilyGroupScreen } from '../screens/FamilyGroupScreen';
+import { NewsDetailScreen } from '../screens/NewsDetailScreen';
+import { NewsListScreen } from '../screens/NewsListScreen';
 import { DebtStatusScreen } from '../screens/DebtStatusScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { LoginScreen } from '../screens/LoginScreen';
@@ -66,7 +68,7 @@ function MainTabs() {
       />
       <Tab.Screen
         name="Noticias"
-        component={ComingSoonScreen}
+        component={NewsListScreen}
         options={{ tabBarLabel: 'Noticias' }}
       />
       <Tab.Screen
@@ -100,6 +102,8 @@ function AppNavigatorStack() {
       <RootStack.Screen name="PaymentHistory" component={PaymentHistoryScreen} />
       <RootStack.Screen name="PaymentDetail" component={PaymentDetailScreen} />
       <RootStack.Screen name="PaymentResult" component={PaymentResultScreen} />
+      <RootStack.Screen name="FamilyGroup" component={FamilyGroupScreen} />
+      <RootStack.Screen name="NewsDetail" component={NewsDetailScreen} />
     </RootStack.Navigator>
   );
 }

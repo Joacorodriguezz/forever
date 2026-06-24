@@ -1,4 +1,4 @@
-import { PrismaClient, Rol, EstadoDeportista, EstadoCuota, EstadoPago, Periodicidad, Vinculo } from '@prisma/client';
+import { PrismaClient, Rol, EstadoDeportista, EstadoCuota, EstadoPago, Periodicidad } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
 
@@ -6,8 +6,38 @@ dotenv.config();
 
 const prisma = new PrismaClient();
 
+async function ensureGrupoFamiliarSchema() {
+    await prisma.$executeRawUnsafe(
+        `ALTER TABLE "grupo_familiar_integrantes" ADD COLUMN IF NOT EXISTS "es_principal" BOOLEAN NOT NULL DEFAULT false`
+    );
+    await prisma.$executeRawUnsafe(
+        `ALTER TABLE "grupos_familiares" ADD COLUMN IF NOT EXISTS "titular_dni" VARCHAR(20)`
+    );
+    await prisma.$executeRawUnsafe(
+        `ALTER TABLE "grupos_familiares" ADD COLUMN IF NOT EXISTS "cuota_hermano" DECIMAL(10,2)`
+    );
+    await prisma.$executeRawUnsafe(
+        `ALTER TABLE "grupo_familiar_integrantes" DROP COLUMN IF EXISTS "vinculo"`
+    );
+    await prisma.$executeRawUnsafe(`DROP TYPE IF EXISTS "Vinculo"`);
+}
+
+async function insertGrupoFamiliarIntegrante(
+    grupoId: number,
+    deportistaId: number,
+    esPrincipal: boolean
+) {
+    await prisma.$executeRaw`
+        INSERT INTO "grupo_familiar_integrantes" ("id_grupo_familiar", "id_deportista", "es_principal")
+        VALUES (${grupoId}, ${deportistaId}, ${esPrincipal})
+        ON CONFLICT ("id_grupo_familiar", "id_deportista") DO NOTHING
+    `;
+}
+
 async function main() {
     console.log('🌱 Iniciando seed de datos...');
+
+    await ensureGrupoFamiliarSchema();
 
     // Limpiar datos existentes (opcional)
     await prisma.pago.deleteMany();
@@ -240,17 +270,13 @@ async function main() {
     const grupoFamiliar1 = await prisma.grupoFamiliar.create({
         data: {
             nombre: 'Familia Pérez',
+            titularDni: deportista1.dni,
+            cuotaHermano: 8000,
         },
     });
 
-    await prisma.grupoFamiliarIntegrante.create({
-        data: {
-            grupoId: grupoFamiliar1.id,
-            deportistaId: deportista1.id,
-            vinculo: Vinculo.HIJO,
-            esPrincipal: true,
-        },
-    });
+    await insertGrupoFamiliarIntegrante(grupoFamiliar1.id, deportista1.id, true);
+    await insertGrupoFamiliarIntegrante(grupoFamiliar1.id, deportista2.id, false);
 
     console.log('✅ Grupos familiares creados');
 
