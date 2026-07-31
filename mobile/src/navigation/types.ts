@@ -15,7 +15,7 @@ export type RootStackParamList = {
   MainTabs: NavigatorScreenParams<MainTabParamList> | undefined;
   PaymentHistory: undefined;
   PaymentDetail: { pagoId: number };
-  PaymentResult: { pagoId: number; status?: string };
+  PaymentResult: { pagoId: number | string; status?: string; paymentId?: string };
   FamilyGroup: undefined;
   NewsDetail: { noticiaId: number };
 };
@@ -27,5 +27,5 @@ export type AppStackParamList = {
   Profile: undefined;
   PaymentHistory: undefined;
   PaymentDetail: { pagoId: number };
-  PaymentResult: { pagoId: number; status?: string };
+  PaymentResult: { pagoId: number | string; status?: string; paymentId?: string };
 };

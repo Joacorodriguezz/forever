@@ -14,4 +14,11 @@ export const pagoService = {
     const response = await api.get<PagoApiResponse>(`/pagos/${pagoId}`);
     return response.data;
   },
+
+  sincronizar: async (pagoId: number, mercadoPagoId: string): Promise<PagoApiResponse> => {
+    const response = await api.post<PagoApiResponse>(`/pagos/${pagoId}/sincronizar`, {
+      mercadoPagoId,
+    });
+    return response.data;
+  },
 };

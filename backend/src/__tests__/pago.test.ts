@@ -48,6 +48,13 @@ jest.mock('../services/mercadopago.service', () => ({
   },
 }));
 
+jest.mock('../services/email.service', () => ({
+  emailService: {
+    isConfigured: jest.fn().mockReturnValue(false),
+    sendPaymentReceipt: jest.fn().mockResolvedValue(undefined),
+  },
+}));
+
 const mockPrisma = prisma as jest.Mocked<typeof prisma>;
 
 describe('Pago Module', () => {
@@ -176,7 +183,13 @@ describe('Pago Module', () => {
         monto: 5000,
         estadoCuota: EstadoCuota.PENDIENTE,
         disciplina: { nombre: 'Futbol' },
-        deportista: { id: 1, nombre: 'Juan', apellido: 'Perez' },
+        deportista: {
+          id: 1,
+          nombre: 'Juan',
+          apellido: 'Perez',
+          cuenta: { email: 'juan.perez@test.com' },
+          adultoResponsable: null,
+        },
       });
       const mockPago = {
         id: 1,

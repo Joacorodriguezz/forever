@@ -43,6 +43,14 @@ router.get(
 );
 
 // GET /api/pagos/:id - Obtener pago
+router.post(
+  '/:id/sincronizar',
+  authenticateToken,
+  validateParams(idParamSchema),
+  pagoController.sincronizar.bind(pagoController)
+);
+
+// GET /api/pagos/:id - Obtener pago
 router.get(
   '/:id',
   authenticateToken,
