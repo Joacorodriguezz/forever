@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { CompositeScreenProps } from '@react-navigation/native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -113,6 +113,13 @@ export function HomeScreen({ navigation }: Props) {
           iconColor="#1565C0"
           iconBg="#E3F2FD"
           onPress={() => navigation.navigate('Perfil')}
+        />
+        <MenuRow
+          label="Página de la Liga"
+          iconName="external-link"
+          iconColor="#00695C"
+          iconBg="#E0F2F1"
+          onPress={() => Linking.openURL('https://www.lapf.com.ar/')}
         />
 
         <Text style={styles.sectionLabel}>Redes del club</Text>

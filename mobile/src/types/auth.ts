@@ -53,9 +53,23 @@ export interface DeportistaProfile {
   apellido: string;
   dni: string;
   fechaNac?: string;
-  disciplina?: { nombre: string };
+  disciplina?: { id: number; nombre: string };
   genero?: { nombre: string };
   categoria?: { nombre: string };
   subcategoria?: { nombre: string };
   cuenta?: { email: string };
+}
+
+export interface Disciplina {
+  id: number;
+  nombre: string;
+}
+
+export interface UpdateProfileRequest {
+  email?: string;
+  nombre?: string;
+  apellido?: string;
+  disciplinaId?: number;
+  currentPassword?: string;
+  password?: string;
 }
