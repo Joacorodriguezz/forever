@@ -42,7 +42,8 @@ const STATUS_CONFIG = {
 } as const;
 
 export function PaymentResultScreen({ navigation, route }: Props) {
-  const { pagoId } = route.params;
+  const pagoId = Number(route.params.pagoId);
+  const paymentId = route.params.paymentId;
   const [loading, setLoading] = useState(true);
   const [pago, setPago] = useState<Pago | null>(null);
   const [error, setError] = useState(false);
@@ -50,9 +51,21 @@ export function PaymentResultScreen({ navigation, route }: Props) {
   useEffect(() => {
     let cancelled = false;
     let attempts = 0;
+    let synced = false;
 
     const poll = async () => {
+      if (!pagoId || Number.isNaN(pagoId)) {
+        setError(true);
+        setLoading(false);
+        return;
+      }
+
       try {
+        if (paymentId && !synced) {
+          synced = true;
+          await pagoService.sincronizar(pagoId, paymentId);
+        }
+
         const res = await pagoService.getById(pagoId);
         if (cancelled) return;
 
@@ -77,7 +90,7 @@ export function PaymentResultScreen({ navigation, route }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [pagoId]);
+  }, [pagoId, paymentId]);
 
   const estadoKey = error
     ? 'ERROR'

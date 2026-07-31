@@ -1,6 +1,6 @@
 import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
 import env from '../config/env';
-import { BadRequestError } from '../utils/errors';
+import { BadRequestError, ErrorMessages } from '../utils/errors';
 
 const MONTH_NAMES = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -15,6 +15,7 @@ export interface CreatePreferenceInput {
   monto: number;
   deportistaNombre: string;
   deportistaApellido: string;
+  payerEmail: string;
 }
 
 export interface PreferenceResult {
@@ -52,12 +53,7 @@ export class MercadoPagoService {
 
     const client = getClient();
     if (!client) {
-      const mockPrefId = `mock_pref_${input.pagoId}`;
-      return {
-        preferenceId: mockPrefId,
-        checkoutUrl: `${env.API_URL}/api/pagos/simular-retorno?pagoId=${input.pagoId}&status=approved&redirect=mobile`,
-        publicKey,
-      };
+      throw new BadRequestError(ErrorMessages.PAYMENT_SERVICE_UNAVAILABLE);
     }
 
     const preference = new Preference(client);
@@ -91,7 +87,13 @@ export class MercadoPagoService {
         },
         auto_return: 'approved',
         notification_url: env.MERCADOPAGO_WEBHOOK_URL || undefined,
+        metadata: {
+          pago_id: input.pagoId,
+          cuota_nro: input.cuotaNro,
+          cuota_anio: input.cuotaAnio,
+        },
         payer: {
+          email: input.payerEmail,
           name: input.deportistaNombre,
           surname: input.deportistaApellido,
         },
@@ -118,11 +120,7 @@ export class MercadoPagoService {
   async getPayment(paymentId: string): Promise<MercadoPagoPaymentInfo | null> {
     const client = getClient();
     if (!client) {
-      return {
-        id: paymentId,
-        status: 'approved',
-        externalReference: null,
-      };
+      throw new BadRequestError(ErrorMessages.PAYMENT_SERVICE_UNAVAILABLE);
     }
 
     const payment = new Payment(client);

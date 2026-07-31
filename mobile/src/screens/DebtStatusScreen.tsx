@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -165,18 +166,26 @@ export function DebtStatusScreen({ navigation }: Props) {
       }
 
       const pagoId = res.data.pago.id;
-      const result = await WebBrowser.openBrowserAsync(res.data.checkoutUrl);
+      const canOpenCheckout = await Linking.canOpenURL(res.data.checkoutUrl);
 
-      if (result.type === 'cancel' || result.type === 'dismiss') {
-        navigation.navigate('PaymentResult', { pagoId });
+      if (canOpenCheckout) {
+        await Linking.openURL(res.data.checkoutUrl);
       } else {
-        navigation.navigate('PaymentResult', { pagoId });
+        const result = await WebBrowser.openBrowserAsync(res.data.checkoutUrl);
+        if (result.type === 'cancel' || result.type === 'dismiss') {
+          navigation.navigate('PaymentResult', { pagoId });
+        }
       }
-    } catch {
-      Alert.alert(
-        'Sin conexión',
-        'No se pudo conectar con el servidor. Verificá tu internet e intentá de nuevo.',
-      );
+    } catch (error: any) {
+      const serverMessage = error?.response?.data?.error;
+      if (serverMessage) {
+        Alert.alert('No se pudo iniciar el pago', serverMessage);
+      } else {
+        Alert.alert(
+          'Sin conexión',
+          'No se pudo conectar con el servidor. Verificá tu internet e intentá de nuevo.',
+        );
+      }
     } finally {
       setPaying(false);
     }

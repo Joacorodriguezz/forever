@@ -108,13 +108,20 @@ function AppNavigatorStack() {
   );
 }
 
-function parsePaymentDeepLink(url: string): { pagoId: number; status?: string } | null {
+function parsePaymentDeepLink(
+  url: string,
+): { pagoId: number; status?: string; paymentId?: string } | null {
   try {
     const parsed = new URL(url.replace('forever://', 'https://forever.app/'));
     const pagoId = parseInt(parsed.searchParams.get('pagoId') ?? '', 10);
     const status = parsed.searchParams.get('status') ?? undefined;
+    const paymentId =
+      parsed.searchParams.get('paymentId') ??
+      parsed.searchParams.get('payment_id') ??
+      parsed.searchParams.get('collection_id') ??
+      undefined;
     if (!pagoId || Number.isNaN(pagoId)) return null;
-    return { pagoId, status };
+    return { pagoId, status, paymentId };
   } catch {
     return null;
   }

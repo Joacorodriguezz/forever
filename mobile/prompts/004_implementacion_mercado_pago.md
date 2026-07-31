@@ -79,58 +79,34 @@ Antes de abrir Mercado Pago, el backend debe calcular el monto final. El mobile 
 | Caso | Regla propuesta |
 |------|-----------------|
 | Socio normal paga una cuota | Monto = `Cuota.monto` |
-| Socio normal paga varias cuotas | Monto = suma de cuotas pendientes seleccionadas |
+| Socio normal paga varias cuotas | Fuera de alcance para esta entrega; se paga una cuota por transaccion |
 | Grupo familiar paga una cuota | Solo puede pagar el titular; monto = cuota seleccionada |
-| Grupo familiar paga varias cuotas | Solo puede pagar el titular; monto = suma de cuotas seleccionadas validas |
+| Grupo familiar paga varias cuotas | Fuera de alcance para esta entrega; se paga una cuota por transaccion |
 | Cuota ya pagada | No se incluye; devolver error si fue seleccionada |
 | Cuota que no pertenece al socio/grupo | Rechazar operacion |
 
-### Recomendacion de alcance
+### Decision de alcance
 
-El modelo actual de `Pago` tiene una sola `cuotaId`, por lo que hoy esta preparado para **una cuota por pago**.
+Se mantiene **una cuota por transaccion**.
 
-Si se quiere pagar mas de una cuota en una sola operacion, hay dos opciones:
+Motivo:
 
-1. **Opcion conservadora para Entrega 3:** mantener una cuota por transaccion y documentar esa decision.
-2. **Opcion completa:** modificar el modelo para que un pago pueda tener varias cuotas.
-
-Para que el requerimiento de "puede estar pagando mas de una cuota" quede bien resuelto, la opcion completa es la mas correcta.
+- El modelo actual de `Pago` tiene una sola `cuotaId`.
+- La app mobile ya selecciona una cuota puntual.
+- Reduce riesgo de cambios en schema, historial, comprobantes y estado de deuda.
+- El grupo familiar mantiene la restriccion actual: solo paga el titular, pero siempre una cuota por pago.
 
 ## Cambios backend propuestos
 
-### 1. Ajustar modelo de pagos si se decide soportar multiples cuotas
+### 1. Mantener modelo de pago individual
+
+No se modifica Prisma para multiples cuotas.
 
 Modelo actual:
 
 - `Pago.cuotaId`
 - Un pago pertenece a una cuota.
-
-Modelo propuesto:
-
-- `Pago`
-- `PagoCuota` como tabla intermedia entre pagos y cuotas.
-
-Ejemplo conceptual:
-
-```prisma
-model Pago {
-  id                Int
-  monto             Decimal
-  estadoPago        EstadoPago
-  mercadoPagoId     String?
-  mercadoPagoStatus String?
-  linkComprobante   String?
-  deportistaId      Int
-  cuotas            PagoCuota[]
-}
-
-model PagoCuota {
-  pagoId  Int
-  cuotaId Int
-}
-```
-
-Si se decide no modificar schema para esta entrega, se mantiene pago individual y se crea una preferencia por cuota seleccionada.
+- Una preferencia de Mercado Pago se crea por cada cuota seleccionada.
 
 ### 2. Crear preferencia real de Mercado Pago
 
@@ -213,9 +189,9 @@ Archivos:
 
 Tareas:
 
-- Permitir seleccionar una o varias cuotas, si se decide implementar pago multiple.
-- Enviar al backend los IDs de cuotas seleccionadas.
-- Mostrar el total calculado visualmente, pero confiar en el total final del backend.
+- Mantener seleccion de una cuota.
+- Enviar al backend el `cuotaId` seleccionado.
+- Mostrar el monto de la cuota seleccionada.
 - Abrir el `checkoutUrl` real de Mercado Pago.
 - Mantener deep link `forever://payment/result`.
 - Al volver a la app, consultar estado real del pago al backend.
@@ -225,10 +201,10 @@ Tareas:
 ## Flujo final esperado
 
 1. Socio entra a Estado de Deuda.
-2. Selecciona cuota o cuotas.
-3. La app muestra el total estimado.
+2. Selecciona una cuota.
+3. La app muestra el monto de la cuota seleccionada.
 4. Socio toca **Pagar con Mercado Pago**.
-5. Mobile envia cuotas seleccionadas al backend.
+5. Mobile envia la cuota seleccionada al backend.
 6. Backend valida pertenencia, estado y monto.
 7. Backend crea `Pago` pendiente.
 8. Backend crea preferencia real de Mercado Pago.
@@ -275,7 +251,7 @@ Tareas:
 - [ ] La app abre Mercado Pago real en Sandbox.
 - [ ] El monto lo calcula y valida el backend.
 - [ ] La cuenta receptora se define por el token de Mercado Pago configurado.
-- [ ] Se soporta correctamente el alcance definido: una cuota por pago o multiples cuotas por pago.
+- [ ] Se soporta correctamente el alcance definido: una cuota por pago.
 - [ ] El pago se confirma desde webhook/consulta a Mercado Pago.
 - [ ] Las cuotas se marcan pagadas solo si Mercado Pago confirma `approved`.
 - [ ] El socio vuelve a la app y ve el resultado.
@@ -288,7 +264,7 @@ Tareas:
 
 | Tema | Decision pendiente |
 |------|--------------------|
-| Multiples cuotas | Definir si Entrega 3 exige pagarlas en una sola transaccion o si alcanza una cuota por pago |
+| Multiples cuotas | Definido fuera de alcance: una cuota por pago |
 | Grupo familiar | Definir si paga solo titular o tambien otros integrantes autorizados |
 | Email | Definir proveedor SMTP real |
 | Comprobante | Definir si alcanza link de Mercado Pago o si el club necesita comprobante propio |

@@ -7,6 +7,7 @@ import {
 } from '../utils/errors';
 import { EstadoPago, EstadoCuota, EstadoDeportista } from '@prisma/client';
 import { mercadoPagoService } from './mercadopago.service';
+import { emailService } from './email.service';
 
 export interface CrearPagoResult {
   pago: Awaited<ReturnType<PagoService['getById']>>;
@@ -20,7 +21,12 @@ export class PagoService {
     const cuota = await prisma.cuota.findUnique({
       where: { id: data.cuotaId },
       include: {
-        deportista: true,
+        deportista: {
+          include: {
+            cuenta: true,
+            adultoResponsable: true,
+          },
+        },
         disciplina: true,
       },
     });
@@ -39,6 +45,10 @@ export class PagoService {
 
     if (cuota.estadoCuota !== EstadoCuota.PENDIENTE && cuota.estadoCuota !== EstadoCuota.VENCIDA) {
       throw new BadRequestError(ErrorMessages.CUOTA_NOT_PENDING);
+    }
+
+    if (!mercadoPagoService.isConfigured()) {
+      throw new BadRequestError(ErrorMessages.PAYMENT_SERVICE_UNAVAILABLE);
     }
 
     const pago = await prisma.pago.create({
@@ -66,6 +76,7 @@ export class PagoService {
       monto: Number(cuota.monto),
       deportistaNombre: cuota.deportista.nombre,
       deportistaApellido: cuota.deportista.apellido,
+      payerEmail: cuota.deportista.adultoResponsable?.email || cuota.deportista.cuenta.email,
     });
 
     await prisma.pago.update({
@@ -95,6 +106,8 @@ export class PagoService {
     if (!pago) {
       throw new NotFoundError(ErrorMessages.PAGO_NOT_FOUND);
     }
+
+    const wasAlreadyApproved = pago.estadoPago === EstadoPago.APROBADO;
 
     let estadoPago: EstadoPago;
     if (status === 'approved') {
@@ -143,7 +156,36 @@ export class PagoService {
       }
     });
 
+    if (estadoPago === EstadoPago.APROBADO && !wasAlreadyApproved) {
+      try {
+        await emailService.sendPaymentReceipt({ pagoId });
+      } catch (error) {
+        console.error('No se pudo enviar el comprobante por email:', error);
+      }
+    }
+
     return this.getById(pagoId);
+  }
+
+  async sincronizarConMercadoPago(pagoId: number, mercadoPagoId: string) {
+    const paymentInfo = await mercadoPagoService.getPayment(mercadoPagoId);
+
+    if (!paymentInfo) {
+      throw new BadRequestError('No se pudo obtener el pago de Mercado Pago');
+    }
+
+    const externalReferencePagoId = paymentInfo.externalReference
+      ? parseInt(paymentInfo.externalReference, 10)
+      : NaN;
+
+    if (
+      paymentInfo.externalReference &&
+      (!externalReferencePagoId || Number.isNaN(externalReferencePagoId) || externalReferencePagoId !== pagoId)
+    ) {
+      throw new BadRequestError('El pago de Mercado Pago no corresponde a la cuota seleccionada');
+    }
+
+    return this.confirmarPago(pagoId, paymentInfo.id, paymentInfo.status);
   }
 
   async getById(id: number) {
